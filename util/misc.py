@@ -7,7 +7,9 @@ from pathlib import Path
 
 import torch
 import torch.distributed as dist
-from torch._six import inf
+#from torch._six import inf
+# Depends on torch version if late version then the following
+from torch import inf
 
 
 class SmoothedValue(object):
