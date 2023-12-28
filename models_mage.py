@@ -11,6 +11,8 @@ from taming.models.vqgan import VQModel
 from omegaconf import OmegaConf
 import numpy as np
 import scipy.stats as stats
+from spot.slot_attn import SlotAttentionEncoder
+
 
 
 class Attention(nn.Module):
@@ -194,6 +196,18 @@ class MaskedGenerativeEncoderViT(nn.Module):
             for i in range(depth)])
         self.norm = norm_layer(embed_dim)
         # --------------------------------------------------------------------------
+        self.slot_attention = SlotAttentionEncoder(
+            num_iterations=3,  # specify the number of iterations
+            num_slots=7,       # specify the number of slots
+            input_channels=embed_dim,  # since it should match the output of your encoder
+            slot_size=256,       # specify the slot size
+            mlp_hidden_size=1024, # specify the MLP hidden size
+            pos_channels=4,    # specify the positional channels size
+            truncate='none', # or other options as per your requirement
+            init_method='shared_gaussian',  # or 'shared_gaussian'
+            num_heads=6,       # specify the number of heads for attention
+            drop_path=0.0        # specify dropout path rate
+        )
 
         # --------------------------------------------------------------------------
         # MAGE decoder specifics
@@ -354,7 +368,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
     def forward(self, imgs):
         latent, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder(imgs)
-        logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
+        slots, attn, init_slots, attn_logits = self.slot_attention(latent)
+
+        #logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
+        logits = self.forward_decoder(slots, token_drop_mask, token_all_mask)
+
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
         return loss, imgs, token_all_mask
 
