@@ -200,7 +200,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             num_iterations=3,  # specify the number of iterations
             num_slots=7,       # specify the number of slots
             input_channels=embed_dim,  # since it should match the output of your encoder
-            slot_size=256,       # specify the slot size
+            slot_size=768,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
             truncate='none', # or other options as per your requirement
@@ -280,25 +280,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # masking
         bsz, seq_len = token_indices.size()
-        mask_ratio_min = self.mask_ratio_min
-        mask_rate = self.mask_ratio_generator.rvs(1)[0]
 
-        num_dropped_tokens = int(np.ceil(seq_len * mask_ratio_min))
-        num_masked_tokens = int(np.ceil(seq_len * mask_rate))
-
-        # it is possible that two elements of the noise is the same, so do a while loop to avoid it
-        while True:
-            noise = torch.rand(bsz, seq_len, device=x.device)  # noise in [0, 1]
-            sorted_noise, _ = torch.sort(noise, dim=1)  # ascend: small is remove, large is keep
-            cutoff_drop = sorted_noise[:, num_dropped_tokens-1:num_dropped_tokens]
-            cutoff_mask = sorted_noise[:, num_masked_tokens-1:num_masked_tokens]
-            token_drop_mask = (noise <= cutoff_drop).float()
-            token_all_mask = (noise <= cutoff_mask).float()
-            if token_drop_mask.sum() == bsz*num_dropped_tokens and token_all_mask.sum() == bsz*num_masked_tokens:
-                break
-            else:
-                print("Rerandom the noise!")
-        # print(mask_rate, num_dropped_tokens, num_masked_tokens, token_drop_mask.sum(dim=1), token_all_mask.sum(dim=1))
+        token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
+        token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()    # Mask all tokens
+        
         token_indices[token_all_mask.nonzero(as_tuple=True)] = self.mask_token_label
         # print("Masekd num token:", torch.sum(token_indices == self.mask_token_label, dim=1))
 
@@ -315,11 +300,13 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # dropping
         token_keep_mask = 1 - token_drop_mask
-        input_embeddings_after_drop = input_embeddings[token_keep_mask.nonzero(as_tuple=True)].reshape(bsz, -1, emb_dim)
+        #input_embeddings_after_drop = input_embeddings[token_keep_mask.nonzero(as_tuple=True)].reshape(bsz, -1, emb_dim)
         # print("Input embedding after drop shape:", input_embeddings_after_drop.shape)
 
         # apply Transformer blocks
-        x = input_embeddings_after_drop
+        #x = input_embeddings_after_drop
+        x = input_embeddings
+
         for blk in self.blocks:
             x = blk(x)
         x = self.norm(x)
@@ -327,7 +314,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         return x, gt_indices, token_drop_mask, token_all_mask
 
-    def forward_decoder(self, x, token_drop_mask, token_all_mask):
+    def forward_decoder(self, x,slots, token_drop_mask, token_all_mask):
         # embed tokens
         x = self.decoder_embed(x)
 
@@ -345,6 +332,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # add pos embed
         x = x_after_pad + self.decoder_pos_embed_learned
+
+        x = torch.cat((slots, x), dim=1)
 
         # apply Transformer blocks
         for blk in self.decoder_blocks:
@@ -371,7 +360,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         slots, attn, init_slots, attn_logits = self.slot_attention(latent)
 
         #logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
-        logits = self.forward_decoder(slots, token_drop_mask, token_all_mask)
+        logits = self.forward_decoder(latent,slots ,token_drop_mask, token_all_mask)
 
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
         return loss, imgs, token_all_mask
