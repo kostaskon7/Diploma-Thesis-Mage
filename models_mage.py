@@ -274,16 +274,19 @@ class MaskedGenerativeEncoderViT(nn.Module):
         with torch.no_grad():
             z_q, _, token_tuple = self.vqgan.encode(x)
 
+        #z_q torch.Size([32, 256, 16, 16])
         _, _, token_indices = token_tuple
         token_indices = token_indices.reshape(z_q.size(0), -1)
         gt_indices = token_indices.clone().detach().long()
+        #token_indices 256,256,256.... batch size times
+        #gt_indices torch.Size([32, 256])
 
         # masking
         bsz, seq_len = token_indices.size()
 
         token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
         token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()    # Mask all tokens
-        
+        #both torch.Size([32, 256])
         token_indices[token_all_mask.nonzero(as_tuple=True)] = self.mask_token_label
         # print("Masekd num token:", torch.sum(token_indices == self.mask_token_label, dim=1))
 
@@ -293,6 +296,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         token_drop_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_drop_mask], dim=1)
         token_all_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_all_mask], dim=1)
         token_indices = token_indices.long()
+        #torch.Size([32, 257])
         # bert embedding
         input_embeddings = self.token_emb(token_indices)
         # print("Input embedding shape:", input_embeddings.shape)
