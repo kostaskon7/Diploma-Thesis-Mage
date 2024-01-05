@@ -285,7 +285,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         bsz, seq_len = token_indices.size()
 
         token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
-        token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()    # Mask all tokens
+        token_all_mask = torch.zeros(bsz, seq_len, device=x.device).float()    # Mask all tokens
         #both torch.Size([32, 256])
         token_indices[token_all_mask.nonzero(as_tuple=True)] = self.mask_token_label
         # print("Masekd num token:", torch.sum(token_indices == self.mask_token_label, dim=1))
@@ -315,6 +315,27 @@ class MaskedGenerativeEncoderViT(nn.Module):
             x = blk(x)
         x = self.norm(x)
         # print("Encoder representation shape:", x.shape)
+        # Mask all tokens for the decoding phase
+        _, _, token_indices = token_tuple
+        token_indices = token_indices.reshape(z_q.size(0), -1)
+        gt_indices = token_indices.clone().detach().long()
+
+        # masking
+        bsz, seq_len = token_indices.size()
+
+        # After training mask all tokens
+        token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
+        token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()    # Mask all tokens
+        
+        token_indices[token_all_mask.nonzero(as_tuple=True)] = self.mask_token_label
+        #print("Masekd num token after encoder:", torch.sum(token_indices == self.mask_token_label, dim=1))
+
+        # concate class token
+        token_indices = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
+        token_indices[:, 0] = self.fake_class_label
+        token_drop_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_drop_mask], dim=1)
+        token_all_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_all_mask], dim=1)
+        token_indices = token_indices.long()
 
         return x, gt_indices, token_drop_mask, token_all_mask
 
