@@ -390,12 +390,38 @@ class MaskedGenerativeEncoderViT(nn.Module):
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
         return loss, imgs, token_all_mask
 
+    def freeze_encoder_decoder(self):
+        # Freeze encoder
+        self.cls_token.requires_grad = False
+        for param in self.patch_embed.parameters():
+            param.requires_grad = False
+        for block in self.blocks:
+            for param in block.parameters():
+                param.requires_grad = False
+
+        # Freeze decoder
+        self.mask_token.requires_grad = False
+        self.decoder_pos_embed_learned.requires_grad = False
+        for param in self.decoder_norm.parameters():
+            param.requires_grad = False
+        for block in self.decoder_blocks:
+            for param in block.parameters():
+                param.requires_grad = False
+        for param in self.decoder_embed.parameters():
+            param.requires_grad = False
+        for param in self.decoder_pred.parameters():
+            param.requires_grad = False
+        # Add any other components as needed
+
 
 def mage_vit_base_patch16(**kwargs):
     model = MaskedGenerativeEncoderViT(
         patch_size=16, embed_dim=768, depth=12, num_heads=12,
         decoder_embed_dim=768, decoder_depth=8, decoder_num_heads=16,
         mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+
+    model.freeze_encoder_decoder()
+
     return model
 
 
@@ -404,4 +430,7 @@ def mage_vit_large_patch16(**kwargs):
         patch_size=16, embed_dim=1024, depth=24, num_heads=16,
         decoder_embed_dim=1024, decoder_depth=8, decoder_num_heads=16,
         mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+    
+    model.freeze_encoder_decoder()
+
     return model
