@@ -40,6 +40,9 @@ def get_args_parser():
     parser.add_argument('--input_size', default=256, type=int,
                         help='images input size')
 
+    parser.add_argument('--vqgan_ckpt_path', default='vqgan_jax_strongaug.ckpt', type=str,
+                        help='Path to the VQGAN checkpoint file')
+
     # Optimizer parameters
     parser.add_argument('--weight_decay', type=float, default=0.05,
                         help='weight decay (default: 0.05)')
@@ -147,7 +150,7 @@ def main(args):
     )
     
     # define the model
-    vqgan_ckpt_path = 'vqgan_jax_strongaug.ckpt'
+    vqgan_ckpt_path = args.vqgan_ckpt_path
 
     model = models_mage.__dict__[args.model](mask_ratio_mu=args.mask_ratio_mu, mask_ratio_std=args.mask_ratio_std,
                                              mask_ratio_min=args.mask_ratio_min, mask_ratio_max=args.mask_ratio_max,
