@@ -52,9 +52,12 @@ def gen_image(model, bsz, seed, num_iter=12, choice_temperature=4.5):
             x = blk(x)
         x = model.norm(x)
 
+        slots, attn, init_slots, attn_logits = model.slot_attention(x)
+
+        
         # decoder
-        logits = model.forward_decoder(x, token_drop_mask, token_all_mask)
-        logits = logits[:, 1:, :codebook_size]
+        logits = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
+        logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
 
         # get token prediction
         sample_dist = torch.distributions.categorical.Categorical(logits=logits)
