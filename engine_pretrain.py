@@ -80,53 +80,35 @@ import util.lr_sched as lr_sched
 #     print("Averaged stats:", metric_logger)
 #     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
+import torch
+from torch.nn.utils import clip_grad_norm_
 
 def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: torch.optim.Optimizer, device: torch.device, epoch: int, loss_scaler, log_writer=None, args=None):
     model.train(True)
-    metric_logger = misc.MetricLogger(delimiter="  ")
-    metric_logger.add_meter('lr', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
-    header = 'Epoch: [{}]'.format(epoch)
-    print_freq = 20
+    train_epoch_size = len(data_loader)
+    log_interval = train_epoch_size // 5  # or adjust as per your requirement
 
-    accum_iter = args.accum_iter
-    optimizer.zero_grad()
+    for batch, batch_data in enumerate(data_loader):
+        # Assuming the first item in batch_data is the tensor of samples
+        samples = batch_data[0].to(device, non_blocking=True)
+        global_step = epoch * train_epoch_size + batch
 
-    if log_writer is not None:
-        print('log_dir: {}'.format(log_writer.log_dir))
+        # Adjust learning rate if necessary
+        # (Add your learning rate adjustment logic here if required)
 
-    for data_iter_step, (images, mask_instance, mask_class, mask_ignore) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
-        images = images.to(device, non_blocking=True)
-        # Depending on your model, you might need to send these to the device as well
-        # mask_instance = mask_instance.to(device, non_blocking=True)
-        # mask_class = mask_class.to(device, non_blocking=True)
-        # mask_ignore = mask_ignore.to(device, non_blocking=True)
+        optimizer.zero_grad()
 
         with torch.cuda.amp.autocast():
-            # Adjust the model call based on how your model uses these masks
-            loss, _, _ = model(images, mask_instance, mask_class, mask_ignore)
+            loss, _, _ = model(samples)
 
-        loss_value = loss.item()
-        if not math.isfinite(loss_value):
-            print("Loss is {}, stopping training".format(loss_value))
-            sys.exit(1)
+        loss_scaler(loss, optimizer, parameters=model.parameters())
 
-        loss /= accum_iter
-        loss_scaler(loss, optimizer, clip_grad=args.grad_clip, parameters=model.parameters(), update_grad=(data_iter_step + 1) % accum_iter == 0)
-        if (data_iter_step + 1) % accum_iter == 0:
-            optimizer.zero_grad()
+        if batch % log_interval == 0:
+            loss_value = loss.item()
+            print('Train Epoch: {:3} [{:5}/{:5}] \t Loss: {:.6f}'.format(
+                epoch + 1, batch, train_epoch_size, loss_value))
 
-        torch.cuda.synchronize()
-        metric_logger.update(loss=loss_value)
+            if log_writer is not None:
+                log_writer.add_scalar('train_loss', loss_value, global_step)
 
-        lr = optimizer.param_groups[0]["lr"]
-        metric_logger.update(lr=lr)
-
-        loss_value_reduce = misc.all_reduce_mean(loss_value)
-        if log_writer is not None and (data_iter_step + 1) % accum_iter == 0:
-            epoch_1000x = int((data_iter_step / len(data_loader) + epoch) * 1000)
-            log_writer.add_scalar('train_loss', loss_value_reduce, epoch_1000x)
-            log_writer.add_scalar('lr', lr, epoch_1000x)
-
-    metric_logger.synchronize_between_processes()
-    print("Averaged stats:", metric_logger)
-    return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+    return {"loss": loss_value}
