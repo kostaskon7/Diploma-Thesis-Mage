@@ -125,42 +125,42 @@ def main(args):
             transforms.ToTensor()])
 
 
-    dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
+    # dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
     #print(dataset_train)
 
-    if True:  # args.distributed:
-        num_tasks = misc.get_world_size()
-        global_rank = misc.get_rank()
-        sampler_train = torch.utils.data.DistributedSampler(
-            dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
-        )
-        print("Sampler_train = %s" % str(sampler_train))
-    else:
-        sampler_train = torch.utils.data.RandomSampler(dataset_train)
+    # if True:  # args.distributed:
+    #     num_tasks = misc.get_world_size()
+    #     global_rank = misc.get_rank()
+    #     sampler_train = torch.utils.data.DistributedSampler(
+    #         dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
+    #     )
+    #     print("Sampler_train = %s" % str(sampler_train))
+    # else:
+    #     sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
-    if global_rank == 0 and args.log_dir is not None:
-        os.makedirs(args.log_dir, exist_ok=True)
-        log_writer = SummaryWriter(log_dir=args.log_dir)
-    else:
-        log_writer = None
+    # if global_rank == 0 and args.log_dir is not None:
+    #     os.makedirs(args.log_dir, exist_ok=True)
+    #     log_writer = SummaryWriter(log_dir=args.log_dir)
+    # else:
+    #     log_writer = None
 
-    data_loader_train = torch.utils.data.DataLoader(
-        dataset_train, sampler=sampler_train,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        pin_memory=args.pin_mem,
-        drop_last=True,
-    )
+    # data_loader_train = torch.utils.data.DataLoader(
+    #     dataset_train, sampler=sampler_train,
+    #     batch_size=args.batch_size,
+    #     num_workers=args.num_workers,
+    #     pin_memory=args.pin_mem,
+    #     drop_last=True,
+    # )
 
-    # log_writer = SummaryWriter(log_dir=args.log_dir)
-    # train_sampler = None
-    # val_sampler = None
+    log_writer = SummaryWriter(log_dir=args.log_dir)
+    train_sampler = None
+    val_sampler = None
 
-    # train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
-    # train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, num_workers= 4)
+    train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
+    train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, num_workers= 4)
 
-    # val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
-    # val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, num_workers= 4)
+    val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
+    val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, num_workers= 4)
 
     # define the model
     vqgan_ckpt_path = args.vqgan_ckpt_path
@@ -199,24 +199,24 @@ def main(args):
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
-    for epoch in range(args.start_epoch, args.epochs):
-        if args.distributed:
-            data_loader_train.sampler.set_epoch(epoch)
-        train_stats = train_one_epoch(
-            model, data_loader_train,
-            optimizer, device, epoch, loss_scaler,
-            log_writer=log_writer,
-            args=args
-        )
     # for epoch in range(args.start_epoch, args.epochs):
     #     if args.distributed:
-    #         train_loader.sampler.set_epoch(epoch)
+    #         data_loader_train.sampler.set_epoch(epoch)
     #     train_stats = train_one_epoch(
-    #         model, train_loader,
+    #         model, data_loader_train,
     #         optimizer, device, epoch, loss_scaler,
     #         log_writer=log_writer,
     #         args=args
     #     )
+    for epoch in range(args.start_epoch, args.epochs):
+        if args.distributed:
+            train_loader.sampler.set_epoch(epoch)
+        train_stats = train_one_epoch(
+            model, train_loader,
+            optimizer, device, epoch, loss_scaler,
+            log_writer=log_writer,
+            args=args
+        )
         if args.output_dir and (epoch % 40 == 0 or epoch + 1 == args.epochs):
             misc.save_model(
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
