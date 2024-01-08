@@ -31,11 +31,24 @@ def train_one_epoch(model: torch.nn.Module,
     #     print(f"Number of items in batch: {len(batch)}")
     #     print([type(item) for item in batch])
     #     break  # Only inspect the first batch
+    for batch in data_loader:
+        print(f"Number of items in batch: {len(batch)}")
+        print([type(item) for item in batch])
+        break  # Inspect just the first batch
+
+    for batch in data_loader:
+        for i, item in enumerate(batch):
+            if isinstance(item, torch.Tensor):
+                print(f"Item {i}: shape {item.shape}")
+            else:
+                print(f"Item {i}: type {type(item)}")
+        break  # Inspect just the first batch
+
+
+
 
 
     for data_iter_step, (samples, _) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
-        print(data_iter_step)
-        print(samples.shape)
     # for data_iter_step, (samples, mask_instance, mask_class, mask_ignore) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
 
         # we use a per iteration (instead of per epoch) lr scheduler
