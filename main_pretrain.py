@@ -158,14 +158,15 @@ def main(args):
 
 
     def custom_collate_fn(batch):
-        # Assuming each element in 'batch' is a tuple (img, mask_instance, mask_class, mask_ignore)
-        # We will stack all images and all masks separately
-        images = torch.stack([item[0] for item in batch])
-        # Example for stacking other elements (modify as needed)
-        mask_instances = torch.stack([item[1] for item in batch])
+        # Stack the images (assuming they are at index 0 in the tuples and have 3 color channels)
+        images = torch.stack([item[0] for item in batch])  # This should now have the shape [32, 3, 256, 256]
 
-        # Return the restructured batch
-        return images, mask_instances
+        # Concatenate or stack the second items (assuming they are labels or similar)
+        # Adjust this line according to what the second item actually represents
+        labels = torch.cat([item[1].unsqueeze(0) for item in batch], dim=0)  # This should now have the shape [32]
+
+        return images, labels
+
 
 
     train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
