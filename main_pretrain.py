@@ -152,6 +152,7 @@ def main(args):
     #     drop_last=True,
     # )
 
+    log_writer = SummaryWriter(log_dir=args.log_dir)
     train_sampler = None
     val_sampler = None
 
