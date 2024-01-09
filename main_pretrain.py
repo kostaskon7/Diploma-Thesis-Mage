@@ -125,7 +125,7 @@ def main(args):
             transforms.ToTensor()])
 
 
-    dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train2017'), transform=transform_train)
+    dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
     #print(dataset_train)
 
     if True:  # args.distributed:
