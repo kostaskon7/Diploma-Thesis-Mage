@@ -25,8 +25,8 @@ import models_mage
 from engine_pretrain import train_one_epoch
 from spot.datasets import COCO2017
 
-from ocl_metrics import UnsupervisedMaskIoUMetric, ARIMetric
-from utils_spot import inv_normalize, cosine_scheduler, visualize, bool_flag, load_pretrained_encoder
+from spot.ocl_metrics import UnsupervisedMaskIoUMetric, ARIMetric
+from spot.utils_spot import inv_normalize, cosine_scheduler, visualize, bool_flag, load_pretrained_encoder
 from tqdm import tqdm
 import torch.nn.functional as F
 import torchvision.utils as vutils
