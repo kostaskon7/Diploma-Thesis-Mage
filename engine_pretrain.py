@@ -110,7 +110,7 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
 
     for data_iter_step, batch_data in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
         samples = batch_data[0].to(device, non_blocking=True)  # Use only the first tensor (images)
-
+        print(samples.shape)
         # LR Scheduler Adjustment (if necessary)
         if data_iter_step % accum_iter == 0:
             lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
