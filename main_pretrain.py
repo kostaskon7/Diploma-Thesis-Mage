@@ -25,6 +25,14 @@ import models_mage
 from engine_pretrain import train_one_epoch
 from spot.datasets import COCO2017
 
+from ocl_metrics import UnsupervisedMaskIoUMetric, ARIMetric
+from utils_spot import inv_normalize, cosine_scheduler, visualize, bool_flag, load_pretrained_encoder
+from tqdm import tqdm
+import torch.nn.functional as F
+import torchvision.utils as vutils
+
+
+
 
 def get_args_parser():
     parser = argparse.ArgumentParser('MAGE pre-training', add_help=False)
@@ -170,18 +178,7 @@ def main(args):
 
 
     train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
-    # for index in range(len(sampler_train)):
-    #     # Fetch the item
-    #     item = sampler_train[index]
 
-    #     # Print the index and the shape of the item
-    #     print(f"Index: {index}")
-
-    #     if isinstance(item, tuple):
-    #         for i, tensor in enumerate(item):
-    #             print(f"  Shape of tensor {i}: {tensor.shape}")
-    #     else:
-    #         print(f"  Shape of the item: {item.shape}")    
     
     train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
@@ -225,15 +222,7 @@ def main(args):
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
-    # for epoch in range(args.start_epoch, args.epochs):
-    #     if args.distributed:
-    #         data_loader_train.sampler.set_epoch(epoch)
-    #     train_stats = train_one_epoch(
-    #         model, data_loader_train,
-    #         optimizer, device, epoch, loss_scaler,
-    #         log_writer=log_writer,
-    #         args=args
-    #     )
+
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_loader.sampler.set_epoch(epoch)
@@ -259,6 +248,147 @@ def main(args):
                 log_writer.flush()
             with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
                 f.write(json.dumps(log_stats) + "\n")
+
+
+        MBO_c_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
+        MBO_i_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
+        fg_iou_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).cuda()
+        ari_metric = ARIMetric(foreground = True, ignore_overlaps = True).cuda()
+        
+        MBO_c_slot_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
+        MBO_i_slot_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
+        fg_iou_slot_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).cuda()
+        ari_slot_metric = ARIMetric(foreground = True, ignore_overlaps = True).cuda()
+
+        visualize_per_epoch = int(args.epochs*args.eval_viz_percent)
+        val_epoch_size = len(val_loader)
+
+        with torch.no_grad():
+            model.eval()
+
+            val_mse = 0.
+            counter = 0
+    
+            for batch, (image, true_mask_i, true_mask_c, mask_ignore) in enumerate(tqdm(val_loader)):
+                image = image.cuda()
+                true_mask_i = true_mask_i.cuda()
+                true_mask_c = true_mask_c.cuda()
+                mask_ignore = mask_ignore.cuda() 
+                
+                batch_size = image.shape[0]
+                counter += batch_size
+    
+                mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image)
+    
+                # DINOSAUR uses as attention masks the attenton maps of the decoder
+                # over the slots, which bilinearly resizes to match the image resolution
+                # dec_slots_attns shape: [B, num_slots, H_enc, W_enc]
+                default_attns = F.interpolate(default_slots_attns, size=args.val_mask_size, mode='bilinear')
+                dec_attns = F.interpolate(dec_slots_attns, size=args.val_mask_size, mode='bilinear')
+                # dec_attns shape [B, num_slots, H, W]
+                default_attns = default_attns.unsqueeze(2)
+                dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
+    
+                pred_default_mask = default_attns.argmax(1).squeeze(1)
+                pred_dec_mask = dec_attns.argmax(1).squeeze(1)
+    
+                val_mse += mse.item()
+
+                # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
+                true_mask_i_reshaped = torch.nn.functional.one_hot(true_mask_i).to(torch.float32).permute(0,3,1,2).cuda()
+                true_mask_c_reshaped = torch.nn.functional.one_hot(true_mask_c).to(torch.float32).permute(0,3,1,2).cuda()
+                pred_dec_mask_reshaped = torch.nn.functional.one_hot(pred_dec_mask).to(torch.float32).permute(0,3,1,2).cuda()
+                pred_default_mask_reshaped = torch.nn.functional.one_hot(pred_default_mask).to(torch.float32).permute(0,3,1,2).cuda()
+                
+                MBO_i_metric.update(pred_dec_mask_reshaped, true_mask_i_reshaped, mask_ignore)
+                MBO_c_metric.update(pred_dec_mask_reshaped, true_mask_c_reshaped, mask_ignore)
+                fg_iou_metric.update(pred_dec_mask_reshaped, true_mask_i_reshaped, mask_ignore)
+                ari_metric.update(pred_dec_mask_reshaped, true_mask_i_reshaped, mask_ignore)
+            
+                MBO_i_slot_metric.update(pred_default_mask_reshaped, true_mask_i_reshaped, mask_ignore)
+                MBO_c_slot_metric.update(pred_default_mask_reshaped, true_mask_c_reshaped, mask_ignore)
+                fg_iou_slot_metric.update(pred_default_mask_reshaped, true_mask_i_reshaped, mask_ignore)
+                ari_slot_metric.update(pred_default_mask_reshaped, true_mask_i_reshaped, mask_ignore)
+    
+            val_mse /= (val_epoch_size)
+            ari = 100 * ari_metric.compute()
+            ari_slot = 100 * ari_slot_metric.compute()
+            mbo_c = 100 * MBO_c_metric.compute()
+            mbo_i = 100 * MBO_i_metric.compute()
+            fg_iou = 100 * fg_iou_metric.compute()
+            mbo_c_slot = 100 * MBO_c_slot_metric.compute()
+            mbo_i_slot = 100 * MBO_i_slot_metric.compute()
+            fg_iou_slot = 100 * fg_iou_slot_metric.compute()
+            val_loss = val_mse
+            log_writer.add_scalar('VAL/mse', val_mse, epoch+1)
+            log_writer.add_scalar('VAL/ari (slots)', ari_slot, epoch+1)
+            log_writer.add_scalar('VAL/ari (decoder)', ari, epoch+1)
+            log_writer.add_scalar('VAL/mbo_c', mbo_c, epoch+1)
+            log_writer.add_scalar('VAL/mbo_i', mbo_i, epoch+1)
+            log_writer.add_scalar('VAL/fg_iou', fg_iou, epoch+1)
+            log_writer.add_scalar('VAL/mbo_c (slots)', mbo_c_slot, epoch+1)
+            log_writer.add_scalar('VAL/mbo_i (slots)', mbo_i_slot, epoch+1)
+            log_writer.add_scalar('VAL/fg_iou (slots)', fg_iou_slot, epoch+1)
+            
+            print(args.log_path)
+            print('====> Epoch: {:3} \t Loss = {:F} \t MSE = {:F} \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
+                epoch+1, val_loss, val_mse, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+            
+            ari_metric.reset()
+            MBO_c_metric.reset()
+            MBO_i_metric.reset()
+            fg_iou_metric.reset()
+            MBO_c_slot_metric.reset()
+            MBO_i_slot_metric.reset()
+            ari_slot_metric.reset()
+            fg_iou_slot_metric.reset()
+            
+            if (val_loss < best_val_loss) or (best_val_ari > ari) or (best_mbo_c > mbo_c):
+                best_val_loss = val_loss
+                best_val_ari = ari
+                best_val_ari_slot = ari_slot
+                best_mbo_c = mbo_c
+                best_mbo_i = mbo_i
+                best_fg_iou = fg_iou
+                best_mbo_c_slot = mbo_c_slot
+                best_mbo_i_slot = mbo_i_slot
+                best_fg_iou_slot = fg_iou_slot
+                best_epoch = epoch + 1
+    
+                #torch.save(model.state_dict(), os.path.join(args.output_dir, 'best_model.pt'))
+                
+            if epoch%visualize_per_epoch==0 or epoch==args.epochs-1:
+                image = inv_normalize(image)
+                image = F.interpolate(image, size=args.val_mask_size, mode='bilinear')
+                rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
+                rgb_dec_attns = image.unsqueeze(1) * dec_attns + 1. - dec_attns
+    
+                vis_recon = visualize(image, true_mask_c, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
+                grid = vutils.make_grid(vis_recon, nrow=2*args.num_slots + 4, pad_value=0.2)[:, 2:-2, 2:-2]
+                grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
+                log_writer.add_image('VAL_recon/epoch={:03}'.format(epoch + 1), grid)
+    
+            log_writer.add_scalar('VAL/best_loss', best_val_loss, epoch+1)
+    
+            checkpoint = {
+                'epoch': epoch + 1,
+                'best_val_loss': best_val_loss,
+                'best_val_ari': best_val_ari,
+                'best_val_ari_slot': best_val_ari_slot,
+                'best_mbo_c':best_mbo_c,
+                'best_mbo_i':best_mbo_i,
+                'best_fg_iou':best_fg_iou,
+                'best_mbo_c_slot':best_mbo_c_slot,
+                'best_mbo_i_slot':best_mbo_i_slot,
+                'best_fg_iou_slot':best_fg_iou_slot,
+                'best_epoch': best_epoch,
+                'model': model.state_dict(),
+                'optimizer': optimizer.state_dict()
+            }
+    
+            #torch.save(checkpoint, os.path.join(args.output_dir, 'checkpoint.pt.tar'))
+    
+            print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
