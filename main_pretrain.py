@@ -282,7 +282,8 @@ def main(args):
                 # DINOSAUR uses as attention masks the attenton maps of the decoder
                 # over the slots, which bilinearly resizes to match the image resolution
                 # dec_slots_attns shape: [B, num_slots, H_enc, W_enc]
-                default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')# NA RWTHSW
+                print(default_slots_attns.shape)
+                default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
                 dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
                 # dec_attns shape [B, num_slots, H, W]
                 default_attns = default_attns.unsqueeze(2)
