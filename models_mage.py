@@ -375,7 +375,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward_loss(self, gt_indices, logits, mask):
         bsz, seq_len = gt_indices.size()
         # logits and mask are with seq_len+1 but gt_indices is with seq_len
-        loss = self.criterion(logits[:, 7:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))
+        loss = self.criterion(logits[:, self.num_slots:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))
         loss = loss.reshape(bsz, seq_len)
         loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
         return loss
