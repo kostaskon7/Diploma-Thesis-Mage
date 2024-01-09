@@ -260,7 +260,7 @@ def main(args):
         fg_iou_slot_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).cuda()
         ari_slot_metric = ARIMetric(foreground = True, ignore_overlaps = True).cuda()
 
-        visualize_per_epoch = int(args.epochs*args.eval_viz_percent)
+        visualize_per_epoch = 1#int(args.epochs*args.eval_viz_percent)
         val_epoch_size = len(val_loader)
 
         with torch.no_grad():
