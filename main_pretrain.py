@@ -125,36 +125,36 @@ def main(args):
             transforms.ToTensor()])
 
 
-    dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
-    #print(dataset_train)
+    # dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'train'), transform=transform_train)
+    # #print(dataset_train)
 
-    if True:  # args.distributed:
-        num_tasks = misc.get_world_size()
-        global_rank = misc.get_rank()
-        sampler_train = torch.utils.data.DistributedSampler(
-            dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
-        )
-        print("Sampler_train = %s" % str(sampler_train))
-    else:
-        sampler_train = torch.utils.data.RandomSampler(dataset_train)
+    # if True:  # args.distributed:
+    #     num_tasks = misc.get_world_size()
+    #     global_rank = misc.get_rank()
+    #     sampler_train = torch.utils.data.DistributedSampler(
+    #         dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
+    #     )
+    #     print("Sampler_train = %s" % str(sampler_train))
+    # else:
+    #     sampler_train = torch.utils.data.RandomSampler(dataset_train)
 
-    if global_rank == 0 and args.log_dir is not None:
-        os.makedirs(args.log_dir, exist_ok=True)
-        log_writer = SummaryWriter(log_dir=args.log_dir)
-    else:
-        log_writer = None
+    # if global_rank == 0 and args.log_dir is not None:
+    #     os.makedirs(args.log_dir, exist_ok=True)
+    #     log_writer = SummaryWriter(log_dir=args.log_dir)
+    # else:
+    #     log_writer = None
 
-    data_loader_train = torch.utils.data.DataLoader(
-        dataset_train, sampler=sampler_train,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        pin_memory=args.pin_mem,
-        drop_last=True,
-    )
+    # data_loader_train = torch.utils.data.DataLoader(
+    #     dataset_train, sampler=sampler_train,
+    #     batch_size=args.batch_size,
+    #     num_workers=args.num_workers,
+    #     pin_memory=args.pin_mem,
+    #     drop_last=True,
+    # )
 
-    # log_writer = SummaryWriter(log_dir=args.log_dir)
-    # train_sampler = None
-    # val_sampler = None
+    log_writer = SummaryWriter(log_dir=args.log_dir)
+    train_sampler = None
+    val_sampler = None
 
 
     # def custom_collate_fn(batch):
@@ -169,24 +169,24 @@ def main(args):
 
 
 
-    #train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
-    for index in range(len(sampler_train)):
-        # Fetch the item
-        item = sampler_train[index]
+    train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
+    # for index in range(len(sampler_train)):
+    #     # Fetch the item
+    #     item = sampler_train[index]
 
-        # Print the index and the shape of the item
-        print(f"Index: {index}")
+    #     # Print the index and the shape of the item
+    #     print(f"Index: {index}")
 
-        if isinstance(item, tuple):
-            for i, tensor in enumerate(item):
-                print(f"  Shape of tensor {i}: {tensor.shape}")
-        else:
-            print(f"  Shape of the item: {item.shape}")    
+    #     if isinstance(item, tuple):
+    #         for i, tensor in enumerate(item):
+    #             print(f"  Shape of tensor {i}: {tensor.shape}")
+    #     else:
+    #         print(f"  Shape of the item: {item.shape}")    
     
-    # train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
+    train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
-    # val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
-    # val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
+    val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
+    val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
     # define the model
     vqgan_ckpt_path = args.vqgan_ckpt_path
