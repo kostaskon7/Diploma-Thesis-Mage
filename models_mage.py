@@ -375,10 +375,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward_loss(self, gt_indices, logits, mask):
         bsz, seq_len = gt_indices.size()
         # logits and mask are with seq_len+1 but gt_indices is with seq_len
-        loss = self.criterion(logits[:, 1:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))
+        loss = self.criterion(logits[:, 1:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
         loss = loss.reshape(bsz, seq_len)
-        print("EEEEEP")
-        print(loss.shape)
         loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
         return loss
 
@@ -391,7 +389,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #[Batch,decoder264,2025]
 
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
-        return loss, imgs, token_all_mask,logits,logits
+        return loss, imgs, token_all_mask,attn,attn
 
     def freeze_encoder_decoder(self):
         # Freeze encoder
