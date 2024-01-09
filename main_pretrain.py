@@ -170,10 +170,11 @@ def main(args):
 
 
     train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
-    train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, num_workers= 4,collate_fn=custom_collate_fn)
+    print(train_dataset.shape)
+    train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, num_workers= 4)#,collate_fn=custom_collate_fn)
 
     val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
-    val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, num_workers= 4,collate_fn=custom_collate_fn)
+    val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, num_workers= 4)#,collate_fn=custom_collate_fn)
 
     # define the model
     vqgan_ckpt_path = args.vqgan_ckpt_path
