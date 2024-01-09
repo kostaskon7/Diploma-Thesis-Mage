@@ -283,8 +283,8 @@ def main(args):
                 # over the slots, which bilinearly resizes to match the image resolution
                 # dec_slots_attns shape: [B, num_slots, H_enc, W_enc]
                 print(default_slots_attns.shape)
-                default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
-                dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
+                default_attns = F.interpolate(default_slots_attns, size=256, mode='linear ')
+                dec_attns = F.interpolate(dec_slots_attns, size=256, mode='linear ')
                 # dec_attns shape [B, num_slots, H, W]
                 default_attns = default_attns.unsqueeze(2)
                 dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
