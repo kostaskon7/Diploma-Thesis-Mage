@@ -377,6 +377,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # logits and mask are with seq_len+1 but gt_indices is with seq_len
         loss = self.criterion(logits[:, self.num_slots:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))
         loss = loss.reshape(bsz, seq_len)
+        print(loss.shape)
         loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
         return loss
 
