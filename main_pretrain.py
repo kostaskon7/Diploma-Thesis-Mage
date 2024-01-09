@@ -170,7 +170,19 @@ def main(args):
 
 
     train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
-    print(train_dataset.shape)
+    for index in range(len(train_dataset)):
+        # Fetch the item
+        item = train_dataset[index]
+
+        # Print the index and the shape of the item
+        print(f"Index: {index}")
+
+        if isinstance(item, tuple):
+            for i, tensor in enumerate(item):
+                print(f"  Shape of tensor {i}: {tensor.shape}")
+        else:
+            print(f"  Shape of the item: {item.shape}")    
+    
     train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, num_workers= 4)#,collate_fn=custom_collate_fn)
 
     val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
