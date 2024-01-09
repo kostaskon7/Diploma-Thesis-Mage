@@ -266,7 +266,6 @@ def main(args):
         with torch.no_grad():
             model.eval()
 
-            val_mse = 0.
             counter = 0
     
             for batch, (image, true_mask_i, true_mask_c, mask_ignore) in enumerate(tqdm(val_loader)):
@@ -278,7 +277,7 @@ def main(args):
                 batch_size = image.shape[0]
                 counter += batch_size
     
-                mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image)
+                val_loss,_,_,default_slots_attns, dec_slots_attns = model(image)
     
                 # DINOSAUR uses as attention masks the attenton maps of the decoder
                 # over the slots, which bilinearly resizes to match the image resolution
@@ -292,7 +291,6 @@ def main(args):
                 pred_default_mask = default_attns.argmax(1).squeeze(1)
                 pred_dec_mask = dec_attns.argmax(1).squeeze(1)
     
-                val_mse += mse.item()
 
                 # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
                 true_mask_i_reshaped = torch.nn.functional.one_hot(true_mask_i).to(torch.float32).permute(0,3,1,2).cuda()
@@ -310,7 +308,6 @@ def main(args):
                 fg_iou_slot_metric.update(pred_default_mask_reshaped, true_mask_i_reshaped, mask_ignore)
                 ari_slot_metric.update(pred_default_mask_reshaped, true_mask_i_reshaped, mask_ignore)
     
-            val_mse /= (val_epoch_size)
             ari = 100 * ari_metric.compute()
             ari_slot = 100 * ari_slot_metric.compute()
             mbo_c = 100 * MBO_c_metric.compute()
@@ -319,8 +316,8 @@ def main(args):
             mbo_c_slot = 100 * MBO_c_slot_metric.compute()
             mbo_i_slot = 100 * MBO_i_slot_metric.compute()
             fg_iou_slot = 100 * fg_iou_slot_metric.compute()
-            val_loss = val_mse
-            log_writer.add_scalar('VAL/mse', val_mse, epoch+1)
+            
+            log_writer.add_scalar('VAL/mse', val_loss, epoch+1)
             log_writer.add_scalar('VAL/ari (slots)', ari_slot, epoch+1)
             log_writer.add_scalar('VAL/ari (decoder)', ari, epoch+1)
             log_writer.add_scalar('VAL/mbo_c', mbo_c, epoch+1)
@@ -331,8 +328,8 @@ def main(args):
             log_writer.add_scalar('VAL/fg_iou (slots)', fg_iou_slot, epoch+1)
             
             print(args.log_path)
-            print('====> Epoch: {:3} \t Loss = {:F} \t MSE = {:F} \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
-                epoch+1, val_loss, val_mse, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+            print('====> Epoch: {:3} \t Loss = {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
+                epoch+1, val_loss, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
             
             ari_metric.reset()
             MBO_c_metric.reset()

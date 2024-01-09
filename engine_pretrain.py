@@ -116,7 +116,7 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
             lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
 
         with torch.cuda.amp.autocast():
-            loss, _, _ = model(samples)
+            loss, _, _,_,_ = model(samples)
 
         loss_value = loss.item()
         if not math.isfinite(loss_value):
