@@ -12,6 +12,7 @@ from omegaconf import OmegaConf
 import numpy as np
 import scipy.stats as stats
 from spot.slot_attn import SlotAttentionEncoder
+import math
 
 
 
@@ -381,12 +382,23 @@ class MaskedGenerativeEncoderViT(nn.Module):
         return loss
 
     def forward(self, imgs):
+
+        B, _, H, W = imgs.size()
         latent, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder(imgs)
         slots, attn, init_slots, attn_logits = self.slot_attention(latent)
 
         #logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
         logits = self.forward_decoder(latent,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
+
+
+        # Mean-Square-Error loss
+        H_enc, W_enc = int(math.sqrt(latent.shape[1])), int(math.sqrt(latent.shape[1]))
+        loss_mse = ((latent - logits) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
+
+        # Reshape the slot and decoder-slot attentions.
+        attn = attn.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
+
 
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
         return loss, imgs, token_all_mask,attn,attn
