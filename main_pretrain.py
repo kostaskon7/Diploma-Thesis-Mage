@@ -30,6 +30,7 @@ from spot.utils_spot import inv_normalize, cosine_scheduler, visualize, bool_fla
 from tqdm import tqdm
 import torch.nn.functional as F
 import torchvision.utils as vutils
+import math
 
 
 
@@ -219,9 +220,8 @@ def main(args):
     loss_scaler = NativeScaler()
 
     misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
-    checkpoint = torch.load(args.resume, map_location='cpu')
-    if os.path.isfile(args.checkpoint_path):
-        checkpoint = torch.load(args.checkpoint_path, map_location='cpu')
+    if os.path.isfile(args.resume):
+        checkpoint = torch.load(args.resume, map_location='cpu')
         start_epoch = checkpoint['epoch']
         best_val_loss = checkpoint['best_val_loss']
         best_val_ari = checkpoint['best_val_dec_ari']
