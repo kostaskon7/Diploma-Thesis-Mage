@@ -258,12 +258,12 @@ def main(args):
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_loader.sampler.set_epoch(epoch)
-        # train_stats = train_one_epoch(
-        #     model, train_loader,
-        #     optimizer, device, epoch, loss_scaler,
-        #     log_writer=log_writer,
-        #     args=args
-        # )
+        train_stats = train_one_epoch(
+            model, train_loader,
+            optimizer, device, epoch, loss_scaler,
+            log_writer=log_writer,
+            args=args
+        )
         # if args.output_dir and (epoch % 40 == 0 or epoch + 1 == args.epochs):
         #     misc.save_model(
         #         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
@@ -366,19 +366,19 @@ def main(args):
             mbo_i_slot = 100 * MBO_i_slot_metric.compute()
             fg_iou_slot = 100 * fg_iou_slot_metric.compute()
             
-            log_writer.add_scalar('VAL/mse', val_loss, epoch+1)
-            log_writer.add_scalar('VAL/ari (slots)', ari_slot, epoch+1)
-            log_writer.add_scalar('VAL/ari (decoder)', ari, epoch+1)
-            log_writer.add_scalar('VAL/mbo_c', mbo_c, epoch+1)
-            log_writer.add_scalar('VAL/mbo_i', mbo_i, epoch+1)
-            log_writer.add_scalar('VAL/fg_iou', fg_iou, epoch+1)
-            log_writer.add_scalar('VAL/mbo_c (slots)', mbo_c_slot, epoch+1)
-            log_writer.add_scalar('VAL/mbo_i (slots)', mbo_i_slot, epoch+1)
-            log_writer.add_scalar('VAL/fg_iou (slots)', fg_iou_slot, epoch+1)
+            log_writer.add_scalar('VAL/mse', val_loss, epoch)
+            log_writer.add_scalar('VAL/ari (slots)', ari_slot, epoch)
+            log_writer.add_scalar('VAL/ari (decoder)', ari, epoch)
+            log_writer.add_scalar('VAL/mbo_c', mbo_c, epoch)
+            log_writer.add_scalar('VAL/mbo_i', mbo_i, epoch)
+            log_writer.add_scalar('VAL/fg_iou', fg_iou, epoch)
+            log_writer.add_scalar('VAL/mbo_c (slots)', mbo_c_slot, epoch)
+            log_writer.add_scalar('VAL/mbo_i (slots)', mbo_i_slot, epoch)
+            log_writer.add_scalar('VAL/fg_iou (slots)', fg_iou_slot, epoch)
             
             #print(args.log_path)
             print('====> Epoch: {:3} \t Loss = {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
-                epoch+1, val_loss, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+                epoch, val_loss, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
             
             ari_metric.reset()
             MBO_c_metric.reset()
@@ -389,7 +389,7 @@ def main(args):
             ari_slot_metric.reset()
             fg_iou_slot_metric.reset()
             
-            if (val_loss < best_val_loss) or (best_val_ari > ari) or (best_mbo_c > mbo_c):
+            if (val_loss < best_val_loss) or (best_val_ari > ari) or (best_mbo_c > mbo_c) and (epoch > 5):
                 best_val_loss = val_loss
                 best_val_ari = ari
                 best_val_ari_slot = ari_slot
@@ -399,7 +399,7 @@ def main(args):
                 best_mbo_c_slot = mbo_c_slot
                 best_mbo_i_slot = mbo_i_slot
                 best_fg_iou_slot = fg_iou_slot
-                best_epoch = epoch + 1
+                best_epoch = epoch
     
                 #torch.save(model.state_dict(), os.path.join(args.output_dir, 'best_model.pt'))
                 
@@ -412,12 +412,12 @@ def main(args):
                 vis_recon = visualize(image, true_mask_c, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
                 grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
                 grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
-                log_writer.add_image('VAL_recon/epoch={:03}'.format(epoch + 1), grid)
+                log_writer.add_image('VAL_recon/epoch={:03}'.format(epoch), grid)
     
-            log_writer.add_scalar('VAL/best_loss', best_val_loss, epoch+1)
+            log_writer.add_scalar('VAL/best_loss', best_val_loss, epoch)
     
             checkpoint = {
-                'epoch': epoch + 1,
+                'epoch': epoch,
                 'best_val_loss': best_val_loss,
                 'best_val_ari': best_val_ari,
                 'best_val_ari_slot': best_val_ari_slot,
@@ -431,8 +431,8 @@ def main(args):
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict()
             }
-    
-            #torch.save(checkpoint, os.path.join(args.output_dir, 'checkpoint.pt.tar'))
+            if(epoch>4):
+                torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
     
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
     log_writer.close()
