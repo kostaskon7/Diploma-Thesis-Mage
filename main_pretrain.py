@@ -389,9 +389,9 @@ def main(args):
             ari_slot_metric.reset()
             fg_iou_slot_metric.reset()
             
-            if (val_loss < best_val_loss) or (best_val_ari > ari) or (best_mbo_c > mbo_c) and (epoch > 5):
+            if (val_loss < best_val_loss):
                 best_val_loss = val_loss
-                best_val_ari = ari
+                
                 best_val_ari_slot = ari_slot
                 best_mbo_c = mbo_c
                 best_mbo_i = mbo_i
@@ -400,7 +400,13 @@ def main(args):
                 best_mbo_i_slot = mbo_i_slot
                 best_fg_iou_slot = fg_iou_slot
                 best_epoch = epoch
-    
+
+            if(best_val_ari > ari):
+                best_val_ari = ari
+
+            if(best_mbo_c > mbo_c):
+                best_mbo_c = mbo_c
+
                 #torch.save(model.state_dict(), os.path.join(args.output_dir, 'best_model.pt'))
                 
             if epoch%visualize_per_epoch==0 or epoch==args.epochs-1:
