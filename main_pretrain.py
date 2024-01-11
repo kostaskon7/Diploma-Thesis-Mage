@@ -294,7 +294,7 @@ def main(args):
                 pred_default_mask = default_attns.argmax(1).squeeze(1)
                 pred_dec_mask = dec_attns.argmax(1).squeeze(1)
                 print("Unsqueeze")
-                print(default_slots_attns.shape)
+                print(default_attns.shape)
                 print(true_mask_i.shape)
                 print(true_mask_c.shape)
                 print("Squeeze")
