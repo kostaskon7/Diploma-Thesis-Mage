@@ -375,18 +375,18 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
     def forward_loss(self, gt_indices, logits, mask):
         bsz, seq_len = gt_indices.size()
-        print(bsz)
-        print(seq_len)
-        print(mask.shape)
-        print(logits.shape)
+        # print(bsz)
+        # print(seq_len)
+        # print(mask.shape)
+        # print(logits.shape)
         # logits and mask are with seq_len+1 but gt_indices is with seq_len
         loss = self.criterion(logits[:, 1:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
-        print(loss.shape)
+        # print(loss.shape)
         loss = loss.reshape(bsz, seq_len)
-        print(loss.shape)
+        # print(loss.shape)
         loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
-        print(loss)
-        print("Telos")
+        # print(loss)
+        # print("Telos")
         return loss
 
     def forward(self, imgs):
