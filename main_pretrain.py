@@ -219,6 +219,37 @@ def main(args):
     loss_scaler = NativeScaler()
 
     misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
+    checkpoint = torch.load(args.resume, map_location='cpu')
+    if os.path.isfile(args.checkpoint_path):
+        checkpoint = torch.load(args.checkpoint_path, map_location='cpu')
+        start_epoch = checkpoint['epoch']
+        best_val_loss = checkpoint['best_val_loss']
+        best_val_ari = checkpoint['best_val_dec_ari']
+        best_val_ari_slot = checkpoint['best_val_default_ari']
+        best_mbo_c = checkpoint['best_mbo_c']
+        best_mbo_i = checkpoint['best_mbo_i']
+        best_fg_iou = checkpoint['best_fg_iou']
+        best_mbo_c_slot = checkpoint['best_mbo_c_slot']
+        best_mbo_i_slot = checkpoint['best_mbo_i_slot']
+        best_fg_iou_slot = checkpoint['best_fg_iou_slot']
+        best_epoch = checkpoint['best_epoch']
+        model.load_state_dict(checkpoint['model'], strict=True)
+        msg = model.load_state_dict(checkpoint['model'], strict=True)
+        print(msg)
+    else:
+        print('No checkpoint_path found')
+        checkpoint = None
+        start_epoch = 0
+        best_val_loss = math.inf
+        best_epoch = 0
+        best_val_ari = 0
+        best_val_ari_slot = 0
+        best_mbo_c = 0
+        best_mbo_i = 0
+        best_fg_iou= 0 
+        best_mbo_c_slot = 0
+        best_mbo_i_slot = 0
+        best_fg_iou_slot= 0 
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
@@ -344,7 +375,7 @@ def main(args):
             log_writer.add_scalar('VAL/mbo_i (slots)', mbo_i_slot, epoch+1)
             log_writer.add_scalar('VAL/fg_iou (slots)', fg_iou_slot, epoch+1)
             
-            print(args.log_path)
+            #print(args.log_path)
             print('====> Epoch: {:3} \t Loss = {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
                 epoch+1, val_loss, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
             
