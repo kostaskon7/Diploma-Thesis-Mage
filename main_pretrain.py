@@ -434,7 +434,7 @@ def main(args):
             #torch.save(checkpoint, os.path.join(args.output_dir, 'checkpoint.pt.tar'))
     
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
-    writer.close()
+    log_writer.close()
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
