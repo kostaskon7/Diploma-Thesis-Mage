@@ -285,6 +285,8 @@ def main(args):
                 print(default_slots_attns.shape)
                 print(true_mask_i.shape)
                 print(true_mask_c.shape)
+                default_slots_attns = default_slots_attns[:, 1:, :]
+                dec_slots_attns=dec_slots_attns[:, 1:, :]
                 default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
                 dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
                 # default_slots_attns=default_slots_attns.unsqueeze(3)
