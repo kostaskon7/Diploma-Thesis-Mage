@@ -282,25 +282,30 @@ def main(args):
                 # DINOSAUR uses as attention masks the attenton maps of the decoder
                 # over the slots, which bilinearly resizes to match the image resolution
                 # dec_slots_attns shape: [B, num_slots, H_enc, W_enc]
-                print(default_slots_attns.shape)
-                print(true_mask_i.shape)
-                print(true_mask_c.shape)
-                default_attns = F.interpolate(default_slots_attns, size=256, mode='linear')
-                dec_attns = F.interpolate(dec_slots_attns, size=256, mode='linear')
+                # print(default_slots_attns.shape)
+                # print(true_mask_i.shape)
+                # print(true_mask_c.shape)
+
+                default_slots_attns=default_slots_attns.unsqueeze(3)
+                dec_slots_attns=dec_slots_attns.unsqueeze(3)
+
+
+                default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
+                dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
                 # dec_attns shape [B, num_slots, H, W]
                 default_attns = default_attns.unsqueeze(2)
                 dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
     
                 pred_default_mask = default_attns.argmax(1).squeeze(1)
                 pred_dec_mask = dec_attns.argmax(1).squeeze(1)
-                print("Unsqueeze")
-                print(default_attns.shape)
-                print(true_mask_i.shape)
-                print(true_mask_c.shape)
-                print("Squeeze")
-                print(pred_default_mask.shape)
-                print(true_mask_i.shape)
-                print(true_mask_c.shape)
+                # print("Unsqueeze")
+                # print(default_attns.shape)
+                # print(true_mask_i.shape)
+                # print(true_mask_c.shape)
+                # print("Squeeze")
+                # print(pred_default_mask.shape)
+                # print(true_mask_i.shape)
+                # print(true_mask_c.shape)
     
 
                 # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
@@ -367,13 +372,13 @@ def main(args):
                 
             if epoch%visualize_per_epoch==0 or epoch==args.epochs-1:
                 image = inv_normalize(image)
-                image = F.interpolate(image, size=args.val_mask_size, mode='linear')
+                image = F.interpolate(image, size=args.val_mask_size, mode='bilinear')
                 rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
                 rgb_dec_attns = image.unsqueeze(1) * dec_attns + 1. - dec_attns
     
                 vis_recon = visualize(image, true_mask_c, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
                 grid = vutils.make_grid(vis_recon, nrow=2*args.num_slots + 4, pad_value=0.2)[:, 2:-2, 2:-2]
-                grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='linear').squeeze() # Lower resolution
+                grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
                 log_writer.add_image('VAL_recon/epoch={:03}'.format(epoch + 1), grid)
     
             log_writer.add_scalar('VAL/best_loss', best_val_loss, epoch+1)
