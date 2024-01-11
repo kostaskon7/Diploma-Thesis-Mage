@@ -404,7 +404,7 @@ def main(args):
                 
             if epoch%visualize_per_epoch==0 or epoch==args.epochs-1:
                 image = inv_normalize(image)
-                image = F.interpolate(image, size=args.val_mask_size, mode='bilinear')
+                image = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
                 rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
                 rgb_dec_attns = image.unsqueeze(1) * dec_attns + 1. - dec_attns
     
