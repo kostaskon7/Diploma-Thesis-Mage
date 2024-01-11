@@ -373,6 +373,13 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         return x
 
+
+    # [19:16:56.286655] 32
+    # [19:16:56.286734] 256
+    # [19:16:56.286754] torch.Size([32, 257])
+    # [19:16:56.286786] torch.Size([32, 264, 2025])
+    # [19:16:56.492483] torch.Size([8192])
+    # [19:16:56.492559] torch.Size([32, 256])
     def forward_loss(self, gt_indices, logits, mask):
         bsz, seq_len = gt_indices.size()
         # print(bsz)
