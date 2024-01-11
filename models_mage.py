@@ -387,8 +387,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print(mask.shape)
         # print(logits.shape)
         # logits and mask are with seq_len+1 but gt_indices is with seq_len
-        print(self.codebook_size)
-        print("Telos")
         loss = self.criterion(logits[:, 8:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
         # print(loss.shape)
         loss = loss.reshape(bsz, seq_len)
