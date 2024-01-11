@@ -31,7 +31,8 @@ from tqdm import tqdm
 import torch.nn.functional as F
 import torchvision.utils as vutils
 import math
-
+import matplotlib.pyplot as plt
+import torchvision.utils as vutils
 
 
 
@@ -412,6 +413,15 @@ def main(args):
                 grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
                 grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
                 log_writer.add_image('VAL_recon/epoch={:03}'.format(epoch + 1), grid)
+
+                grid_np = grid.cpu().detach().numpy()
+                grid_np = np.transpose(grid_np, (1, 2, 0))
+
+                # Display the image
+                plt.figure(figsize=(10,10))
+                plt.imshow(grid_np)
+                plt.axis('off')  # Turn off axis numbers and labels
+                plt.show()
     
             log_writer.add_scalar('VAL/best_loss', best_val_loss, epoch+1)
     
