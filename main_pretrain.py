@@ -373,7 +373,7 @@ def main(args):
             mbo_i_slot = 100 * MBO_i_slot_metric.compute()
             fg_iou_slot = 100 * fg_iou_slot_metric.compute()
             
-            log_writer.add_scalar('VAL/mse', val_loss, epoch)
+            log_writer.add_scalar('VAL/val', val_loss, epoch)
             log_writer.add_scalar('VAL/ari (slots)', ari_slot, epoch)
             log_writer.add_scalar('VAL/ari (decoder)', ari, epoch)
             log_writer.add_scalar('VAL/mbo_c', mbo_c, epoch)
