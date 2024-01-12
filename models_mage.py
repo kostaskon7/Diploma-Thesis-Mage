@@ -377,9 +377,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
         x = self.mlm_layer(x, word_embeddings)
         # print("Logits shape:", x.shape)
 
+        #print(atts.shape)
+        #[32,16,264,264]
+        atts=atts.sum(dim=1)
         print(atts.shape)
-
-        return x
+        atts_slots = atts[:,:7,7:]
+        atts_slots = atts_slots /atts_slots.sum(dim=2)
+        print(atts_slots.shape)
+        return x,atts_slots
 
 
     # [19:16:56.286655] 32
