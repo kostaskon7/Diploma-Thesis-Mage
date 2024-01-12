@@ -310,7 +310,15 @@ def main(args):
                 counter += batch_size
     
                 val_loss,_,_,default_slots_attns, dec_slots_attns = model(image)
-    
+                
+                #Get dec att and normalize
+                dec_slots_attns=dec_slots_attns.sum(dim=1)
+                dec_slots_attns = dec_slots_attns[:,:7,8:]
+                sums = dec_slots_attns.sum(dim=2, keepdim=True)
+                # Replace zero sums to avoid division by zero
+                sums[sums == 0] = 1
+                dec_slots_attns = dec_slots_attns / sums
+                dec_slots_attns = dec_slots_attns.permute(0, 2, 1)
                 # DINOSAUR uses as attention masks the attenton maps of the decoder
                 # over the slots, which bilinearly resizes to match the image resolution
                 # dec_slots_attns shape: [B, num_slots, H_enc, W_enc]
