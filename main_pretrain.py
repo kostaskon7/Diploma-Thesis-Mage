@@ -33,6 +33,7 @@ import torchvision.utils as vutils
 import math
 import matplotlib.pyplot as plt
 import torchvision.utils as vutils
+import sys
 
 
 
@@ -446,8 +447,12 @@ def main(args):
             }
             if(epoch>2):
                 torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
-    
+
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
+            if(epoch>3):
+                break
+        if(epoch>3):
+            break
     log_writer.close()
 
     total_time = time.time() - start_time
