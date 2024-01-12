@@ -380,15 +380,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #print(atts.shape)
         #[32,16,264,264]
         atts=atts.sum(dim=1)
-        print(atts.shape)
         atts_slots = atts[:,:7,8:]
         sums = atts_slots.sum(dim=2, keepdim=True)
         # Replace zero sums to avoid division by zero
         sums[sums == 0] = 1
         normalized_atts_slots = atts_slots / sums
-        print(normalized_atts_slots.shape)
         normalized_atts_slots = normalized_atts_slots.permute(0, 2, 1)
-        print(normalized_atts_slots.shape)
+        # print(normalized_atts_slots.shape)
+        #[32,256,7]
 
         
         return x,normalized_atts_slots
@@ -425,7 +424,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
         logits,attn_dec = self.forward_decoder(latent,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
-        print(attn.shape)
 
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
         return loss, imgs, token_all_mask,attn,attn_dec
