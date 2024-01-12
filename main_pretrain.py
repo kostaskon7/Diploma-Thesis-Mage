@@ -314,15 +314,15 @@ def main(args):
                 # DINOSAUR uses as attention masks the attenton maps of the decoder
                 # over the slots, which bilinearly resizes to match the image resolution
                 # dec_slots_attns shape: [B, num_slots, H_enc, W_enc]
-                print(default_slots_attns.shape)
-                print(dec_slots_attns.shape)
-                print(batch_size)
-                default_slots_attns = default_slots_attns[:, 1:, :]
-                dec_slots_attns=dec_slots_attns[:, 1:, :]
+                # print(default_slots_attns.shape)
+                # print(dec_slots_attns.shape)
+                # print(batch_size)
+                # default_slots_attns = default_slots_attns[:, 1:, :]
+                # dec_slots_attns=dec_slots_attns[:, 1:, :]
 
-                print(default_slots_attns.shape)
-                print(dec_slots_attns.shape)
-                print(batch_size)
+                # print(default_slots_attns.shape)
+                # print(dec_slots_attns.shape)
+                # print(batch_size)
 
                 default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
                 dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
