@@ -316,6 +316,7 @@ def main(args):
                 # dec_slots_attns shape: [B, num_slots, H_enc, W_enc]
                 print(default_slots_attns.shape)
                 print(dec_slots_attns.shape)
+                print(batch_size)
                 default_slots_attns = default_slots_attns[:, 1:, :]
                 dec_slots_attns=dec_slots_attns[:, 1:, :]
                 default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
