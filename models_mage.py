@@ -400,8 +400,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         B, _, H, W = imgs.size()
         latent, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder(imgs)
-        slots, attn, init_slots, attn_logits = self.slot_attention(latent)
-        print(latent.shape)
+        slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
+        # print(latent.shape)
         #logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
         logits = self.forward_decoder(latent,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
