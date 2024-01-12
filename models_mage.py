@@ -382,9 +382,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
         atts=atts.sum(dim=1)
         print(atts.shape)
         atts_slots = atts[:,:7,8:]
-        atts_slots = atts_slots /atts_slots.sum(dim=2)
+        sums = atts_slots.sum(dim=2, keepdim=True)
+        # Replace zero sums to avoid division by zero
+        sums[sums == 0] = 1
+        normalized_atts_slots = atts_slots / sums
+        print(normalized_atts_slots.shape)
+
         
-        return x,atts_slots
+        return x,normalized_atts_slots
 
 
     # [19:16:56.286655] 32
