@@ -387,6 +387,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         sums[sums == 0] = 1
         normalized_atts_slots = atts_slots / sums
         print(normalized_atts_slots.shape)
+        normalized_atts_slots = normalized_atts_slots.permute(0, 2, 1)
+        print(normalized_atts_slots.shape)
 
         
         return x,normalized_atts_slots
