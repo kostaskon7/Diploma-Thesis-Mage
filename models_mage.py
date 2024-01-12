@@ -362,7 +362,13 @@ class MaskedGenerativeEncoderViT(nn.Module):
         x = torch.cat((slots, x), dim=1)
 
         # apply Transformer blocks
-        for blk in self.decoder_blocks:
+        # for blk in self.decoder_blocks:
+        #     x = blk(x)
+        for i, blk in enumerate(self.decoder_blocks):
+            if i == len(self.decoder_blocks) - 1: # last block
+                # Get attention matrix from last block
+                with torch.no_grad(): # r
+                    atts = blk(x, return_attention=True)
             x = blk(x)
 
         x = self.decoder_norm(x)
@@ -370,6 +376,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         word_embeddings = self.token_emb.word_embeddings.weight.data.detach()
         x = self.mlm_layer(x, word_embeddings)
         # print("Logits shape:", x.shape)
+
+        print(atts.shape)
 
         return x
 
