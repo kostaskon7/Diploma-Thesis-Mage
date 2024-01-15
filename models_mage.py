@@ -153,10 +153,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
                  embed_dim=1024, depth=24, num_heads=16,
                  decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
                  mlp_ratio=4., norm_layer=nn.LayerNorm, norm_pix_loss=False,
-                 mask_ratio_min=0.5, mask_ratio_max=1.0, mask_ratio_mu=0.55, mask_ratio_std=0.25,
+                 mask_ratio_min=0.5, mask_ratio_max=1.0, mask_ratio_mu=0.55, mask_ratio_std=0.25,epsilon=1e-8,
                  vqgan_ckpt_path='vqgan_jax_strongaug.ckpt'):
         super().__init__()
 
+        self.epsilon = epsilon
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
@@ -380,10 +381,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #print(atts.shape)
         #[32,16,264,264]
         atts=atts.sum(dim=1)
-        atts_slots = atts[:,:7,8:]
+        atts_slots = atts[:,8:,7:]
+        atts_slots=atts_slots+self.epsilon
         sums = atts_slots.sum(dim=2, keepdim=True)
         # Replace zero sums to avoid division by zero
-        sums[sums == 0] = 1
         normalized_atts_slots = atts_slots / sums
         normalized_atts_slots = normalized_atts_slots.permute(0, 2, 1)
         # print(normalized_atts_slots.shape)
