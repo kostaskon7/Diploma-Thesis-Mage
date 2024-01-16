@@ -311,7 +311,7 @@ def main(args):
                 batch_size = image.shape[0]
                 counter += batch_size
     
-                val_loss,_,_,default_slots_attns, dec_slots_attns = model(image)
+                val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
                 
                 # DINOSAUR uses as attention masks the attenton maps of the decoder
                 # over the slots, which bilinearly resizes to match the image resolution
