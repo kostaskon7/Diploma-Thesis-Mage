@@ -284,7 +284,6 @@ def main(args):
         #     with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
         #         f.write(json.dumps(log_stats) + "\n")
 
-        print("Mphka")
         MBO_c_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
         MBO_i_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
         fg_iou_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).cuda()
@@ -328,7 +327,6 @@ def main(args):
                 # print(batch_size)
                 #################
                 ##Recon
-                print("eftasa")
                 codebook_emb_dim=256
                 logits = logits[:, 8:, :model.codebook_size]
                 probabilities = torch.nn.functional.softmax(logits, dim=-1)

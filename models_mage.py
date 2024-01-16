@@ -426,7 +426,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #[Batch,decoder264,2025]
 
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
-        return loss, imgs, token_all_mask,attn,attn_dec
+        return loss, imgs, token_all_mask,attn,attn_dec,logits
 
     def freeze_encoder_decoder(self):
         # Freeze encoder
