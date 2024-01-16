@@ -224,36 +224,36 @@ def main(args):
     loss_scaler = NativeScaler()
 
     misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
-    # if os.path.isfile(args.resume):
-    #     checkpoint = torch.load(args.resume, map_location='cpu')
-    #     start_epoch = checkpoint['epoch']
-    #     best_val_loss = checkpoint['best_val_loss']
-    #     best_val_ari = checkpoint['best_val_dec_ari']
-    #     best_val_ari_slot = checkpoint['best_val_default_ari']
-    #     best_mbo_c = checkpoint['best_mbo_c']
-    #     best_mbo_i = checkpoint['best_mbo_i']
-    #     best_fg_iou = checkpoint['best_fg_iou']
-    #     best_mbo_c_slot = checkpoint['best_mbo_c_slot']
-    #     best_mbo_i_slot = checkpoint['best_mbo_i_slot']
-    #     best_fg_iou_slot = checkpoint['best_fg_iou_slot']
-    #     best_epoch = checkpoint['best_epoch']
-    #     model.load_state_dict(checkpoint['model'], strict=True)
-    #     msg = model.load_state_dict(checkpoint['model'], strict=True)
-    #     print(msg)
-    # else:
-    print('No checkpoint_path found')
-    checkpoint = None
-    start_epoch = 0
-    best_val_loss = math.inf
-    best_epoch = 0
-    best_val_ari = 0
-    best_val_ari_slot = 0
-    best_mbo_c = 0
-    best_mbo_i = 0
-    best_fg_iou= 0 
-    best_mbo_c_slot = 0
-    best_mbo_i_slot = 0
-    best_fg_iou_slot= 0 
+    if os.path.isfile(args.resume):
+        checkpoint = torch.load(args.resume, map_location='cpu')
+        start_epoch = checkpoint['epoch']
+        best_val_loss = checkpoint['best_val_loss']
+        best_val_ari = checkpoint['best_val_dec_ari']
+        best_val_ari_slot = checkpoint['best_val_default_ari']
+        best_mbo_c = checkpoint['best_mbo_c']
+        best_mbo_i = checkpoint['best_mbo_i']
+        best_fg_iou = checkpoint['best_fg_iou']
+        best_mbo_c_slot = checkpoint['best_mbo_c_slot']
+        best_mbo_i_slot = checkpoint['best_mbo_i_slot']
+        best_fg_iou_slot = checkpoint['best_fg_iou_slot']
+        best_epoch = checkpoint['best_epoch']
+        model.load_state_dict(checkpoint['model'], strict=True)
+        msg = model.load_state_dict(checkpoint['model'], strict=True)
+        print(msg)
+    else:
+        print('No checkpoint_path found')
+        checkpoint = None
+        start_epoch = 0
+        best_val_loss = math.inf
+        best_epoch = 0
+        best_val_ari = 0
+        best_val_ari_slot = 0
+        best_mbo_c = 0
+        best_mbo_i = 0
+        best_fg_iou= 0 
+        best_mbo_c_slot = 0
+        best_mbo_i_slot = 0
+        best_fg_iou_slot= 0 
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
