@@ -339,14 +339,15 @@ def main(args):
                 gen_img_list = []
                 gen_images_batch = gen_images.detach().cpu()
                 gen_img_list.append(gen_images_batch)
+                orig_images_batch=image.detach().cpu()
 
                 # save img
                 for b_id in range(args.batch_size):
-
+                    
                     gen_img = np.clip(gen_images_batch[b_id].numpy().transpose([1, 2, 0]) * 255, 0, 255)
                     gen_img = gen_img.astype(np.uint8)[:, :, ::-1]
                     cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format(str(epoch*args.batch_size+b_id).zfill(5))), gen_img)
-
+                    cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format("orig_"+str(epoch*args.batch_size+b_id).zfill(5))), orig_images_batch)
 
                 ################
 
