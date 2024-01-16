@@ -324,6 +324,11 @@ def main(args):
                 # print(default_slots_attns.shape)
                 # print(dec_slots_attns.shape)
                 # print(batch_size)
+                #################
+                ##Recon
+
+
+                ################
 
                 default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
                 dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
@@ -449,10 +454,10 @@ def main(args):
                 torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
 
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
-            if(epoch>18):
-                break
-        if(epoch>18):
-            break
+        #     if(epoch>18):
+        #         break
+        # if(epoch>18):
+        #     break
     log_writer.close()
 
     total_time = time.time() - start_time
