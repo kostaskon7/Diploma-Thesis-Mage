@@ -346,9 +346,12 @@ def main(args):
                     gen_img = np.clip(gen_images_batch[b_id].numpy().transpose([1, 2, 0]) * 255, 0, 255)
                     gen_img = gen_img.astype(np.uint8)[:, :, ::-1]
                     cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format(str(epoch*args.batch_size+b_id).zfill(5))), gen_img)
-                    cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format("orig_"+str(epoch*args.batch_size+b_id).zfill(5))), orig_images_batch)
+                    # Saving original image
+                    orig_img = np.clip(orig_images_batch[b_id].numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
+                    orig_img = cv2.cvtColor(orig_img, cv2.COLOR_RGB2BGR)  # Convert from RGB to BGR format for OpenCV
+                    cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), orig_img)
 
-                ################
+                ################ Recon
 
                 default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
                 dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
