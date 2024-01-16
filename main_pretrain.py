@@ -34,6 +34,8 @@ import math
 import matplotlib.pyplot as plt
 import torchvision.utils as vutils
 import sys
+import cv2
+
 
 
 
@@ -326,6 +328,24 @@ def main(args):
                 # print(batch_size)
                 #################
                 ##Recon
+                codebook_emb_dim=256
+                logits = logits[:, model.slot_attention.num_slots+1:, :model.codebook_size]
+                probabilities = torch.nn.functional.softmax(logits, dim=-1)
+                reconstructed_indices = torch.argmax(probabilities, dim=-1)
+                z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
+                gen_images = model.vqgan.decode(z_q)
+
+
+                gen_img_list = []
+                gen_images_batch = gen_images.detach().cpu()
+                gen_img_list.append(gen_images_batch)
+
+                # save img
+                for b_id in range(args.batch_size):
+
+                    gen_img = np.clip(gen_images_batch[b_id].numpy().transpose([1, 2, 0]) * 255, 0, 255)
+                    gen_img = gen_img.astype(np.uint8)[:, :, ::-1]
+                    cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format(str(epoch*args.batch_size+b_id).zfill(5))), gen_img)
 
 
                 ################
