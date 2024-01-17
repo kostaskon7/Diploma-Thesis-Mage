@@ -287,7 +287,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         bsz, seq_len = token_indices.size()
 
         token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
-        token_all_mask = torch.zeros(bsz, seq_len, device=x.device).float()    # Mask all tokens
+        token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()    # Mask no tokens
         #both torch.Size([32, 256])
         token_indices[token_all_mask.nonzero(as_tuple=True)] = self.mask_token_label
         # print("Masekd num token:", torch.sum(token_indices == self.mask_token_label, dim=1))
@@ -360,7 +360,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # add pos embed
         x = x_after_pad + self.decoder_pos_embed_learned
 
-        x = torch.cat((slots, x), dim=1)
+        # x = torch.cat((slots, x), dim=1)
 
         # apply Transformer blocks
         # for blk in self.decoder_blocks:
