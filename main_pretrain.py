@@ -343,7 +343,8 @@ def main(args):
                 # Save images
                 for b_id in range(batch_size):
                     # Apply inverse normalization
-                    inv_gen_img = inv_normalize(gen_images_batch[b_id])
+                    # inv_gen_img = inv_normalize(gen_images_batch[b_id])
+                    inv_gen_img=gen_images_batch[b_id]
                     inv_orig_img = inv_normalize(orig_images_batch[b_id])
 
                     # Convert to numpy and save - Generated Image
