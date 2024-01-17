@@ -327,29 +327,31 @@ def main(args):
                 # print(batch_size)
                 #################
                 ##Recon
-                # codebook_emb_dim=256
-                # logits = logits[:, 8:, :model.codebook_size]
-                # probabilities = torch.nn.functional.softmax(logits, dim=-1)
-                # reconstructed_indices = torch.argmax(probabilities, dim=-1)
-                # z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
-                # gen_images = model.vqgan.decode(z_q)
+                codebook_emb_dim=256
+                logits = logits[:, 8:, :model.codebook_size]
+                probabilities = torch.nn.functional.softmax(logits, dim=-1)
+                reconstructed_indices = torch.argmax(probabilities, dim=-1)
+                z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
+                gen_images = model.vqgan.decode(z_q)
 
 
-                # gen_img_list = []
-                # gen_images_batch = gen_images.detach().cpu()
-                # gen_img_list.append(gen_images_batch)
-                # orig_images_batch=image.detach().cpu()
+                gen_img_list = []
+                gen_images_batch = gen_images.detach().cpu()
+                gen_img_list.append(gen_images_batch)
+                orig_images_batch=image.detach().cpu()
 
-                # # save img
-                # for b_id in range(args.batch_size):
+                # save img
+                for b_id in range(args.batch_size):
                     
-                #     gen_img = np.clip(gen_images_batch[b_id].numpy().transpose([1, 2, 0]) * 255, 0, 255)
-                #     gen_img = gen_img.astype(np.uint8)[:, :, ::-1]
-                #     cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format(str(epoch*args.batch_size+b_id).zfill(5))), gen_img)
-                #     # Saving original image
-                #     orig_img = np.clip(orig_images_batch[b_id].numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-                #     orig_img = cv2.cvtColor(orig_img, cv2.COLOR_RGB2BGR)  # Convert from RGB to BGR format for OpenCV
-                #     cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), orig_img)
+                    gen_img = np.clip(gen_images_batch[b_id].numpy().transpose([1, 2, 0]) * 255, 0, 255)
+                    gen_img = gen_img.astype(np.uint8)[:, :, ::-1]
+                    gen_img=inv_normalize(gen_img)
+                    cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format(str(epoch*args.batch_size+b_id).zfill(5))), gen_img)
+                    # Saving original image
+                    orig_img = np.clip(orig_images_batch[b_id].numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
+                    orig_img = cv2.cvtColor(orig_img, cv2.COLOR_RGB2BGR)  # Convert from RGB to BGR format for OpenCV
+                    orig_img=inv_normalize(orig_img)
+                    cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), orig_img)
 
                 ################ Recon
 
