@@ -425,8 +425,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         logits,attn_dec = self.forward_decoder(latent,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
 
-        loss = self.forward_loss(gt_indices, logits, token_all_mask)
-        return loss, imgs, token_all_mask,attn,attn_dec,logits
+        # loss = self.forward_loss(gt_indices, logits, token_all_mask)
+        return imgs, imgs, token_all_mask,attn,attn_dec,logits
 
     def freeze_encoder_decoder(self):
         # Freeze encoder
