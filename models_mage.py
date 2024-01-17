@@ -287,7 +287,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         bsz, seq_len = token_indices.size()
 
         token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
-        token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()    # Mask no tokens
+        token_all_mask = torch.zeros(bsz, seq_len, device=x.device).float()    # Mask no tokens
         #both torch.Size([32, 256])
         token_indices[token_all_mask.nonzero(as_tuple=True)] = self.mask_token_label
         # print("Masekd num token:", torch.sum(token_indices == self.mask_token_label, dim=1))
@@ -360,7 +360,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # add pos embed
         x = x_after_pad + self.decoder_pos_embed_learned
 
-        # x = torch.cat((slots, x), dim=1)
+        x = torch.cat((slots, x), dim=1)
 
         # apply Transformer blocks
         # for blk in self.decoder_blocks:
@@ -407,7 +407,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print(mask.shape)
         # print(logits.shape)
         # logits and mask are with seq_len+1 but gt_indices is with seq_len
-        loss = self.criterion(logits[:, 1:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
+        loss = self.criterion(logits[:, 8:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
         # print(loss.shape)
         loss = loss.reshape(bsz, seq_len)
         # print(loss.shape)
@@ -425,8 +425,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         logits,attn_dec = self.forward_decoder(latent,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
 
-        # loss = self.forward_loss(gt_indices, logits, token_all_mask)
-        return imgs, imgs, token_all_mask,attn,attn_dec,logits
+        loss = self.forward_loss(gt_indices, logits, token_all_mask)
+        return loss, imgs, token_all_mask,attn,attn_dec,logits
 
     def freeze_encoder_decoder(self):
         # Freeze encoder
