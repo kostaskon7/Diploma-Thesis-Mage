@@ -477,10 +477,10 @@ def main(args):
                 torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
 
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
-        #     if(epoch>18):
-        #         break
-        # if(epoch>18):
-        #     break
+            if(epoch>3):
+                break
+        if(epoch>3):
+            break
     log_writer.close()
 
     total_time = time.time() - start_time
