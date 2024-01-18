@@ -292,7 +292,7 @@ class SPOT(nn.Module):
 
         # Reshape the slot and decoder-slot attentions.
         print(slots_attns.shape)
-        slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
+        slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
         dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
 
         return loss_mse, slots_attns, dec_slots_attns, slots, dec_recon, attn_logits
