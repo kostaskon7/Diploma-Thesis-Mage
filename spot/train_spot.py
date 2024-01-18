@@ -195,8 +195,10 @@ def train(args):
                                     final_value = args.lr_min,
                                     epochs = args.epochs, 
                                     niter_per_ep = len(train_loader),
-                                    warmup_epochs=int(args.lr_warmup_steps/(len(train_dataset)/args.batch_size)),
+                                    warmup_epochs=5,
                                     start_warmup_value=0)
+                                    # warmup_epochs=int(args.lr_warmup_steps/(len(train_dataset)/args.batch_size)),
+                                    # start_warmup_value=0)
     
     optimizer = Adam([
         {'params': (param for name, param in model.named_parameters() if param.requires_grad), 'lr': args.lr_main},
@@ -216,7 +218,7 @@ def train(args):
     
     visualize_per_epoch = int(args.epochs*args.eval_viz_percent)
     
-    for epoch in range(start_epoch, args.epochs):
+    for epoch in range(start_epoch, 5):
     
         model.train()
     
