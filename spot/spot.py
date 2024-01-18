@@ -145,6 +145,7 @@ class SPOT(nn.Module):
         token_indices = token_indices.reshape(z_q.size(0), -1)
 
         # concate class token
+        token_indices = token_indices.cuda()
         token_indices = torch.cat(
             [torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
         token_indices[:, 0] = encoder.fake_class_label
