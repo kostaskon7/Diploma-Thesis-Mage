@@ -142,9 +142,7 @@ class SPOT(nn.Module):
             z_q, _, token_tuple = encoder.vqgan.encode(x)
 
         _, _, token_indices = token_tuple
-        print(token_indices.shape)
         token_indices = token_indices.reshape(z_q.size(0), -1)
-        print(token_indices.shape)
 
         # concate class token
         encoder = encoder.cuda()
@@ -159,10 +157,6 @@ class SPOT(nn.Module):
         for blk in encoder.blocks:
             x = blk(x)
 
-
-        print(token_indices.shape)
-        print(x.shape)
-        print("Allo")
         return x
 
     def forward_decoder(self, slots, emb_target):
