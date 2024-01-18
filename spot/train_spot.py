@@ -133,7 +133,7 @@ def train(args):
     elif args.which_encoder == 'dinov2_vits14_reg':
         args.max_tokens = int((args.val_image_size/14)**2)
         encoder = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14_reg')
-    elif args.which_encoder in ('mae_vitb16', 'moca_vitb16', 'mocov3_vitb16'):
+    elif args.which_encoder in ('mae_vitb16', 'moca_vitb16', 'mocov3_vitb16', 'mage_vitb16'):
         args.max_tokens = int((args.val_image_size/16)**2)
         encoder = models_vit.__dict__["vit_base_patch16"](num_classes=0, global_pool=False, drop_path_rate=0)
         assert args.pretrained_encoder_weights is not None

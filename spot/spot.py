@@ -137,24 +137,23 @@ class SPOT(nn.Module):
 
 
     def forward_encoder(self, x, encoder):
-        encoder.eval()
+        # tokenization
+        with torch.no_grad():
+            z_q, _, token_tuple = encoder.vqgan.encode(x)
 
-        if self.which_encoder in ['dinov2_vitb14', 'dinov2_vits14', 'dinov2_vitb14_reg', 'dinov2_vits14_reg']:
-            x = encoder.prepare_tokens_with_masks(x, None)
-        else:
-            x = encoder.prepare_tokens(x)
+        _, _, token_indices = token_tuple
+        token_indices = token_indices.reshape(z_q.size(0), -1)
+
+        # concate class token
+        token_indices = torch.cat(
+            [torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
+        token_indices[:, 0] = encoder.fake_class_label
+        token_indices = token_indices.long()
+        # bert embedding
+        x = encoder.token_emb(token_indices)
 
         for blk in encoder.blocks:
             x = blk(x)
-        if self.encoder_final_norm: # The DINOSAUR paper does not use the final norm layer according to the supplementary material.
-            x = encoder.norm(x)
-        
-        offset = 1
-        if self.which_encoder in ['dinov2_vitb14_reg', 'dinov2_vits14_reg']:
-            offset += encoder.num_register_tokens
-        elif self.which_encoder in ['simpool_vits16']:
-            offset += -1
-        x = x[:, offset :] # remove the [CLS] and (if they exist) registers tokens 
 
         return x
 
