@@ -288,7 +288,7 @@ class SPOT(nn.Module):
         # print(dec_recon.shape)
         # torch.Size([64, 197, 768])
         # torch.Size([64, 196, 768])
-        loss_mse = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
+        loss_mse = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
 
         # Reshape the slot and decoder-slot attentions.
         slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
