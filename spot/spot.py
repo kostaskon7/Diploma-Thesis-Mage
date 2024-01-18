@@ -284,6 +284,8 @@ class SPOT(nn.Module):
 
         # Mean-Square-Error loss
         H_enc, W_enc = int(math.sqrt(emb_target.shape[1])), int(math.sqrt(emb_target.shape[1]))
+        print(emb_target.shape)
+        print(dec_recon.shape)
         loss_mse = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
 
         # Reshape the slot and decoder-slot attentions.
