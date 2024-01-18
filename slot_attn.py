@@ -1,4 +1,4 @@
-from utils_spot import *
+from spot.utils_spot import *
 from timm.models.layers import DropPath
 
 class SlotAttention(nn.Module):
