@@ -31,7 +31,6 @@ from tqdm import tqdm
 import torch.nn.functional as F
 import torchvision.utils as vutils
 import math
-import matplotlib.pyplot as plt
 import torchvision.utils as vutils
 import sys
 import cv2
