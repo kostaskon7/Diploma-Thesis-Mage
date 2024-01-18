@@ -157,6 +157,10 @@ class SPOT(nn.Module):
         for blk in encoder.blocks:
             x = blk(x)
 
+
+        print(token_indices.shape)
+        print(x.shape)
+        print("Allo")
         return x
 
     def forward_decoder(self, slots, emb_target):
