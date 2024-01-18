@@ -291,6 +291,7 @@ class SPOT(nn.Module):
         loss_mse = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
 
         # Reshape the slot and decoder-slot attentions.
+        print(slots_attns.shape)
         slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
         dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
 
