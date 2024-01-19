@@ -11,7 +11,7 @@ from taming.models.vqgan import VQModel
 from omegaconf import OmegaConf
 import numpy as np
 import scipy.stats as stats
-from spot.slot_attn import SlotAttentionEncoder
+from slot_attn import SlotAttentionEncoder
 import math
 
 
