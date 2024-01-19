@@ -163,7 +163,7 @@ def train(args):
         start_epoch = checkpoint['epoch']
         best_val_loss = checkpoint['best_val_loss']
         best_val_ari = checkpoint['best_val_ari']
-        best_val_ari_slot = checkpoint['best_val_default_ari']
+        best_val_ari_slot = checkpoint['best_val_ari_slot']
         best_mbo_c = checkpoint['best_mbo_c']
         best_mbo_i = checkpoint['best_mbo_i']
         best_fg_iou = checkpoint['best_fg_iou']
