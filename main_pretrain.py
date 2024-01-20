@@ -325,7 +325,7 @@ def main(args):
                 # print(batch_size)
                 #################
                 ##Recon
-                if(epoch>21):
+                if(epoch>25):
                     codebook_emb_dim=256
                     logits = logits[:, 8:, :model.codebook_size]
                     probabilities = torch.nn.functional.softmax(logits, dim=-1)
@@ -481,9 +481,9 @@ def main(args):
                 torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
 
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
-            if(epoch>21):
+            if(epoch>25):
                 break
-        if(epoch>21):
+        if(epoch>25):
             break
     log_writer.close()
 
