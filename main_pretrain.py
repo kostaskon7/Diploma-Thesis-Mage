@@ -325,7 +325,7 @@ def main(args):
                 # print(batch_size)
                 #################
                 ##Recon
-                if(epoch>25):
+                if(epoch>3):
                     codebook_emb_dim=256
                     logits = logits[:, 8:, :model.codebook_size]
                     probabilities = torch.nn.functional.softmax(logits, dim=-1)
