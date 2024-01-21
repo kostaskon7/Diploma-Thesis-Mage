@@ -360,7 +360,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # add pos embed
         x = x_after_pad + self.decoder_pos_embed_learned
 
-        # x = torch.cat((slots, x), dim=1)
+        x = torch.cat((slots, x), dim=1)
 
         # apply Transformer blocks
         # for blk in self.decoder_blocks:
@@ -380,18 +380,18 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         #print(atts.shape)
         #[32,16,264,264]
-        # atts=atts.sum(dim=1)
-        # atts_slots = atts[:,8:,:7]
-        # atts_slots=atts_slots+self.epsilon
-        # sums = atts_slots.sum(dim=2, keepdim=True)
+        atts=atts.sum(dim=1)
+        atts_slots = atts[:,8:,:7]
+        atts_slots=atts_slots+self.epsilon
+        sums = atts_slots.sum(dim=2, keepdim=True)
         # Replace zero sums to avoid division by zero
-        # normalized_atts_slots = atts_slots / sums
-        # normalized_atts_slots = normalized_atts_slots.permute(0, 2, 1)
+        normalized_atts_slots = atts_slots / sums
+        normalized_atts_slots = normalized_atts_slots.permute(0, 2, 1)
         # print(normalized_atts_slots.shape)
         #[32,256,7]
 
         
-        return x,x
+        return x,normalized_atts_slots
 
 
     # [19:16:56.286655] 32
@@ -407,8 +407,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print(mask.shape)
         # print(logits.shape)
         # logits and mask are with seq_len+1 but gt_indices is with seq_len
-        # loss = self.criterion(logits[:, 8:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
-        loss = self.criterion(logits[:, 1:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
+        loss = self.criterion(logits[:, 8:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
+        # loss = self.criterion(logits[:, 1:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
 
         # print(loss.shape)
         loss = loss.reshape(bsz, seq_len)
@@ -421,14 +421,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward(self, imgs):
 
         latent, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder(imgs)
-        # slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
+        slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         # print(latent.shape)
         #logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
-        logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
 
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
-        return loss, imgs, token_all_mask,latent,attn_dec,logits
+        return loss, imgs, token_all_mask,attn,attn_dec,logits
 
     def freeze_encoder_decoder(self):
         # Freeze encoder
