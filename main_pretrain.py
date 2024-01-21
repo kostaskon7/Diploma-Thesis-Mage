@@ -256,7 +256,7 @@ def main(args):
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
-    for epoch in range(args.start_epoch, args.epochs):
+    for epoch in range(args.start_epoch, 5):
         if args.distributed:
             train_loader.sampler.set_epoch(epoch)
         train_stats = train_one_epoch(
@@ -481,10 +481,10 @@ def main(args):
                 torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
 
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
-            if(epoch>25):
-                break
-        if(epoch>25):
-            break
+        #     if(epoch>25):
+        #         break
+        # if(epoch>25):
+        #     break
     log_writer.close()
 
     total_time = time.time() - start_time
