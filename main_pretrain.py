@@ -257,14 +257,14 @@ def main(args):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, 12):
-        # if args.distributed:
-        #     train_loader.sampler.set_epoch(epoch)
-        # train_stats = train_one_epoch(
-        #     model, train_loader,
-        #     optimizer, device, epoch, loss_scaler,
-        #     log_writer=log_writer,
-        #     args=args
-        # )
+        if args.distributed:
+            train_loader.sampler.set_epoch(epoch)
+        train_stats = train_one_epoch(
+            model, train_loader,
+            optimizer, device, epoch, loss_scaler,
+            log_writer=log_writer,
+            args=args
+        )
         # if args.output_dir and (epoch % 40 == 0 or epoch + 1 == args.epochs):
         #     misc.save_model(
         #         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
@@ -327,8 +327,8 @@ def main(args):
                 ##Recon
                 if(epoch>10):
                     codebook_emb_dim=256
-                    # logits = logits[:, 8:, :model.codebook_size]
-                    logits = logits[:, 1:, :model.codebook_size]
+                    logits = logits[:, 8:, :model.codebook_size]
+                    # logits = logits[:, 1:, :model.codebook_size]
 
                     probabilities = torch.nn.functional.softmax(logits, dim=-1)
                     reconstructed_indices = torch.argmax(probabilities, dim=-1)
