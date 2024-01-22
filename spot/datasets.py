@@ -124,13 +124,15 @@ class COCO2017(Dataset):
                             transforms.CenterCrop(image_size),
                             transforms.RandomHorizontalFlip(p=0.5),
                             transforms.ToTensor(),
-                            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
                         ])
+                        #     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                        # ])
         
         self.val_transform_image = transforms.Compose([transforms.Resize(size = image_size, interpolation=transforms.InterpolationMode.BILINEAR),
                                transforms.CenterCrop(size = image_size),
-                               transforms.ToTensor(),
-                               transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
+                               transforms.ToTensor()])
+                            #    transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+                            #    ])
 
         self.val_transform_mask = transforms.Compose([transforms.Resize(size = mask_size, interpolation=transforms.InterpolationMode.NEAREST),
                                transforms.CenterCrop(size = mask_size),
