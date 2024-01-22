@@ -254,6 +254,18 @@ def main(args):
     best_mbo_i_slot = 0
     best_fg_iou_slot= 0 
 
+
+
+    MBO_c_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
+    MBO_i_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
+    fg_iou_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).cuda()
+    ari_metric = ARIMetric(foreground = True, ignore_overlaps = True).cuda()
+    
+    MBO_c_slot_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
+    MBO_i_slot_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
+    fg_iou_slot_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).cuda()
+    ari_slot_metric = ARIMetric(foreground = True, ignore_overlaps = True).cuda()
+
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, 5):
@@ -282,15 +294,7 @@ def main(args):
         #     with open(os.path.join(args.output_dir, "log.txt"), mode="a", encoding="utf-8") as f:
         #         f.write(json.dumps(log_stats) + "\n")
 
-        MBO_c_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
-        MBO_i_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
-        fg_iou_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).cuda()
-        ari_metric = ARIMetric(foreground = True, ignore_overlaps = True).cuda()
-        
-        MBO_c_slot_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
-        MBO_i_slot_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
-        fg_iou_slot_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).cuda()
-        ari_slot_metric = ARIMetric(foreground = True, ignore_overlaps = True).cuda()
+
 
         visualize_per_epoch = 1#int(args.epochs*args.eval_viz_percent)
         val_epoch_size = len(val_loader)
