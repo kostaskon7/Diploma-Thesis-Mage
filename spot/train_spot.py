@@ -342,16 +342,16 @@ def train(args):
     
                 torch.save(model.state_dict(), os.path.join(log_dir, 'best_model.pt'))
                 
-            if epoch%visualize_per_epoch==0 or epoch==args.epochs-1:
-                image = inv_normalize(image)
-                image = F.interpolate(image, size=args.val_mask_size, mode='bilinear')
-                rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
-                rgb_dec_attns = image.unsqueeze(1) * dec_attns + 1. - dec_attns
-    
-                vis_recon = visualize(image, true_mask_c, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
-                grid = vutils.make_grid(vis_recon, nrow=2*args.num_slots + 4, pad_value=0.2)[:, 2:-2, 2:-2]
-                grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
-                writer.add_image('VAL_recon/epoch={:03}'.format(epoch + 1), grid)
+            # if epoch%visualize_per_epoch==0 or epoch==args.epochs-1:
+            image = inv_normalize(image)
+            image = F.interpolate(image, size=args.val_mask_size, mode='bilinear')
+            rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
+            rgb_dec_attns = image.unsqueeze(1) * dec_attns + 1. - dec_attns
+
+            vis_recon = visualize(image, true_mask_c, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
+            grid = vutils.make_grid(vis_recon, nrow=2*args.num_slots + 4, pad_value=0.2)[:, 2:-2, 2:-2]
+            grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
+            writer.add_image('VAL_recon/epoch={:03}'.format(epoch + 1), grid)
     
             writer.add_scalar('VAL/best_loss', best_val_loss, epoch+1)
     
