@@ -350,7 +350,8 @@ def main(args):
                         # Apply inverse normalization
                         # inv_gen_img = inv_normalize(gen_images_batch[b_id])
                         inv_gen_img=gen_images_batch[b_id]
-                        inv_orig_img = inv_normalize(orig_images_batch[b_id])
+                        # inv_orig_img = inv_normalize(orig_images_batch[b_id])
+                        inv_orig_img = orig_images_batch[b_id]
 
                         # Convert to numpy and save - Generated Image
                         gen_img_np = np.clip(inv_gen_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
