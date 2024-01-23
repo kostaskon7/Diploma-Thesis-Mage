@@ -340,7 +340,7 @@ def train(args):
                 best_fg_iou_slot = fg_iou_slot
                 best_epoch = epoch + 1
     
-                torch.save(model.state_dict(), os.path.join(log_dir, 'best_model.pt'))
+                # torch.save(model.state_dict(), os.path.join(log_dir, 'best_model.pt'))
                 
             # if epoch%visualize_per_epoch==0 or epoch==args.epochs-1:
             image = inv_normalize(image)
@@ -371,7 +371,8 @@ def train(args):
                 'optimizer': optimizer.state_dict()
             }
     
-            torch.save(checkpoint, os.path.join(log_dir, 'checkpoint.pt.tar'))
+            # torch.save(checkpoint, os.path.join(log_dir, 'checkpoint.pt.tar'))
+            torch.save(model.state_dict(), os.path.join(log_dir, "checkpoint-%s.pt.tar" % epoch))
     
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
     
