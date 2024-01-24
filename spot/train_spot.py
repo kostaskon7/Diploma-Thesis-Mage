@@ -372,7 +372,7 @@ def train(args):
             }
     
             # torch.save(checkpoint, os.path.join(log_dir, 'checkpoint.pt.tar'))
-            torch.save(model.state_dict(), os.path.join(log_dir, "checkpoint-%s.pt.tar" % epoch))
+            torch.save(checkpoint, os.path.join(log_dir, "checkpoint-%s.pt.tar" % epoch))
     
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
     
