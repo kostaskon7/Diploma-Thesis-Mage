@@ -268,7 +268,7 @@ def main(args):
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
-    for epoch in range(args.start_epoch, 9):
+    for epoch in range(args.start_epoch, 14):
         if args.distributed:
             train_loader.sampler.set_epoch(epoch)
         train_stats = train_one_epoch(
@@ -329,7 +329,7 @@ def main(args):
                 # print(batch_size)
                 #################
                 ##Recon
-                if(epoch>7):
+                if(epoch>12):
                     codebook_emb_dim=256
                     logits = logits[:, 8:, :model.codebook_size]
                     # logits = logits[:, 1:, :model.codebook_size]
