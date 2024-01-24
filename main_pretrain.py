@@ -331,8 +331,8 @@ def main(args):
                 ##Recon
                 if(epoch>7):
                     codebook_emb_dim=256
-                    logits = logits[:, 8:, :model.codebook_size]
-                    # logits = logits[:, 1:, :model.codebook_size]
+                    # logits = logits[:, 8:, :model.codebook_size]
+                    logits = logits[:, 1:, :model.codebook_size]
 
                     probabilities = torch.nn.functional.softmax(logits, dim=-1)
                     reconstructed_indices = torch.argmax(probabilities, dim=-1)
