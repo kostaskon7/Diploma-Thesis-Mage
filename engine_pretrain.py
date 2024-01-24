@@ -102,7 +102,7 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
     metric_logger = misc.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
     header = 'Epoch: [{}]'.format(epoch)
-    print_freq = 20
+    print_freq = 400
     accum_iter = args.accum_iter
 
     optimizer.zero_grad()
