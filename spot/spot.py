@@ -15,6 +15,10 @@ class SPOT(nn.Module):
         self.encoder = encoder
         self.second_encoder = second_encoder
         self.encoder_final_norm = args.encoder_final_norm
+
+        self.use_token_embs = args.use_token_embs
+        self.use_token_inds_target = args.use_token_inds_target
+
         
         for param_name, param in self.encoder.named_parameters():
             if ('blocks' in param_name):
@@ -149,15 +153,16 @@ class SPOT(nn.Module):
         token_indices = token_indices.cuda()
         token_indices = torch.cat(
             [torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
-        token_indices[:, 0] = encoder.fake_class_label
+        token_indices[:, 0] = encoder.fake_class_label#Na to dw auto
         token_indices = token_indices.long()
         # bert embedding
         x = encoder.token_emb(token_indices)
+        token_emb = x
 
         for blk in encoder.blocks:
             x = blk(x)
 
-        return x
+        return x,token_emb,token_indices
 
     def forward_decoder(self, slots, emb_target):
         # Prepate the input tokens for the decoder transformer:
@@ -265,13 +270,17 @@ class SPOT(nn.Module):
         """
 
         B, _, H, W = image.size()
-        emb_input = self.forward_encoder(image, self.encoder)
+        emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
         with torch.no_grad():
             if self.second_encoder is not None:
                 emb_target = self.forward_encoder(image, self.second_encoder)
             else:
-                emb_target = emb_input.clone().detach()
+                if self.use_token_embs:
+                    emb_target = token_emb.clone().detach()
+                else:
+                    emb_target = emb_input.clone().detach()
         # emb_target shape: B, N, D
+        print(emb_target.shape)
 
         # Apply the slot attention
         slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_input)
@@ -288,10 +297,16 @@ class SPOT(nn.Module):
         # print(dec_recon.shape)
         # torch.Size([64, 197, 768])
         # torch.Size([64, 196, 768])
-        loss_mse = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
+        if self.use_token_inds_target:
+            dec_preds =self.dec_predictor(dec_recon)
+            token_indices = token_indices.reshape(-1)
+            dec_preds = dec_preds.reshape(-1, dec_preds[2])
+            loss_out = F.cross_entropy_loss(dec_preds,token_indices)
+        else:
+            loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
 
         # Reshape the slot and decoder-slot attentions.
         slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
         dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
 
-        return loss_mse, slots_attns, dec_slots_attns, slots, dec_recon, attn_logits
+        return loss_out, slots_attns, dec_slots_attns, slots, dec_recon, attn_logits

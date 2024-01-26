@@ -74,6 +74,9 @@ def get_args_parser():
     
     parser.add_argument('--train_permutations',  type=str, default='random', help='which permutation')
     parser.add_argument('--eval_permutations',  type=str, default='standard', help='which permutation')
+
+    parser.add_argument('--use_token_inds_target',  type=int, default=None, help='use token inds target')
+    parser.add_argument('--use_token_embs',  type=int, default=None, help='use token embeddings')
     
     return parser
 
