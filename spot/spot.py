@@ -38,7 +38,7 @@ class SPOT(nn.Module):
         # embedding size (d_model)
         with torch.no_grad():
             x = torch.rand(1, args.img_channels, args.image_size, args.image_size)
-            x = self.forward_encoder(x, self.encoder)
+            x,_,_ = self.forward_encoder(x, self.encoder)
             _, num_tokens, d_model = x.shape
 
         args.d_model = d_model
@@ -257,7 +257,7 @@ class SPOT(nn.Module):
 
         B, _, H, W = image.size()
         with torch.no_grad():
-            emb_target = self.forward_encoder(image, self.encoder)
+            emb_target,_,_ = self.forward_encoder(image, self.encoder)
         # emb_target shape: B, N, D
 
         # Apply the slot attention
@@ -273,7 +273,7 @@ class SPOT(nn.Module):
         emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
         with torch.no_grad():
             if self.second_encoder is not None:
-                emb_target = self.forward_encoder(image, self.second_encoder)
+                emb_target,_,_ = self.forward_encoder(image, self.second_encoder)
             else:
                 if self.use_token_embs:
                     emb_target = token_emb.clone().detach()
