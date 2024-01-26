@@ -81,6 +81,7 @@ class VisionTransformer(timm.models.vision_transformer.VisionTransformer):
 
         codebook_size = config.params.n_embed
         vocab_size = codebook_size + 1000 + 1  # 1024 codebook size, 1000 classes, 1 for mask token.
+        self.codebook_size = codebook_size
         self.fake_class_label = codebook_size + 1100 - 1024
         self.mask_token_label = vocab_size - 1
         self.token_emb = BertEmbeddings(vocab_size=vocab_size,

@@ -116,6 +116,8 @@ class SPOT(nn.Module):
         if self.dec_type=='transformer':
             self.dec = TransformerDecoder(
                 args.num_dec_blocks, args.max_tokens, args.d_model, args.num_heads, args.dropout, args.num_cross_heads)
+            if self.use_token_inds_target:
+                self.dec_predictor = nn.Linear(self.d_model, self.encoder.codebook_size)
             if self.cappa > 0:
                 assert (self.train_permutations == 'standard') and (self.eval_permutations == 'standard')   
                 self.mask_token = nn.Parameter(torch.zeros(1, 1, args.d_model))
@@ -280,7 +282,7 @@ class SPOT(nn.Module):
                 else:
                     emb_target = emb_input.clone().detach()
         # emb_target shape: B, N, D
-        print(emb_target.shape)
+        # print(emb_target.shape)
 
         # Apply the slot attention
         slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_input)
@@ -294,9 +296,9 @@ class SPOT(nn.Module):
         # Mean-Square-Error loss
         H_enc, W_enc = int(math.sqrt(emb_target.shape[1])), int(math.sqrt(emb_target.shape[1]))
         # print(emb_target.shape)
-        print(dec_recon.shape)
-        # torch.Size([64, 197, 768])
-        # torch.Size([64, 196, 768])
+        # print(dec_recon.shape)
+        # torch.Size([64, 256, 768])
+        # torch.Size([64, 256, 768])
         if self.use_token_inds_target:
             dec_preds =self.dec_predictor(dec_recon)
             token_indices = token_indices.reshape(-1)
