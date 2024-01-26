@@ -164,7 +164,9 @@ class SPOT(nn.Module):
         for blk in encoder.blocks:
             x = blk(x)
 
-        return x[:,1:,:],token_emb,token_indices
+        return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:,:]
+        # return x,token_emb,token_indices
+
 
     def forward_decoder(self, slots, emb_target):
         # Prepate the input tokens for the decoder transformer:
@@ -273,9 +275,6 @@ class SPOT(nn.Module):
 
         B, _, H, W = image.size()
         emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
-        print(emb_input.shape)
-        print(token_emb.shape)
-        print(token_indices.shape)
         with torch.no_grad():
             if self.second_encoder is not None:
                 emb_target,_,_ = self.forward_encoder(image, self.second_encoder)
