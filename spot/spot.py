@@ -307,10 +307,13 @@ class SPOT(nn.Module):
             dec_preds = dec_preds.reshape(-1, dec_preds[2])
             loss_out = F.cross_entropy_loss(dec_preds,token_indices)
         else:
-            loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
+            # loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
+            loss_out = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
 
         # Reshape the slot and decoder-slot attentions.
         slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
         dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
+        print(slots_attns.shape)
+        print(dec_slots_attns.shape)
 
         return loss_out, slots_attns, dec_slots_attns, slots, dec_recon, attn_logits
