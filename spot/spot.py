@@ -159,12 +159,13 @@ class SPOT(nn.Module):
         token_indices = token_indices.long()
         # bert embedding
         x = encoder.token_emb(token_indices)
-        token_emb = x
+        token_emb = x[:,1:,:]
 
         for blk in encoder.blocks:
             x = blk(x)
-
-        return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:,:]
+        x=x[:,1:,:]
+        token_indices=token_indices[:,1:,:]
+        return x,token_emb,token_indices
         # return x,token_emb,token_indices
 
 
