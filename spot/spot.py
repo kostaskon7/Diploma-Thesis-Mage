@@ -159,13 +159,12 @@ class SPOT(nn.Module):
         token_indices = token_indices.long()
         # bert embedding
         x = encoder.token_emb(token_indices)
-        token_emb = x[:,1:,:]
+        token_emb = x
 
         for blk in encoder.blocks:
             x = blk(x)
-        x=x[:,1:,:]
-        token_indices=token_indices[:,1:,:]
-        return x,token_emb,token_indices
+        
+        return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:]
         # return x,token_emb,token_indices
 
 
@@ -276,6 +275,9 @@ class SPOT(nn.Module):
 
         B, _, H, W = image.size()
         emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
+        print(emb_input)
+        print(token_emb)
+        print(token_indices.shape)
         with torch.no_grad():
             if self.second_encoder is not None:
                 emb_target,_,_ = self.forward_encoder(image, self.second_encoder)
