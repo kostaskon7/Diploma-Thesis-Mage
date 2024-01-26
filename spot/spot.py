@@ -275,9 +275,7 @@ class SPOT(nn.Module):
 
         B, _, H, W = image.size()
         emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
-        print(emb_input)
-        print(token_emb)
-        print(token_indices.shape)
+
         with torch.no_grad():
             if self.second_encoder is not None:
                 emb_target,_,_ = self.forward_encoder(image, self.second_encoder)
@@ -314,9 +312,10 @@ class SPOT(nn.Module):
             loss_out = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
 
         # Reshape the slot and decoder-slot attentions.
-        slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
+        slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
+        # slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
+
         dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
-        print(slots_attns.shape)
-        print(dec_slots_attns.shape)
+
 
         return loss_out, slots_attns, dec_slots_attns, slots, dec_recon, attn_logits
