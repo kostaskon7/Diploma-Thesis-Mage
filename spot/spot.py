@@ -305,7 +305,7 @@ class SPOT(nn.Module):
         if self.use_token_inds_target:
             dec_preds =self.dec_predictor(dec_recon)
             token_indices = token_indices.reshape(-1)
-            dec_preds = dec_preds.reshape(-1, dec_preds[2])
+            dec_preds = dec_preds.reshape(-1, dec_preds.shape[2])
             loss_out = F.cross_entropy_loss(dec_preds,token_indices)
         else:
             # loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
