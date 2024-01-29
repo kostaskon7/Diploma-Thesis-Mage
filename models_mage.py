@@ -426,6 +426,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         logits,attn_dec = self.forward_decoder(latent,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
         print(attn_dec.shape)
+        print(slots.shape)
 
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
 
