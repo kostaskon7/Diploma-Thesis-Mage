@@ -221,7 +221,7 @@ def train(args):
     
     visualize_per_epoch = int(args.epochs*args.eval_viz_percent)
     
-    for epoch in range(start_epoch, 6):
+    for epoch in range(start_epoch, 8):
     
         model.train()
     
