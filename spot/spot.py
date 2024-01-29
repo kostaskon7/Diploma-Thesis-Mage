@@ -164,8 +164,8 @@ class SPOT(nn.Module):
         for blk in encoder.blocks:
             x = blk(x)
         
-        return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:]
-        # return x,token_emb,token_indices
+        # return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:]
+        return x,token_emb,token_indices
 
 
     def forward_decoder(self, slots, emb_target):
@@ -295,7 +295,8 @@ class SPOT(nn.Module):
 
         # Apply the decoder.
         dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target)
-
+        print(slots_attns.shape)
+        print(dec_slots_attns.shape)
         # Mean-Square-Error loss
         H_enc, W_enc = int(math.sqrt(emb_target.shape[1])), int(math.sqrt(emb_target.shape[1]))
         # print(emb_target.shape)
@@ -309,8 +310,8 @@ class SPOT(nn.Module):
             loss = nn.CrossEntropyLoss()
             loss_out = loss(dec_preds,token_indices)
         else:
-            # loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
-            loss_out = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
+            loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
+            # loss_out = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
 
         # Reshape the slot and decoder-slot attentions.
         slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
