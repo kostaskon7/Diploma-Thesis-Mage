@@ -84,6 +84,7 @@ def get_args_parser():
     parser.add_argument('--use_token_embs',  type=int, default=None, help='use token embeddings')
 
     parser.add_argument('--recon',  type=int, default=None, help='Reconstruct image')
+    parser.add_argument('--finish_epoch',  type=int, default=None, help='last epoch')
     
     
     return parser
@@ -229,35 +230,37 @@ def train(args):
     
     visualize_per_epoch = int(args.epochs*args.eval_viz_percent)
     
-    for epoch in range(start_epoch, 30):
+    if(args.finish_epoch == None):
+        args.finish_epoch = args.epochs
+    for epoch in range(start_epoch, args.finish_epoch):
     
         model.train()
     
-        # for batch, image in enumerate(train_loader):
+        for batch, image in enumerate(train_loader):
             
-        #     image = image.cuda()
+            image = image.cuda()
 
-        #     global_step = epoch * train_epoch_size + batch
+            global_step = epoch * train_epoch_size + batch
     
-        #     optimizer.param_groups[0]['lr'] = lr_schedule[global_step]
-        #     lr_value = optimizer.param_groups[0]['lr']
+            optimizer.param_groups[0]['lr'] = lr_schedule[global_step]
+            lr_value = optimizer.param_groups[0]['lr']
             
-        #     optimizer.zero_grad()
-        #     mse, _, _, _, _, _ = model(image)
+            optimizer.zero_grad()
+            mse, _, _, _, _, _ = model(image)
 
-        #     mse.backward()
-        #     total_norm = clip_grad_norm_(model.parameters(), args.clip, 'inf')
-        #     total_norm = total_norm.item()
-        #     optimizer.step()
+            mse.backward()
+            total_norm = clip_grad_norm_(model.parameters(), args.clip, 'inf')
+            total_norm = total_norm.item()
+            optimizer.step()
             
-        #     with torch.no_grad():
-        #         if batch % log_interval == 0:
-        #             print('Train Epoch: {:3} [{:5}/{:5}] \t lr = {:5} \t MSE: {:F} \t TotNorm: {:F}'.format(
-        #                   epoch+1, batch, train_epoch_size, lr_value, mse.item(), total_norm))
+            with torch.no_grad():
+                if batch % log_interval == 0:
+                    print('Train Epoch: {:3} [{:5}/{:5}] \t lr = {:5} \t MSE: {:F} \t TotNorm: {:F}'.format(
+                          epoch+1, batch, train_epoch_size, lr_value, mse.item(), total_norm))
     
-        #             writer.add_scalar('TRAIN/mse', mse.item(), global_step)
-        #             writer.add_scalar('TRAIN/lr_main', lr_value, global_step)
-        #             writer.add_scalar('TRAIN/total_norm', total_norm, global_step)
+                    writer.add_scalar('TRAIN/mse', mse.item(), global_step)
+                    writer.add_scalar('TRAIN/lr_main', lr_value, global_step)
+                    writer.add_scalar('TRAIN/total_norm', total_norm, global_step)
 
         with torch.no_grad():
             model.eval()
@@ -278,7 +281,7 @@ def train(args):
                 logits=model.dec_preds
                 print(logits.shape)
                 # Reconstruct image vqgan
-                if args.recon:
+                if args.recon and (epoch==args.finish_epoch-1):
                     codebook_emb_dim=256
                     print(mse.shape)
                     logits = logits[:, :, :model.encoder.codebook_size]
