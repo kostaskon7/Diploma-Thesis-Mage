@@ -305,12 +305,12 @@ def train(args):
                         # Convert to numpy and save - Generated Image
                         gen_img_np = np.clip(inv_gen_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
                         gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
-                        cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), gen_img_np)
+                        cv2.imwrite(os.path.join(args.log_path, '{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), gen_img_np)
 
                         # Convert to numpy and save - Original Image
                         orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
                         orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
-                        cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), orig_img_np)
+                        cv2.imwrite(os.path.join(args.log_path, 'orig_{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), orig_img_np)
                                     ################ Recon
 
 
