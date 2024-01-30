@@ -236,31 +236,31 @@ def train(args):
     
         model.train()
     
-        for batch, image in enumerate(train_loader):
+        # for batch, image in enumerate(train_loader):
             
-            image = image.cuda()
+        #     image = image.cuda()
 
-            global_step = epoch * train_epoch_size + batch
+        #     global_step = epoch * train_epoch_size + batch
     
-            optimizer.param_groups[0]['lr'] = lr_schedule[global_step]
-            lr_value = optimizer.param_groups[0]['lr']
+        #     optimizer.param_groups[0]['lr'] = lr_schedule[global_step]
+        #     lr_value = optimizer.param_groups[0]['lr']
             
-            optimizer.zero_grad()
-            mse, _, _, _, _, _ = model(image)
+        #     optimizer.zero_grad()
+        #     mse, _, _, _, _, _ = model(image)
 
-            mse.backward()
-            total_norm = clip_grad_norm_(model.parameters(), args.clip, 'inf')
-            total_norm = total_norm.item()
-            optimizer.step()
+        #     mse.backward()
+        #     total_norm = clip_grad_norm_(model.parameters(), args.clip, 'inf')
+        #     total_norm = total_norm.item()
+        #     optimizer.step()
             
-            with torch.no_grad():
-                if batch % log_interval == 0:
-                    print('Train Epoch: {:3} [{:5}/{:5}] \t lr = {:5} \t MSE: {:F} \t TotNorm: {:F}'.format(
-                          epoch+1, batch, train_epoch_size, lr_value, mse.item(), total_norm))
+        #     with torch.no_grad():
+        #         if batch % log_interval == 0:
+        #             print('Train Epoch: {:3} [{:5}/{:5}] \t lr = {:5} \t MSE: {:F} \t TotNorm: {:F}'.format(
+        #                   epoch+1, batch, train_epoch_size, lr_value, mse.item(), total_norm))
     
-                    writer.add_scalar('TRAIN/mse', mse.item(), global_step)
-                    writer.add_scalar('TRAIN/lr_main', lr_value, global_step)
-                    writer.add_scalar('TRAIN/total_norm', total_norm, global_step)
+        #             writer.add_scalar('TRAIN/mse', mse.item(), global_step)
+        #             writer.add_scalar('TRAIN/lr_main', lr_value, global_step)
+        #             writer.add_scalar('TRAIN/total_norm', total_norm, global_step)
 
         with torch.no_grad():
             model.eval()
