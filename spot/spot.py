@@ -303,6 +303,8 @@ class SPOT(nn.Module):
         # torch.Size([64, 256, 768])
         # torch.Size([64, 256, 768])
         if self.use_token_inds_target:
+            # dec_preds =self.dec_predictor(dec_recon)
+
             dec_preds =self.dec_predictor(dec_recon[:,1:,:])
             self.dec_preds=dec_preds
             # token_indices = token_indices.reshape(-1)
