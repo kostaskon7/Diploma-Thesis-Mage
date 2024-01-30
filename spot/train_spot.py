@@ -279,11 +279,11 @@ def train(args):
                 # Reconstruct image vqgan
                 if args.recon:
                     codebook_emb_dim=256
-                    print(logits.shape)
-                    logits = logits[:, 8:, :model.codebook_size]
+                    print(mse.shape)
+                    mse = mse[:, 8:, :model.codebook_size]
                     # logits = logits[:, 1:, :model.codebook_size]
 
-                    probabilities = torch.nn.functional.softmax(logits, dim=-1)
+                    probabilities = torch.nn.functional.softmax(mse, dim=-1)
                     reconstructed_indices = torch.argmax(probabilities, dim=-1)
                     z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
                     gen_images = model.vqgan.decode(z_q)
