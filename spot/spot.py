@@ -164,8 +164,8 @@ class SPOT(nn.Module):
         for blk in encoder.blocks:
             x = blk(x)
         
-        # return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:]
-        return x,token_emb,token_indices
+        return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:]
+        # return x,token_emb,token_indices
 
 
     def forward_decoder(self, slots, emb_target):
@@ -304,7 +304,9 @@ class SPOT(nn.Module):
         # torch.Size([64, 256, 768])
         if self.use_token_inds_target:
             dec_preds =self.dec_predictor(dec_recon)
-            token_indices = token_indices[:,1:].reshape(-1)
+            token_indices = token_indices.reshape(-1)
+
+            # token_indices = token_indices[:,1:].reshape(-1)
             dec_preds = dec_preds.reshape(-1, dec_preds.shape[2])
             loss = nn.CrossEntropyLoss()
             loss_out = loss(dec_preds,token_indices)

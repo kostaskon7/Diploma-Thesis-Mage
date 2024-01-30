@@ -19,6 +19,11 @@ from ocl_metrics import UnsupervisedMaskIoUMetric, ARIMetric
 from utils_spot import inv_normalize, cosine_scheduler, visualize, bool_flag, load_pretrained_encoder
 import models_vit
 
+import numpy as np
+import cv2
+
+
+
 
 def get_args_parser():
     parser = argparse.ArgumentParser('SPOT', add_help=False)
@@ -77,6 +82,9 @@ def get_args_parser():
 
     parser.add_argument('--use_token_inds_target',  type=int, default=None, help='use token inds target')
     parser.add_argument('--use_token_embs',  type=int, default=None, help='use token embeddings')
+
+    parser.add_argument('--recon',  type=int, default=None, help='Reconstruct image')
+    
     
     return parser
 
@@ -221,35 +229,35 @@ def train(args):
     
     visualize_per_epoch = int(args.epochs*args.eval_viz_percent)
     
-    for epoch in range(start_epoch, 8):
+    for epoch in range(start_epoch, 30):
     
         model.train()
     
-        for batch, image in enumerate(train_loader):
+        # for batch, image in enumerate(train_loader):
             
-            image = image.cuda()
+        #     image = image.cuda()
 
-            global_step = epoch * train_epoch_size + batch
+        #     global_step = epoch * train_epoch_size + batch
     
-            optimizer.param_groups[0]['lr'] = lr_schedule[global_step]
-            lr_value = optimizer.param_groups[0]['lr']
+        #     optimizer.param_groups[0]['lr'] = lr_schedule[global_step]
+        #     lr_value = optimizer.param_groups[0]['lr']
             
-            optimizer.zero_grad()
-            mse, _, _, _, _, _ = model(image)
+        #     optimizer.zero_grad()
+        #     mse, _, _, _, _, _ = model(image)
 
-            mse.backward()
-            total_norm = clip_grad_norm_(model.parameters(), args.clip, 'inf')
-            total_norm = total_norm.item()
-            optimizer.step()
+        #     mse.backward()
+        #     total_norm = clip_grad_norm_(model.parameters(), args.clip, 'inf')
+        #     total_norm = total_norm.item()
+        #     optimizer.step()
             
-            with torch.no_grad():
-                if batch % log_interval == 0:
-                    print('Train Epoch: {:3} [{:5}/{:5}] \t lr = {:5} \t MSE: {:F} \t TotNorm: {:F}'.format(
-                          epoch+1, batch, train_epoch_size, lr_value, mse.item(), total_norm))
+        #     with torch.no_grad():
+        #         if batch % log_interval == 0:
+        #             print('Train Epoch: {:3} [{:5}/{:5}] \t lr = {:5} \t MSE: {:F} \t TotNorm: {:F}'.format(
+        #                   epoch+1, batch, train_epoch_size, lr_value, mse.item(), total_norm))
     
-                    writer.add_scalar('TRAIN/mse', mse.item(), global_step)
-                    writer.add_scalar('TRAIN/lr_main', lr_value, global_step)
-                    writer.add_scalar('TRAIN/total_norm', total_norm, global_step)
+        #             writer.add_scalar('TRAIN/mse', mse.item(), global_step)
+        #             writer.add_scalar('TRAIN/lr_main', lr_value, global_step)
+        #             writer.add_scalar('TRAIN/total_norm', total_norm, global_step)
 
         with torch.no_grad():
             model.eval()
@@ -267,6 +275,45 @@ def train(args):
                 counter += batch_size
     
                 mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image)
+
+                # Reconstruct image vqgan
+                if args.recon:
+                    codebook_emb_dim=256
+                    print(logits.shape)
+                    logits = logits[:, 8:, :model.codebook_size]
+                    # logits = logits[:, 1:, :model.codebook_size]
+
+                    probabilities = torch.nn.functional.softmax(logits, dim=-1)
+                    reconstructed_indices = torch.argmax(probabilities, dim=-1)
+                    z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
+                    gen_images = model.vqgan.decode(z_q)
+
+
+                    gen_img_list = []
+                    gen_images_batch = gen_images.detach().cpu()
+                    gen_img_list.append(gen_images_batch)
+                    orig_images_batch=image.detach().cpu()
+
+                    # Save images
+                    for b_id in range(batch_size):
+                        # Apply inverse normalization
+                        # inv_gen_img = inv_normalize(gen_images_batch[b_id])
+                        inv_gen_img=gen_images_batch[b_id]
+                        # inv_orig_img = inv_normalize(orig_images_batch[b_id])
+                        inv_orig_img = orig_images_batch[b_id]
+
+                        # Convert to numpy and save - Generated Image
+                        gen_img_np = np.clip(inv_gen_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
+                        gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
+                        cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), gen_img_np)
+
+                        # Convert to numpy and save - Original Image
+                        orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
+                        orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
+                        cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), orig_img_np)
+                                    ################ Recon
+
+
     
                 # DINOSAUR uses as attention masks the attenton maps of the decoder
                 # over the slots, which bilinearly resizes to match the image resolution
