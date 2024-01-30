@@ -281,10 +281,10 @@ def train(args):
                 if args.recon:
                     codebook_emb_dim=256
                     print(mse.shape)
-                    mse = logits[:, :, :model.encoder.codebook_size]
+                    logits = logits[:, :, :model.encoder.codebook_size]
                     # logits = logits[:, 1:, :model.codebook_size]
 
-                    probabilities = torch.nn.functional.softmax(mse, dim=-1)
+                    probabilities = torch.nn.functional.softmax(logits, dim=-1)
                     reconstructed_indices = torch.argmax(probabilities, dim=-1)
                     z_q = model.encoder.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
                     gen_images = model.encoder.vqgan.decode(z_q)
