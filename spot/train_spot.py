@@ -286,8 +286,8 @@ def train(args):
 
                     probabilities = torch.nn.functional.softmax(mse, dim=-1)
                     reconstructed_indices = torch.argmax(probabilities, dim=-1)
-                    z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
-                    gen_images = model.vqgan.decode(z_q)
+                    z_q = model.encoder.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
+                    gen_images = model.encoder.vqgan.decode(z_q)
 
 
                     gen_img_list = []
