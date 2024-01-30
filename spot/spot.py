@@ -304,15 +304,13 @@ class SPOT(nn.Module):
         # torch.Size([64, 256, 768])
         if self.use_token_inds_target:
             dec_preds =self.dec_predictor(dec_recon)
+            self.dec_preds=dec_preds
             token_indices = token_indices.reshape(-1)
 
             # token_indices = token_indices[:,1:].reshape(-1)
             dec_preds = dec_preds.reshape(-1, dec_preds.shape[2])
             loss = nn.CrossEntropyLoss()
             loss_out = loss(dec_preds,token_indices)
-            print(dec_preds.shape)
-            print(token_indices.shape)
-            print(loss_out)
         else:
             loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
             # loss_out = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
@@ -322,6 +320,7 @@ class SPOT(nn.Module):
         # slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
 
         dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
+        
 
 
         return loss_out, slots_attns, dec_slots_attns, slots, dec_recon, attn_logits
