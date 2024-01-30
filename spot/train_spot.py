@@ -275,12 +275,13 @@ def train(args):
                 counter += batch_size
     
                 mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image)
-
+                logits=model.dec_preds
+                print(logits.shape)
                 # Reconstruct image vqgan
                 if args.recon:
                     codebook_emb_dim=256
                     print(mse.shape)
-                    mse = mse[:, 8:, :model.encoder.codebook_size]
+                    mse = logits[:, :, :model.encoder.codebook_size]
                     # logits = logits[:, 1:, :model.codebook_size]
 
                     probabilities = torch.nn.functional.softmax(mse, dim=-1)
