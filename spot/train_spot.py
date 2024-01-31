@@ -279,9 +279,8 @@ def train(args):
     
                 mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image)
                 logits=model.dec_preds
-                print(logits.shape)
                 # Reconstruct image vqgan
-                if args.recon: #and (epoch==args.finish_epoch-1):
+                if args.recon and (epoch==args.finish_epoch-1):
                     codebook_emb_dim=256
                     print(mse.shape)
                     logits = logits[:, :, :model.encoder.codebook_size]
