@@ -164,8 +164,8 @@ class SPOT(nn.Module):
         for blk in encoder.blocks:
             x = blk(x)
         
-        return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:]
-        # return x,token_emb,token_indices
+        # return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:]
+        return x,token_emb,token_indices
 
 
     def forward_decoder(self, slots, emb_target):
@@ -193,7 +193,6 @@ class SPOT(nn.Module):
                 which_permutations = self.perm_ind
             else:
                 raise
-        print(emb_target.shape)
         
         all_dec_slots_attns = []
         all_dec_output = []
@@ -212,17 +211,13 @@ class SPOT(nn.Module):
                 dec_input = self.mask_token.to(emb_target.dtype).expand(emb_target.shape[0], -1, -1)
             else: # Use autoregressive decoder
                 dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
-            print(dec_input.shape)
-            print(current_perm)
-            print(current_perm.shape)
+
             if use_pos_emb:
                 # Add position embedding if they exist.
                 dec_input = dec_input + self.pos_embed.to(emb_target.dtype)
 
             # dec_input has the same shape as emb_target, which is [B, N, D]
-            print(dec_input.shape)
             dec_input = self.input_proj(dec_input)
-            print(dec_input.shape)
     
             # Apply the decoder
             dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
@@ -243,7 +238,6 @@ class SPOT(nn.Module):
                 inv_current_perm = torch.argsort(current_perm)
                 dec_slots_attns = dec_slots_attns[:,inv_current_perm,:]
                 dec_output = dec_output[:,inv_current_perm,:]
-                print(dec_output.shape)
 
             elif self.dec_type=='mlp':
                 dec_output, dec_slots_attns = self.dec(dec_input_slots)
@@ -255,16 +249,11 @@ class SPOT(nn.Module):
             all_dec_slots_attns.append(dec_slots_attns)
             all_dec_output.append(dec_output)
 
-            print(len(all_dec_slots_attns))
-            print(len(all_dec_slots_attns[0]))
-            print(len(all_dec_output))
-            print(len(all_dec_output[0]))            
-            print('telos loop')
+
 
         mean_dec_slots_attns = torch.stack(all_dec_slots_attns).mean(0)
         mean_dec_output = torch.stack(all_dec_output).mean(0)
-        print(mean_dec_slots_attns.shape)
-        print(mean_dec_output.shape)
+
 
         return mean_dec_output, mean_dec_slots_attns
 
@@ -308,7 +297,7 @@ class SPOT(nn.Module):
         # slots_attns shape: [B, N, num_slots]
 
         # Apply the decoder.
-        dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target)
+        dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target[:,1:,:])
 
         # Mean-Square-Error loss
         H_enc, W_enc = int(math.sqrt(emb_target.shape[1])), int(math.sqrt(emb_target.shape[1]))
