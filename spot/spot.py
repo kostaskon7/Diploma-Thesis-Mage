@@ -299,6 +299,7 @@ class SPOT(nn.Module):
         # Mean-Square-Error loss
         H_enc, W_enc = int(math.sqrt(emb_target.shape[1])), int(math.sqrt(emb_target.shape[1]))
         print(emb_target.shape)
+        print(dec_slots_attns.shape)
         print(dec_recon.shape)
         # torch.Size([64, 256, 768])
         # torch.Size([64, 256, 768])
