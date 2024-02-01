@@ -253,10 +253,8 @@ class SPOT(nn.Module):
             all_dec_slots_attns.append(dec_slots_attns)
             all_dec_output.append(dec_output)
 
-            print(len(all_dec_slots_attns))
-            print(len(all_dec_slots_attns[0]))
-            print(len(all_dec_output))
-            print(len(all_dec_output[0]))            
+            print(np.shape(all_dec_slots_attns) )
+            print(np.shape(all_dec_output))            
             print('telos loop')
 
         mean_dec_slots_attns = torch.stack(all_dec_slots_attns).mean(0)
