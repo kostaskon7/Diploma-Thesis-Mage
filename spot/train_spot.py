@@ -207,7 +207,7 @@ def train(args):
                                     final_value = args.lr_min,
                                     epochs = args.epochs, 
                                     niter_per_ep = len(train_loader),
-                                    warmup_epochs=10,
+                                    warmup_epochs=6,
                                     start_warmup_value=0)
                                     # warmup_epochs=int(args.lr_warmup_steps/(len(train_dataset)/args.batch_size)),
                                     # start_warmup_value=0)
