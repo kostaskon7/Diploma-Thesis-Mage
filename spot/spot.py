@@ -212,18 +212,20 @@ class SPOT(nn.Module):
                 dec_input = self.mask_token.to(emb_target.dtype).expand(emb_target.shape[0], -1, -1)
             else: # Use autoregressive decoder
                 dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
-      
+            print(dec_input.shape)
             if use_pos_emb:
                 # Add position embedding if they exist.
                 dec_input = dec_input + self.pos_embed.to(emb_target.dtype)
 
             # dec_input has the same shape as emb_target, which is [B, N, D]
             dec_input = self.input_proj(dec_input)
+            print(dec_input.shape)
     
             # Apply the decoder
             dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
             if self.dec_type=='transformer':
                 dec_output = self.dec(dec_input, dec_input_slots, causal_mask=(not parallel_dec))
+                print(dec_output.shape)
                 # decoder_output shape [B, N, D]
 
                 dec_slots_attns = self.dec_slots_attns[0]
@@ -238,6 +240,7 @@ class SPOT(nn.Module):
                 inv_current_perm = torch.argsort(current_perm)
                 dec_slots_attns = dec_slots_attns[:,inv_current_perm,:]
                 dec_output = dec_output[:,inv_current_perm,:]
+                print(dec_output.shape)
 
             elif self.dec_type=='mlp':
                 dec_output, dec_slots_attns = self.dec(dec_input_slots)
@@ -249,8 +252,14 @@ class SPOT(nn.Module):
             all_dec_slots_attns.append(dec_slots_attns)
             all_dec_output.append(dec_output)
 
+            print(all_dec_slots_attns.shape)
+            print(all_dec_output.shape)
+            print('telos loop')
+
         mean_dec_slots_attns = torch.stack(all_dec_slots_attns).mean(0)
         mean_dec_output = torch.stack(all_dec_output).mean(0)
+        print(mean_dec_slots_attns.shape)
+        print(mean_dec_output.shape)
 
         return mean_dec_output, mean_dec_slots_attns
 
