@@ -306,7 +306,7 @@ class SPOT(nn.Module):
 
             dec_preds =self.dec_predictor(dec_recon[:,1:,:])
             self.dec_preds=dec_preds
-            token_indices = token_indices.reshape(-1)
+            # token_indices = token_indices.reshape(-1)
 
             token_indices = token_indices[:,1:].reshape(-1)
             dec_preds = dec_preds.reshape(-1, dec_preds.shape[2])
