@@ -307,10 +307,14 @@ class SPOT(nn.Module):
             # dec_preds =self.dec_predictor(dec_recon[:,1:,:])
             self.dec_preds=dec_preds
             # token_indices = token_indices.reshape(-1)
+            print(dec_preds.shape)
+            print(token_indices.shape)
 
             token_indices = token_indices[:,1:].reshape(-1)
             dec_preds = dec_preds.reshape(-1, dec_preds.shape[2])
             loss = nn.CrossEntropyLoss()
+            print(dec_preds.shape)
+            print(token_indices.shape)
             loss_out = loss(dec_preds,token_indices)
         else:
             loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
