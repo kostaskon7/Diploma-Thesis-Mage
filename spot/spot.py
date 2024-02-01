@@ -298,19 +298,17 @@ class SPOT(nn.Module):
 
         # Mean-Square-Error loss
         H_enc, W_enc = int(math.sqrt(emb_target.shape[1])), int(math.sqrt(emb_target.shape[1]))
-        print(emb_target.shape)
-        print(dec_slots_attns.shape)
-        print(dec_recon.shape)
+
         # torch.Size([64, 256, 768])
         # torch.Size([64, 256, 768])
         if self.use_token_inds_target:
-            dec_preds =self.dec_predictor(dec_recon)
+            # dec_preds =self.dec_predictor(dec_recon)
 
-            # dec_preds =self.dec_predictor(dec_recon[:,1:,:])
+            dec_preds =self.dec_predictor(dec_recon[:,1:,:])
             self.dec_preds=dec_preds
             token_indices = token_indices.reshape(-1)
 
-            # token_indices = token_indices[:,1:].reshape(-1)
+            token_indices = token_indices[:,1:].reshape(-1)
             dec_preds = dec_preds.reshape(-1, dec_preds.shape[2])
             loss = nn.CrossEntropyLoss()
             loss_out = loss(dec_preds,token_indices)
