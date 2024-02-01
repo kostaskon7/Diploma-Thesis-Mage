@@ -213,6 +213,8 @@ class SPOT(nn.Module):
             else: # Use autoregressive decoder
                 dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
             print(dec_input.shape)
+            print(current_perm)
+            print(current_perm.shape)
             if use_pos_emb:
                 # Add position embedding if they exist.
                 dec_input = dec_input + self.pos_embed.to(emb_target.dtype)
