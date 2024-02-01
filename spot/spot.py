@@ -193,7 +193,7 @@ class SPOT(nn.Module):
                 which_permutations = self.perm_ind
             else:
                 raise
-        
+        print(emb_target.shape)
         
         all_dec_slots_attns = []
         all_dec_output = []
