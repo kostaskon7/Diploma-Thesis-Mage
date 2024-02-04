@@ -34,6 +34,8 @@ import math
 import torchvision.utils as vutils
 import sys
 import cv2
+import torch_xla.core.xla_model as xm
+
 
 
 
@@ -120,8 +122,12 @@ def main(args):
 
     print('job dir: {}'.format(os.path.dirname(os.path.realpath(__file__))))
     print("{}".format(args).replace(', ', ',\n'))
+    if device == 'tpu':
+        # First, make sure you've installed PyTorch XLA
+        device = xm.xla_device()
 
-    device = torch.device(args.device)
+    else:
+        device = torch.device(args.device)
 
     # fix the seed for reproducibility
     seed = args.seed + misc.get_rank()
