@@ -290,8 +290,8 @@ class SPOT(nn.Module):
         # print(emb_target.shape)
 
         # Apply the slot attention
-        # slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_input)
-        slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_target)
+        slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_input)
+        # slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_target)
 
         attn_logits = attn_logits.squeeze()
         # slots shape: [B, num_slots, Ds]
