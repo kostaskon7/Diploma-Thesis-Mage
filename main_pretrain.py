@@ -269,14 +269,14 @@ def main(args):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, 27):
-        # if args.distributed:
-        #     train_loader.sampler.set_epoch(epoch)
-        # train_stats = train_one_epoch(
-        #     model, train_loader,
-        #     optimizer, device, epoch, loss_scaler,
-        #     log_writer=log_writer,
-        #     args=args
-        # )
+        if args.distributed:
+            train_loader.sampler.set_epoch(epoch)
+        train_stats = train_one_epoch(
+            model, train_loader,
+            optimizer, device, epoch, loss_scaler,
+            log_writer=log_writer,
+            args=args
+        )
         # if args.output_dir and (epoch % 40 == 0 or epoch + 1 == args.epochs):
         #     misc.save_model(
         #         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
@@ -330,62 +330,38 @@ def main(args):
                 #################
                 ##Recon
                 # if(epoch>8):
+                codebook_emb_dim=256
+                logits = logits[:, 8:, :model.codebook_size]
+                # logits = logits[:, 1:, :model.codebook_size]
 
-                z_q, _, token_tuple = model.vqgan.encode(image)
+                probabilities = torch.nn.functional.softmax(logits, dim=-1)
+                reconstructed_indices = torch.argmax(probabilities, dim=-1)
+                z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
                 gen_images = model.vqgan.decode(z_q)
+
 
                 gen_img_list = []
                 gen_images_batch = gen_images.detach().cpu()
                 gen_img_list.append(gen_images_batch)
                 orig_images_batch=image.detach().cpu()
 
+                # Save images
                 for b_id in range(batch_size):
                     # Apply inverse normalization
                     # inv_gen_img = inv_normalize(gen_images_batch[b_id])
+                    inv_gen_img=gen_images_batch[b_id]
                     # inv_orig_img = inv_normalize(orig_images_batch[b_id])
                     inv_orig_img = orig_images_batch[b_id]
 
                     # Convert to numpy and save - Generated Image
-
+                    gen_img_np = np.clip(inv_gen_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
+                    gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
+                    cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), gen_img_np)
 
                     # Convert to numpy and save - Original Image
                     orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
                     orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
                     cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), orig_img_np)
-
-
-                # codebook_emb_dim=256
-                # logits = logits[:, 8:, :model.codebook_size]
-                # # logits = logits[:, 1:, :model.codebook_size]
-
-                # probabilities = torch.nn.functional.softmax(logits, dim=-1)
-                # reconstructed_indices = torch.argmax(probabilities, dim=-1)
-                # z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
-                # gen_images = model.vqgan.decode(z_q)
-
-
-                # gen_img_list = []
-                # gen_images_batch = gen_images.detach().cpu()
-                # gen_img_list.append(gen_images_batch)
-                # orig_images_batch=image.detach().cpu()
-
-                # # Save images
-                # for b_id in range(batch_size):
-                #     # Apply inverse normalization
-                #     # inv_gen_img = inv_normalize(gen_images_batch[b_id])
-                #     inv_gen_img=gen_images_batch[b_id]
-                #     # inv_orig_img = inv_normalize(orig_images_batch[b_id])
-                #     inv_orig_img = orig_images_batch[b_id]
-
-                #     # Convert to numpy and save - Generated Image
-                #     gen_img_np = np.clip(inv_gen_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-                #     gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
-                #     cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), gen_img_np)
-
-                #     # Convert to numpy and save - Original Image
-                #     orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-                #     orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
-                #     cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), orig_img_np)
                                     ################ Recon
 
                 default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
