@@ -6,6 +6,8 @@ import models_mage
 import numpy as np
 from tqdm import tqdm
 import cv2
+from spot.datasets import COCO2017
+
 
 
 def mask_by_random_topk(mask_len, probs, temperature=1.0):
@@ -148,9 +150,16 @@ gen_img_list = []
 save_folder = os.path.join(args.output_dir, "temp{}-iter{}".format(args.temp, args.num_iter))
 if not os.path.exists(save_folder):
     os.makedirs(save_folder)
+
+
+val_sampler = None
+
+val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
+val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
+
 for batch, (image, true_mask_i, true_mask_c, mask_ignore) in enumerate(tqdm(val_loader)):
     with torch.no_grad():
-        gen_images_batch = gen_image(model,image, bsz=args.batch_size, seed=i, choice_temperature=args.temp, num_iter=args.num_iter)
+        gen_images_batch = gen_image(model,image, bsz=args.batch_size, seed=batch, choice_temperature=args.temp, num_iter=args.num_iter)
     gen_images_batch = gen_images_batch.detach().cpu()
     gen_img_list.append(gen_images_batch)
 
