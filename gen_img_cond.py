@@ -130,6 +130,8 @@ parser.add_argument('--model', default='mage_vit_base_patch16', type=str,
                     help='model')
 parser.add_argument('--output_dir', default='output_dir/fid/gen/mage-vitb', type=str,
                     help='name')
+parser.add_argument('--data_path', default='None', type=str,
+                    help='name')
 
 args = parser.parse_args()
 
