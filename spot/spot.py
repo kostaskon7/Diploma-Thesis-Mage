@@ -217,8 +217,7 @@ class SPOT(nn.Module):
                 filtered_perm = [p for p in current_perm if p != 0]
                 print(filtered_perm)
                 print(first_element)
-                print(filtered_perm.shape)
-                print(first_element.shape)
+
 
                 # Index emb_target with the filtered current_perm to exclude the first element
                 # Concatenate the explicitly included first element with the permuted elements
