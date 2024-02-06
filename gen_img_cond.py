@@ -7,6 +7,10 @@ import numpy as np
 from tqdm import tqdm
 import cv2
 from spot.datasets import COCO2017
+import torchvision.transforms as transforms
+import torchvision.datasets as datasets
+from tqdm import tqdm
+
 
 
 
@@ -29,6 +33,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5):
     mask_token_id = model.mask_token_label
     unknown_number_in_the_beginning = 256
     _CONFIDENCE_OF_KNOWN_TOKENS = +np.inf
+
+    image=image.cuda()
 
     latent, gt_indices, token_drop_mask, token_all_mask = model.forward_encoder(image)
     #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
@@ -119,6 +125,9 @@ parser.add_argument('--output_dir', default='output_dir/fid/gen/mage-vitb', type
                     help='name')
 parser.add_argument('--data_path', default='None', type=str,
                     help='name')
+parser.add_argument('--dataset', default='coco', type=str,
+                    help='dataset name')
+                    
 
 args = parser.parse_args()
 
@@ -143,10 +152,40 @@ if not os.path.exists(save_folder):
 
 val_sampler = None
 
-val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
-val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
+if args.dataset == 'coco':
+  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
+  val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
-for batch, (image, true_mask_i, true_mask_c, mask_ignore) in enumerate(tqdm(val_loader)):
+
+else:
+    transform_train = transforms.Compose([
+        transforms.RandomResizedCrop(256, scale=(0.2, 1.0)),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor()])
+    dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'val'), transform=transform_train)
+    # sampler_train = torch.utils.data.RandomSampler(dataset_train)
+    sampler_train = None
+    data_loader_train = torch.utils.data.DataLoader(
+        dataset_train, sampler=sampler_train,
+        batch_size=32,
+        num_workers=4,
+        pin_memory=True,
+        drop_last=True,
+    )
+
+
+# Assuming args.dataset is defined somewhere in your code
+if args.dataset == 'coco':
+    iterator = enumerate(tqdm(val_loader))
+else:
+    iterator = enumerate(tqdm(data_loader_train))
+
+for batch, data in iterator:
+    if args.dataset == 'coco':
+        image, true_mask_i, true_mask_c, mask_ignore = data
+    else:
+        image, _ = data
+
     with torch.no_grad():
         gen_images_batch = gen_image(model,image, bsz=args.batch_size, seed=batch, choice_temperature=args.temp, num_iter=args.num_iter)
     gen_images_batch = gen_images_batch.detach().cpu()
