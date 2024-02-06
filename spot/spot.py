@@ -224,6 +224,8 @@ class SPOT(nn.Module):
                 print(emb_target.shape)
                 emb_target_no_cls=emb_target[:,1:,:]
                 print(emb_target_no_cls.shape)
+                print(emb_target[:, first_element , :].shape)
+                print(emb_target_no_cls[:, filtered_perm, :][:, :-1, :].shape)
                 dec_input = torch.cat((emb_target[:, first_element , :], emb_target_no_cls[:, filtered_perm, :][:, :-1, :]), dim=1)
                 print("Meta")
                 print(emb_target)
