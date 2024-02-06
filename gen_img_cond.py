@@ -30,28 +30,13 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5):
     unknown_number_in_the_beginning = 256
     _CONFIDENCE_OF_KNOWN_TOKENS = +np.inf
 
+    latent, gt_indices, token_drop_mask, token_all_mask = model.forward_encoder(image)
+    #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
+    slots, attn, init_slots, attn_logits = model.slot_attention(latent)
 
-##########################
-    
-    image = image.cuda() 
-    with torch.no_grad():
-        z_q, _, token_tuple = model.vqgan.encode(image)
+    initial_token_indices = mask_token_id * torch.ones(bsz, unknown_number_in_the_beginning)
 
-    _, _, token_indices = token_tuple
-    token_indices = token_indices.reshape(z_q.size(0), -1)
-    gt_indices = token_indices.clone().detach().long()
-
-    mask = (torch.rand(token_indices.shape) < 0.5).to(token_indices.device)  # Example: 50% mask
-    token_indices = torch.where(mask, mask_token_id * torch.ones_like(token_indices), token_indices)
-
-
-##############################
-    
-
- 
-
-
-    token_indices = token_indices.cuda()
+    token_indices = initial_token_indices.cuda()
 
     for step in range(num_iter):
         cur_ids = token_indices.clone().long()
@@ -73,7 +58,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5):
             x = blk(x)
         x = model.norm(x)
 
-        slots, attn, init_slots, attn_logits = model.slot_attention(x)
+        # slots, attn, init_slots, attn_logits = model.slot_attention(x)
 
         
         # decoder
