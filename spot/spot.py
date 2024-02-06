@@ -252,7 +252,7 @@ class SPOT(nn.Module):
                 # dec_slots_attns shape [B, num_heads, N, num_slots]
                 # L1-normalize over the slots so as to sum to 1.
                 dec_slots_attns = dec_slots_attns / dec_slots_attns.sum(dim=2, keepdim=True)
-
+                print(current_perm)
                 inv_current_perm = torch.argsort(current_perm)
                 print(dec_input.shape)
                 print(dec_output.shape)
