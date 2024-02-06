@@ -210,7 +210,20 @@ class SPOT(nn.Module):
             if parallel_dec: # Use parallel decoder
                 dec_input = self.mask_token.to(emb_target.dtype).expand(emb_target.shape[0], -1, -1)
             else: # Use autoregressive decoder
-                dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
+                first_element = emb_target[:, 0, :].unsqueeze(1)
+
+                # Remove the index of the first element (0) from current_perm if it exists
+                # This prevents duplicating the first element when it's explicitly added at the beginning
+                filtered_perm = [p for p in current_perm if p != 0]
+                print(filtered_perm.shape)
+                print(first_element.shape)
+                print(filtered_perm)
+                print(first_element)
+                # Index emb_target with the filtered current_perm to exclude the first element
+                # Concatenate the explicitly included first element with the permuted elements
+                dec_input = torch.cat((first_element, emb_target[:, filtered_perm, :][:, :-1, :]), dim=1)
+
+                # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
 
             if use_pos_emb:
                 # Add position embedding if they exist.
