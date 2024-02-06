@@ -215,13 +215,16 @@ class SPOT(nn.Module):
                 # Remove the index of the first element (0) from current_perm if it exists
                 # This prevents duplicating the first element when it's explicitly added at the beginning
                 filtered_perm = [p for p in current_perm if p != 0]
+                first_element_tensor = torch.tensor([p.item() for p in first_element])
+                filtered_perm_tensor = torch.tensor([p.item() for p in filtered_perm])
+
                 print(filtered_perm)
                 print(first_element)
 
 
                 # Index emb_target with the filtered current_perm to exclude the first element
                 # Concatenate the explicitly included first element with the permuted elements
-                dec_input = torch.cat((emb_target[:, first_element , :][:, :-1, :], emb_target[:, filtered_perm, :][:, :-1, :]), dim=1)
+                dec_input = torch.cat((emb_target[:, first_element_tensor, :][:, :-1, :], emb_target[:, filtered_perm_tensor, :][:, :-1, :]), dim=1)
 
                 # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
 
