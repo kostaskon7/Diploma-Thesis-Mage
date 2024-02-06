@@ -221,11 +221,11 @@ class SPOT(nn.Module):
                 print(filtered_perm)
                 print(first_element)
 
-
+                print("prin")
                 # Index emb_target with the filtered current_perm to exclude the first element
                 # Concatenate the explicitly included first element with the permuted elements
                 dec_input = torch.cat((emb_target[:, first_element_tensor, :][:, :-1, :], emb_target[:, filtered_perm_tensor, :][:, :-1, :]), dim=1)
-
+                print("meta")
                 # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
 
             if use_pos_emb:
