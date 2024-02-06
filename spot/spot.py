@@ -255,6 +255,58 @@ class SPOT(nn.Module):
 
 
         return mean_dec_output, mean_dec_slots_attns
+    
+
+    def forward_decoder_generation(self, slots, n_tokens):
+        # Prepate the input tokens for the decoder transformer:
+        # (1) insert a learnable beggining-of-sequence ([BOS]) token at the beggining of each target embedding sequence.
+        # (2) remove the last token of the target embedding sequence
+        # (3) no need to add positional embeddings since positional information already exists at the DINO's outptu.
+        
+
+
+
+        bos_token = self.bos_tokens[0]
+        bos_token = bos_token.expand(slots.shape[0], -1, -1)
+        
+
+
+
+        # dec_input = torch.cat((bos_token, emb_target[:,:,:][:, :-1, :]), dim=1)
+
+
+        dec_input = bos_token
+        dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
+
+        for i in range(n_tokens):
+
+
+            # dec_input has the same shape as emb_target, which is [B, N, D]
+            dec_input_proj = self.input_proj(dec_input)
+
+
+            # Apply the decoder
+            dec_output = self.dec(dec_input_proj, dec_input_slots, causal_mask=True)
+            # decoder_output shape [B, N, D]
+
+            dec_input = torch.cat((dec_input, dec_output[:, -1, :]), dim=1)
+
+
+
+            dec_slots_attns = self.dec_slots_attns[0]
+            self.dec_slots_attns = []
+
+            # sum over the heads and 
+            dec_slots_attns = dec_slots_attns.sum(dim=1) # [B, N, num_slots]
+            # dec_slots_attns shape [B, num_heads, N, num_slots]
+            # L1-normalize over the slots so as to sum to 1.
+            dec_slots_attns = dec_slots_attns / dec_slots_attns.sum(dim=2, keepdim=True)
+
+        
+
+
+
+        return dec_output, dec_slots_attns
 
     def get_embeddings_n_slots(self, image):
         """
