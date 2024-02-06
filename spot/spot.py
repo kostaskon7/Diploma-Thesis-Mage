@@ -248,6 +248,11 @@ class SPOT(nn.Module):
                 dec_slots_attns = dec_slots_attns / dec_slots_attns.sum(dim=2, keepdim=True)
 
                 inv_current_perm = torch.argsort(current_perm)
+
+                print(dec_output.shape)
+                print(current_perm.shape)
+                print(inv_current_perm)
+
                 dec_slots_attns = dec_slots_attns[:,inv_current_perm,:]
                 dec_output = dec_output[:,inv_current_perm,:]
 
