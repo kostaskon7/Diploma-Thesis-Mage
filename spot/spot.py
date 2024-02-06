@@ -211,25 +211,11 @@ class SPOT(nn.Module):
                 dec_input = self.mask_token.to(emb_target.dtype).expand(emb_target.shape[0], -1, -1)
             else: # Use autoregressive decoder
                 first_element = [p for p in current_perm if p == 0]
-
-                # Remove the index of the first element (0) from current_perm if it exists
-                # This prevents duplicating the first element when it's explicitly added at the beginning
                 filtered_perm = [p for p in current_perm if p != 0]
-                # print(filtered_perm)
-                # print(first_element)
-
-                print("Prin")
-                # Index emb_target with the filtered current_perm to exclude the first element
-                # Concatenate the explicitly included first element with the permuted elements
-                # print(emb_target.shape)
-                # emb_target_no_cls=emb_target[:,1:,:]
-                # print(emb_target_no_cls.shape)
-                # print(emb_target[:, first_element , :].shape)
-                # print(emb_target_no_cls[:, filtered_perm, :][:, :-1, :].shape)
                 dec_input = torch.cat((emb_target[:, first_element , :], emb_target[:, filtered_perm, :]), dim=1)
-                print("Meta")
                 # print(emb_target)
                 # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
+
 
             if use_pos_emb:
                 # Add position embedding if they exist.
@@ -252,12 +238,8 @@ class SPOT(nn.Module):
                 # dec_slots_attns shape [B, num_heads, N, num_slots]
                 # L1-normalize over the slots so as to sum to 1.
                 dec_slots_attns = dec_slots_attns / dec_slots_attns.sum(dim=2, keepdim=True)
-                print(current_perm)
                 inv_current_perm = torch.argsort(current_perm)
-                print(dec_input.shape)
-                print(dec_output.shape)
-                print(current_perm.shape)
-                print(inv_current_perm)
+
 
                 dec_slots_attns = dec_slots_attns[:,inv_current_perm,:]
                 dec_output = dec_output[:,inv_current_perm,:]
