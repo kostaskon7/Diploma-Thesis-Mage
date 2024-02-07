@@ -297,7 +297,7 @@ class SPOT(nn.Module):
             print(dec_input.shape)
             print(dec_output.shape)
 
-            dec_input = torch.cat((dec_input, dec_output[:, -1, :]), dim=1)
+            dec_input = torch.cat((dec_input, dec_output[:, -1, :].unsqueeze(1)), dim=1)
 
 
 
