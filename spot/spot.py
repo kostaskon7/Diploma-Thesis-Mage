@@ -362,7 +362,7 @@ class SPOT(nn.Module):
         else:
             # Run both decoders
             dec_recon_1, dec_slots_attns_1 = self.forward_decoder(slots, emb_target[:, 1:, :])  # Assuming some input is needed
-            dec_recon_2, dec_slots_attns_2 = self.forward_decoder_generation(slots)
+            dec_recon, dec_slots_attns_2 = self.forward_decoder_generation(slots)
 
 
 
@@ -375,10 +375,10 @@ class SPOT(nn.Module):
         # torch.Size([64, 256, 768])
         # torch.Size([64, 256, 768])
         if self.use_token_inds_target:
-            if self.training:
-                dec_preds =self.dec_predictor(dec_recon)
-            else :
-                dec_preds =self.dec_predictor(dec_recon_2)
+            # if self.training:
+            #     dec_preds =self.dec_predictor(dec_recon)
+            # else :
+            dec_preds =self.dec_predictor(dec_recon)
 
             self.dec_preds=dec_preds
             # token_indices = token_indices.reshape(-1)
@@ -394,7 +394,7 @@ class SPOT(nn.Module):
                 loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
             # loss_out = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
             else:
-                loss_out = ((emb_target[:,1:,:] - dec_recon_2) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
+                loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
 
         # Reshape the slot and decoder-slot attentions.
         # slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
