@@ -263,7 +263,7 @@ class SPOT(nn.Module):
         return mean_dec_output, mean_dec_slots_attns
     
 
-    def forward_decoder_generation(self, slots, n_tokens):
+    def forward_decoder_generation(self, slots, n_tokens=256):
         # Prepate the input tokens for the decoder transformer:
         # (1) insert a learnable beggining-of-sequence ([BOS]) token at the beggining of each target embedding sequence.
         # (2) remove the last token of the target embedding sequence
@@ -357,7 +357,7 @@ class SPOT(nn.Module):
 
         # Apply the decoder.
         # dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target[:,1:,:])
-        dec_recon, dec_slots_attns = self.forward_decoder_generation(slots, emb_target[:,1:,:])
+        dec_recon, dec_slots_attns = self.forward_decoder_generation(slots )
 
         # Mean-Square-Error loss
         H_enc, W_enc = int(math.sqrt(emb_target.shape[1])), int(math.sqrt(emb_target.shape[1]))
