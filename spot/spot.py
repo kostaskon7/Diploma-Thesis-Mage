@@ -365,9 +365,7 @@ class SPOT(nn.Module):
             dec_recon_1, dec_slots_attns_1 = self.forward_decoder(slots, emb_target[:, 1:, :])  # Assuming some input is needed
             dec_recon_2, dec_slots_attns_2 = self.forward_decoder_generation(slots)
 
-            # Pack results together
-            dec_recon = (dec_recon_1, dec_recon_2)
-            dec_slots_attns = (dec_slots_attns_1, dec_slots_attns_2)
+
 
 
         # dec_recon, dec_slots_attns = self.forward_decoder_generation(slots )
@@ -406,7 +404,7 @@ class SPOT(nn.Module):
         if self.training:
             dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
         else:
-            dec_slots_attns = dec_slots_attns_2.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
+            dec_slots_attns = dec_slots_attns_1.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
         
 
 
