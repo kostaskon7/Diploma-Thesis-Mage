@@ -72,7 +72,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5):
 
             
             # decoder
-            logits, = model.forward_decoder(x, token_drop_mask, token_all_mask)
+            logits, = model.forward_decoder_generation(x, token_drop_mask, token_all_mask)
             logits = logits[:, 1:, :codebook_size]
 
 
