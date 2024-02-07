@@ -43,11 +43,12 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5):
     token_indices = initial_token_indices.cuda()
 
     for step in range(num_iter):
+        cur_ids = token_indices.clone().long()
+
 
         if step == 0:
             val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
         else:
-            cur_ids = token_indices.clone().long()
 
             token_indices = torch.cat(
                 [torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
