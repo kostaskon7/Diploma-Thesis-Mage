@@ -340,6 +340,38 @@ class MaskedGenerativeEncoderViT(nn.Module):
         token_indices = token_indices.long()
 
         return x, gt_indices, token_drop_mask, token_all_mask
+    
+
+    def forward_decoder_generation(self, x, token_drop_mask, token_all_mask):
+        # embed tokens
+        x = self.decoder_embed(x)
+
+        # append mask tokens to sequence
+        if self.pad_with_cls_token:
+            mask_tokens = x[:, 0:1].repeat(1, token_all_mask.shape[1], 1)
+        else:
+            mask_tokens = self.mask_token.repeat(token_all_mask.shape[0], token_all_mask.shape[1], 1)
+
+        # put undropped tokens into original sequence
+        x_after_pad = mask_tokens.clone()
+        x_after_pad[(1 - token_drop_mask).nonzero(as_tuple=True)] = x.reshape(x.shape[0] * x.shape[1], x.shape[2])
+        # set undropped but masked positions with mask
+        x_after_pad = torch.where(token_all_mask.unsqueeze(-1).bool(), mask_tokens, x_after_pad)
+
+        # add pos embed
+        x = x_after_pad + self.decoder_pos_embed_learned
+
+        # apply Transformer blocks
+        for blk in self.decoder_blocks:
+            x = blk(x)
+
+        x = self.decoder_norm(x)
+
+        word_embeddings = self.token_emb.word_embeddings.weight.data.detach()
+        x = self.mlm_layer(x, word_embeddings)
+        # print("Logits shape:", x.shape)
+
+        return x
 
     def forward_decoder(self, x,slots, token_drop_mask, token_all_mask):
         # embed tokens
