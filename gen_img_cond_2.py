@@ -48,6 +48,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5):
 
         if step == 0:
             val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
+            logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
         else:
 
             token_indices = torch.cat(
@@ -72,9 +73,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5):
             
             # decoder
             logits,_ = model.forward_decoder(x, token_drop_mask, token_all_mask)
+            logits = logits[:, 1:, :codebook_size]
 
 
-        logits = logits[:, 1:, :codebook_size]
+        
 
         # get token prediction
         sample_dist = torch.distributions.categorical.Categorical(logits=logits)
