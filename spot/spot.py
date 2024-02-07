@@ -358,8 +358,12 @@ class SPOT(nn.Module):
         # slots_attns shape: [B, N, num_slots]
 
         # Apply the decoder.
-        # dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target[:,1:,:])
-        dec_recon, dec_slots_attns = self.forward_decoder_generation(slots )
+        if self.training:
+            dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target[:,1:,:])
+        else:
+            dec_recon, dec_slots_attns = self.forward_decoder_generation(slots )
+
+        # dec_recon, dec_slots_attns = self.forward_decoder_generation(slots )
 
         # Mean-Square-Error loss
         H_enc, W_enc = int(math.sqrt(emb_target.shape[1])), int(math.sqrt(emb_target.shape[1]))
