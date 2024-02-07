@@ -294,8 +294,7 @@ class SPOT(nn.Module):
             # Apply the decoder
             dec_output = self.dec(dec_input_proj, dec_input_slots, causal_mask=True)
             # decoder_output shape [B, N, D]
-            print(dec_input.shape)
-            print(dec_output.shape)
+
 
             dec_input = torch.cat((dec_input, dec_output[:, -1, :].unsqueeze(1)), dim=1)
 
