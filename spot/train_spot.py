@@ -277,10 +277,13 @@ def train(args):
                 batch_size = image.shape[0]
                 counter += batch_size
     
-                mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image)
-                logits=model.dec_preds
+
                 # Reconstruct image vqgan
                 if args.recon and (epoch==args.finish_epoch-1):
+
+                    mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image,gen=True)
+                    logits=model.dec_preds
+
                     codebook_emb_dim=256
                     print(mse.shape)
                     logits = logits[:, :, :model.encoder.codebook_size]
@@ -317,7 +320,8 @@ def train(args):
                                     ################ Recon
 
 
-    
+                mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image)
+                logits=model.dec_preds
                 # DINOSAUR uses as attention masks the attenton maps of the decoder
                 # over the slots, which bilinearly resizes to match the image resolution
                 # dec_slots_attns shape: [B, num_slots, H_enc, W_enc]
