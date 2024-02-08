@@ -267,7 +267,6 @@ class SPOT(nn.Module):
         # (2) remove the last token of the target embedding sequence
         # (3) no need to add positional embeddings since positional information already exists at the DINO's outptu.
         
-        print("Mphka")
 
         bos_token = self.bos_tokens[0]
         bos_token = bos_token.expand(slots.shape[0], -1, -1)

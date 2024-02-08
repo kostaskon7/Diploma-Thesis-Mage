@@ -286,7 +286,6 @@ def train(args):
                     logits=model.dec_preds
 
                     codebook_emb_dim=256
-                    print(mse.shape)
                     logits = logits[:, :, :model.encoder.codebook_size]
                     # logits = logits[:, 1:, :model.codebook_size]
 
