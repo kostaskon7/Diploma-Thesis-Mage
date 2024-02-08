@@ -196,7 +196,7 @@ class SPOT(nn.Module):
         
         all_dec_slots_attns = []
         all_dec_output = []
-        
+        print("Mphka")
         for perm_id in which_permutations:
             current_perm = self.permutations[perm_id]
 
@@ -254,7 +254,7 @@ class SPOT(nn.Module):
             all_dec_slots_attns.append(dec_slots_attns)
             all_dec_output.append(dec_output)
 
-
+        print("Mphka")
 
         mean_dec_slots_attns = torch.stack(all_dec_slots_attns).mean(0)
         mean_dec_output = torch.stack(all_dec_output).mean(0)
@@ -269,7 +269,7 @@ class SPOT(nn.Module):
         # (2) remove the last token of the target embedding sequence
         # (3) no need to add positional embeddings since positional information already exists at the DINO's outptu.
         
-
+        print("Mphka")
 
 
         bos_token = self.bos_tokens[0]
@@ -283,7 +283,7 @@ class SPOT(nn.Module):
 
         dec_input = bos_token
         dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
-
+        print("Mphka")
         for i in range(n_tokens):
 
 
@@ -309,9 +309,7 @@ class SPOT(nn.Module):
             # L1-normalize over the slots so as to sum to 1.
             dec_slots_attns = dec_slots_attns / dec_slots_attns.sum(dim=2, keepdim=True)
 
-        
-
-
+        print("Mphka")
 
         return dec_output, dec_slots_attns
 
@@ -360,9 +358,12 @@ class SPOT(nn.Module):
         if self.training:
             dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target[:, 1:, :])
         else:
+            print("1")
             # Run both decoders
             dec_recon_1, dec_slots_attns_1 = self.forward_decoder(slots, emb_target[:, 1:, :])  # Assuming some input is needed
+            print("2")
             dec_recon, dec_slots_attns_2 = self.forward_decoder_generation(slots)
+            print("3")
 
 
 
