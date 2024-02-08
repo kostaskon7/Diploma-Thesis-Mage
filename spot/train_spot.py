@@ -279,7 +279,8 @@ def train(args):
     
 
                 # Reconstruct image vqgan
-                if args.recon and (epoch==args.finish_epoch-1):
+                # if args.recon and (epoch==args.finish_epoch-1):
+                if args.recon :
 
                     mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image,gen=True)
                     logits=model.dec_preds
