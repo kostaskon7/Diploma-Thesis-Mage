@@ -198,8 +198,6 @@ class SPOT(nn.Module):
         all_dec_output = []
         for perm_id in which_permutations:
             current_perm = self.permutations[perm_id]
-            print(perm_id)
-            print(current_perm)
 
             bos_token = self.bos_tokens[perm_id]
             bos_token = bos_token.expand(emb_target.shape[0], -1, -1)
@@ -215,7 +213,6 @@ class SPOT(nn.Module):
                 # filtered_perm = [p for p in current_perm if p != 0]
                 # dec_input = torch.cat((emb_target[:, first_element , :], emb_target[:, filtered_perm, :]), dim=1)
                 dec_input = emb_target[:, :-1 , :]
-                print(dec_input)
                 # print(emb_target)
                 # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
 
