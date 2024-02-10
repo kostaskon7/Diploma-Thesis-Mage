@@ -352,7 +352,9 @@ class SPOT(nn.Module):
         if gen:
             dec_recon, dec_slots_attns = self.forward_decoder_generation(slots)
         else :
-            dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target[:, 1:, :])
+            # dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target[:, 1:, :])
+            dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target)
+
 
 
         # dec_recon, dec_slots_attns = self.forward_decoder_generation(slots )
