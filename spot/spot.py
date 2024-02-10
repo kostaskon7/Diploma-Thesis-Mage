@@ -217,8 +217,8 @@ class SPOT(nn.Module):
                 dec_input = emb_target[:, :-1 , :]
                 # print(emb_target)
                 # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
-
-
+                print(dec_input)
+                print( emb_target[:,current_perm,:][:, :-1 , :])
             if use_pos_emb:
                 # Add position embedding if they exist.
                 dec_input = dec_input + self.pos_embed.to(emb_target.dtype)
