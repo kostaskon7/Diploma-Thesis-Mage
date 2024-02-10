@@ -198,6 +198,8 @@ class SPOT(nn.Module):
         all_dec_output = []
         for perm_id in which_permutations:
             current_perm = self.permutations[perm_id]
+            print(perm_id)
+            print(current_perm)
 
             bos_token = self.bos_tokens[perm_id]
             bos_token = bos_token.expand(emb_target.shape[0], -1, -1)
