@@ -19,6 +19,7 @@ class SPOT(nn.Module):
         self.use_token_embs = args.use_token_embs
         self.use_token_inds_target = args.use_token_inds_target
 
+
         
         for param_name, param in self.encoder.named_parameters():
             if ('blocks' in param_name):
@@ -212,6 +213,7 @@ class SPOT(nn.Module):
                 # first_element = [p for p in current_perm if p == 0]
                 # filtered_perm = [p for p in current_perm if p != 0]
                 # dec_input = torch.cat((emb_target[:, first_element , :], emb_target[:, filtered_perm, :]), dim=1)
+
                 dec_input = emb_target[:, :-1 , :]
                 # print(emb_target)
                 # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
