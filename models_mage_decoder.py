@@ -334,11 +334,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         while True:
             noise = torch.rand(bsz, seq_len, device=x.device)  # noise in [0, 1]
             sorted_noise, _ = torch.sort(noise, dim=1)  # ascend: small is remove, large is keep
-            cutoff_drop = sorted_noise[:, num_dropped_tokens-1:num_dropped_tokens]
             cutoff_mask = sorted_noise[:, num_masked_tokens-1:num_masked_tokens]
-            token_drop_mask = (noise <= cutoff_drop).float()
             token_all_mask = (noise <= cutoff_mask).float()
-            if token_drop_mask.sum() == bsz*num_dropped_tokens and token_all_mask.sum() == bsz*num_masked_tokens:
+            if token_all_mask.sum() == bsz*num_masked_tokens:
                 break
             else:
                 print("Rerandom the noise!")
@@ -349,10 +347,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # concate class token
         token_indices = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
         token_indices[:, 0] = self.fake_class_label
-        token_drop_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_drop_mask], dim=1)
+        # token_drop_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_drop_mask], dim=1)
         token_all_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_all_mask], dim=1)
         token_indices = token_indices.long()
-        
+
         return x, gt_indices, token_drop_mask, token_all_mask
     
 
