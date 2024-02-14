@@ -231,7 +231,9 @@ class SPOT(nn.Module):
                 dec_input = dec_input + self.pos_embed.to(emb_target.dtype)
 
             # dec_input has the same shape as emb_target, which is [B, N, D]
+            print(dec_input.shape)
             dec_input = self.input_proj(dec_input)
+            print(dec_input.shape)
     
             # Apply the decoder
             dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
