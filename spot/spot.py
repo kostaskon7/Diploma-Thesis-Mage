@@ -336,6 +336,7 @@ class SPOT(nn.Module):
 
         B, _, H, W = image.size()
         emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
+        print(x.shape)
 
         with torch.no_grad():
             if self.second_encoder is not None:
