@@ -116,7 +116,10 @@ class SPOT(nn.Module):
         
         if self.dec_type=='transformer':
             self.dec = TransformerDecoder(
-                args.num_dec_blocks, args.max_tokens, args.d_model, args.num_heads, args.dropout, args.num_cross_heads)
+                args.num_dec_blocks, args.max_tokens, args.d_model+1, args.num_heads, args.dropout, args.num_cross_heads)
+
+            # self.dec = TransformerDecoder(
+            #     args.num_dec_blocks, args.max_tokens, args.d_model, args.num_heads, args.dropout, args.num_cross_heads)
             if self.use_token_inds_target:
                 self.dec_predictor = nn.Linear(self.d_model, self.encoder.codebook_size)
             if self.cappa > 0:
@@ -214,10 +217,10 @@ class SPOT(nn.Module):
                 # filtered_perm = [p for p in current_perm if p != 0]
                 # dec_input = torch.cat((emb_target[:, first_element , :], emb_target[:, filtered_perm, :]), dim=1)
 
-                dec_input = emb_target[:, :-1 , :]
+                # dec_input = emb_target[:, :-1 , :]
                 # print(emb_target)
                 # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
-                # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:]), dim=1)
+                dec_input = torch.cat((bos_token, emb_target[:,current_perm,:]), dim=1)
 
             if use_pos_emb:
                 # Add position embedding if they exist.
