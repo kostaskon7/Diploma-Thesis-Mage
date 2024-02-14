@@ -228,6 +228,9 @@ class SPOT(nn.Module):
     
             # Apply the decoder
             dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
+
+            print(dec_input_slots.shape)
+            print(dec_input.shape)
             if self.dec_type=='transformer':
                 dec_output = self.dec(dec_input, dec_input_slots, causal_mask=(not parallel_dec))
                 # decoder_output shape [B, N, D]
