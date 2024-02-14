@@ -42,7 +42,8 @@ class SPOT(nn.Module):
             x,_,_ = self.forward_encoder(x, self.encoder)
             _, num_tokens, d_model = x.shape
 
-        args.d_model = d_model
+        # args.d_model = d_model
+            ##Allagh edwwwwwwww
 
         self.num_slots = args.num_slots
         self.d_model = args.d_model
