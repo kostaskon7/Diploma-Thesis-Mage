@@ -236,6 +236,7 @@ class SPOT(nn.Module):
             print(dec_input.shape)
     
             # Apply the decoder
+            print(slots.shape)
             dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
             print(dec_input_slots.shape)
 
@@ -357,6 +358,8 @@ class SPOT(nn.Module):
 
         # Apply the slot attention
         slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_input)
+        print("Slots shapes are:")
+        print(slots.shape)
         # slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_target)
 
         attn_logits = attn_logits.squeeze()
