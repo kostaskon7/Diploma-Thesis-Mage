@@ -214,9 +214,9 @@ class SPOT(nn.Module):
                 # filtered_perm = [p for p in current_perm if p != 0]
                 # dec_input = torch.cat((emb_target[:, first_element , :], emb_target[:, filtered_perm, :]), dim=1)
 
-                # dec_input = emb_target[:, :-1 , :]
+                dec_input = emb_target[:, :-1 , :]
                 # print(emb_target)
-                dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
+                # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
                 # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:]), dim=1)
 
             if use_pos_emb:
