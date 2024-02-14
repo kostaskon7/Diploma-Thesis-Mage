@@ -217,7 +217,9 @@ class SPOT(nn.Module):
                 dec_input = emb_target[:, :-1 , :]
                 # print(emb_target)
                 # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:, :-1, :]), dim=1)
-                if(emb_target[:, :-1 , :]==emb_target[:, filtered_perm, :]):
+                print(emb_target[:, 1:-1 , :].shape)
+                print(emb_target[:, filtered_perm, :].shape)
+                if(emb_target[:, 1:-1 , :]==emb_target[:, filtered_perm, :]):
                     print("BOBA")
                 else:
                     print(emb_target[:, :-1 , :].shape)
