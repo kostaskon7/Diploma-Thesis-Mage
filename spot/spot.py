@@ -48,8 +48,7 @@ class SPOT(nn.Module):
         self.num_slots = args.num_slots
         self.d_model = args.d_model
 
-        print(args.d_model)
-        print("Edw d_model")
+
 
         self.slot_attn = SlotAttentionEncoder(
             args.num_iterations, args.num_slots,
@@ -169,8 +168,8 @@ class SPOT(nn.Module):
         for blk in encoder.blocks:
             x = blk(x)
         
-        # return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:]
-        return x,token_emb,token_indices
+        return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:]
+        # return x,token_emb,token_indices
 
 
     def forward_decoder(self, slots, emb_target):
@@ -214,31 +213,25 @@ class SPOT(nn.Module):
             if parallel_dec: # Use parallel decoder
                 dec_input = self.mask_token.to(emb_target.dtype).expand(emb_target.shape[0], -1, -1)
             else: # Use autoregressive decoder
-                first_element = [p for p in current_perm if p == 0]
-                filtered_perm = [p for p in current_perm if p != 0]
+                # first_element = [p for p in current_perm if p == 0]
+                # filtered_perm = [p for p in current_perm if p != 0]
                 # dec_input = torch.cat((emb_target[:, first_element , :], emb_target[:, filtered_perm, :]), dim=1)
 
                 # dec_input = emb_target[:, :-1 , :]
                 # print(emb_target)
-                print(emb_target[:, first_element , :].shape)
-                print(emb_target[:,1:,:][:, filtered_perm , :].shape)
-                dec_input = torch.cat((bos_token,emb_target[:, first_element , :],emb_target[:,1:,:][:, filtered_perm , :]), dim=1)
-                print(dec_input.shape)
-                # dec_input = torch.cat((bos_token, emb_target[:,current_perm,:]), dim=1)
+
+                # dec_input = torch.cat((bos_token,emb_target[:, first_element , :],emb_target[:,1:,:][:, filtered_perm , :]), dim=1)
+                dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:,:-1,:]), dim=1)
 
             if use_pos_emb:
                 # Add position embedding if they exist.
                 dec_input = dec_input + self.pos_embed.to(emb_target.dtype)
 
             # dec_input has the same shape as emb_target, which is [B, N, D]
-            print(dec_input.shape)
             dec_input = self.input_proj(dec_input)
-            print(dec_input.shape)
     
             # Apply the decoder
-            print(slots.shape)
             dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
-            print(dec_input_slots.shape)
 
             if self.dec_type=='transformer':
                 dec_output = self.dec(dec_input, dec_input_slots, causal_mask=(not parallel_dec))
@@ -343,7 +336,6 @@ class SPOT(nn.Module):
 
         B, _, H, W = image.size()
         emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
-        print(emb_input.shape)
 
         with torch.no_grad():
             if self.second_encoder is not None:
@@ -358,8 +350,7 @@ class SPOT(nn.Module):
 
         # Apply the slot attention
         slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_input)
-        print("Slots shapes are:")
-        print(slots.shape)
+
         # slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_target)
 
         attn_logits = attn_logits.squeeze()
@@ -398,12 +389,12 @@ class SPOT(nn.Module):
 
             loss_out = loss(dec_preds,token_indices)
         else:
-
-            loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
+            loss_out = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
+            # loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
 
         # Reshape the slot and decoder-slot attentions.
-        # slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
-        slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
+        slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
+        # slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
 
         dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
 
