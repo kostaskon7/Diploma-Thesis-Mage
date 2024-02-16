@@ -102,6 +102,40 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5):
         # Masks tokens with lower confidence.
         token_indices = torch.where(masking, mask_token_id, sampled_ids)
 
+
+        batch_size=32
+
+        #Save images every iteration
+        probabilities = torch.nn.functional.softmax(logits, dim=-1)
+        reconstructed_indices = torch.argmax(probabilities, dim=-1)
+        z_q = model.encoder.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
+        gen_images = model.encoder.vqgan.decode(z_q)
+
+
+        gen_img_list = []
+        gen_images_batch = gen_images.detach().cpu()
+        gen_img_list.append(gen_images_batch)
+        orig_images_batch=image.detach().cpu()
+
+        # Save images
+        for b_id in range(batch_size):
+            # Apply inverse normalization
+            # inv_gen_img = inv_normalize(gen_images_batch[b_id])
+            inv_gen_img=gen_images_batch[b_id]
+            # inv_orig_img = inv_normalize(orig_images_batch[b_id])
+            inv_orig_img = orig_images_batch[b_id]
+
+            # Convert to numpy and save - Generated Image
+            gen_img_np = np.clip(inv_gen_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
+            gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(os.path.join(args.log_path, '{}.png'.format(str(10000*step  + b_id).zfill(5))), gen_img_np)
+
+            # Convert to numpy and save - Original Image
+            orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
+            orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(os.path.join(args.log_path, 'orig_{}.png'.format(str(10000*step + b_id).zfill(5))), orig_img_np)
+        
+
     # vqgan visualization
     z_q = model.vqgan.quantize.get_codebook_entry(sampled_ids, shape=(bsz, 16, 16, codebook_emb_dim))
     gen_images = model.vqgan.decode(z_q)
@@ -160,10 +194,10 @@ if args.dataset == 'coco':
 
 
 else:
-    transform_train = transforms.Compose([
-        transforms.RandomResizedCrop(256, scale=(0.2, 1.0)),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor()])
+    transform_train = transforms.Compose([transforms.ToTensor()])
+        # transforms.RandomResizedCrop(256, scale=(0.2, 1.0)),
+        # transforms.RandomHorizontalFlip(),
+        # transforms.ToTensor()])
     dataset_train = datasets.ImageFolder(os.path.join(args.data_path, 'val'), transform=transform_train)
     # sampler_train = torch.utils.data.RandomSampler(dataset_train)
     sampler_train = None
@@ -199,13 +233,13 @@ for batch, data in iterator:
 
         gen_img = np.clip(gen_images_batch[b_id].numpy().transpose([1, 2, 0]) * 255, 0, 255)
         gen_img = gen_img.astype(np.uint8)[:, :, ::-1]
-        cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(batch*args.batch_size+b_id).zfill(5))), gen_img)
+        cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(10000*batch+b_id).zfill(5))), gen_img)
 
 
 
         inv_orig_img = orig_images_batch[b_id]
         orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
         orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(batch * args.batch_size + b_id).zfill(5))), orig_img_np)
+        cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(10000*batch + b_id).zfill(5))), orig_img_np)
 
     break
