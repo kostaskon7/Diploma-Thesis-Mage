@@ -212,8 +212,8 @@ for batch, data in iterator:
 
     with torch.no_grad():
         gen_images_batch = gen_image(model=model,image=image, bsz=args.batch_size, seed=batch, choice_temperature=args.temp, num_iter=args.num_iter)
-    gen_images_batch = gen_images_batch.detach().cpu()
-    gen_img_list.append(gen_images_batch)
+        gen_images_batch = gen_images_batch.detach().cpu()
+        gen_img_list.append(gen_images_batch)
 
     orig_images_batch=image.detach().cpu()
     # save img
