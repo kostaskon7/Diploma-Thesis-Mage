@@ -182,7 +182,7 @@ if args.dataset == 'coco':
 
 
 else:
-    transform_train = transforms.Compose([transforms.ToTensor()])
+    transform_train = transforms.Compose([transforms.CenterCrop(256),transforms.ToTensor()])
         # transforms.RandomResizedCrop(256, scale=(0.2, 1.0)),
         # transforms.RandomHorizontalFlip(),
         # transforms.ToTensor()])
