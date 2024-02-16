@@ -83,6 +83,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         ratio = 1. * (step + 1) / num_iter
 
         mask_ratio = np.cos(math.pi / 2. * ratio)
+        print(mask_ratio)
 
         # sample ids according to prediction confidence
         probs = torch.nn.functional.softmax(logits, dim=-1)
