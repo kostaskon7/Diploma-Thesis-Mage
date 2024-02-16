@@ -127,11 +127,13 @@ parser.add_argument('--data_path', default='None', type=str,
                     help='name')
 parser.add_argument('--dataset', default='coco', type=str,
                     help='dataset name')
+parser.add_argument('--vqgan_jax_strongaug', default='vqgan_jax_strongaug.ckpt', type=str,
+                    help='dataset name')
                     
 
 args = parser.parse_args()
 
-vqgan_ckpt_path = 'vqgan_jax_strongaug.ckpt'
+vqgan_ckpt_path = args.vqgan_jax_strongaug
 
 model = models_mage.__dict__[args.model](norm_pix_loss=False,
                                          mask_ratio_mu=0.55, mask_ratio_std=0.25,
