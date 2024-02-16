@@ -102,35 +102,15 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # Masks tokens with lower confidence.
         token_indices = torch.where(masking, mask_token_id, sampled_ids)
 
-        #######################
-
-                # Convert 'token_indices' to a mask where each element is 1 if it's not masked (i.e., not equal to mask_token_id) and 0 otherwise
-        unmasked_token_mask = (token_indices != mask_token_id).unsqueeze(-1)  # Add an extra dimension for RGB channels
-
-        # Expand this mask to match the spatial dimensions of the generated images
-        # Assuming each token corresponds to a 'patch' of the image, calculate the size of each patch
-        # For simplicity, let's assume each image is square and can be evenly divided by the number of tokens along each dimension
-        image_height, image_width = 256,256  # Assuming (B, C, H, W) format for images
-        num_patches_side = int(math.sqrt(token_indices.shape[1]))  # Assuming square root of number of tokens gives patches per side
-        patch_size = image_height // num_patches_side  # Size of each patch
-
-        # Resize the mask to match the image dimensions
-        # Note: This simple approach assumes that the number of tokens directly corresponds to image patches
-        # In practice, you might need to adjust this depending on how your tokens relate to image pixels
-        unmasked_image_mask = unmasked_token_mask.repeat(1, 1, patch_size, patch_size)  # Repeat the mask for each patch
-
-        # Apply the mask to the generated images, setting masked regions to black
-        masked_gen_images_batch = gen_images_batch * unmasked_image_mask.float()
-
-        ###############################################
+  
 
         if(per_iter):
             batch_size=32
 
             #Save images every iteration
-            probabilities = torch.nn.functional.softmax(logits, dim=-1)
-            reconstructed_indices = torch.argmax(probabilities, dim=-1)
-            z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
+            # probabilities = torch.nn.functional.softmax(logits, dim=-1)
+            # reconstructed_indices = torch.argmax(probabilities, dim=-1)
+            z_q = model.vqgan.quantize.get_codebook_entry(token_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
             gen_images_batch = model.vqgan.decode(z_q)
 
             # Save images
