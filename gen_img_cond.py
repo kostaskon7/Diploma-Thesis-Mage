@@ -110,6 +110,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             # #Save images every iteration
             probabilities = torch.nn.functional.softmax(logits, dim=-1)
             reconstructed_indices = torch.argmax(probabilities, dim=-1)
+            # Correctly replace masked indices in reconstructed_indices with 1023
+            print(reconstructed_indices)
+            reconstructed_indices = torch.where(token_indices == 2024, torch.tensor(1023, device=token_indices.device), reconstructed_indices)
+            print(reconstructed_indices)
 
             z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
             gen_images_batch = model.vqgan.decode(z_q)
