@@ -110,7 +110,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # Expand this mask to match the spatial dimensions of the generated images
         # Assuming each token corresponds to a 'patch' of the image, calculate the size of each patch
         # For simplicity, let's assume each image is square and can be evenly divided by the number of tokens along each dimension
-        image_height, image_width = gen_images_batch.shape[2], gen_images_batch.shape[3]  # Assuming (B, C, H, W) format for images
+        image_height, image_width = 256,256  # Assuming (B, C, H, W) format for images
         num_patches_side = int(math.sqrt(token_indices.shape[1]))  # Assuming square root of number of tokens gives patches per side
         patch_size = image_height // num_patches_side  # Size of each patch
 
