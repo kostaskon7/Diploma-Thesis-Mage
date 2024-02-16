@@ -25,7 +25,7 @@ def mask_by_random_topk(mask_len, probs, temperature=1.0):
     return masking
 
 
-def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5):
+def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=True):
     torch.manual_seed(seed)
     np.random.seed(seed)
     codebook_emb_dim = 256
@@ -102,38 +102,26 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5):
         # Masks tokens with lower confidence.
         token_indices = torch.where(masking, mask_token_id, sampled_ids)
 
+        if(per_iter):
+            batch_size=32
 
-        batch_size=32
+            #Save images every iteration
+            probabilities = torch.nn.functional.softmax(logits, dim=-1)
+            reconstructed_indices = torch.argmax(probabilities, dim=-1)
+            z_q = model.encoder.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
+            gen_images = model.encoder.vqgan.decode(z_q)
 
-        #Save images every iteration
-        probabilities = torch.nn.functional.softmax(logits, dim=-1)
-        reconstructed_indices = torch.argmax(probabilities, dim=-1)
-        z_q = model.encoder.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
-        gen_images = model.encoder.vqgan.decode(z_q)
+            # Save images
+            for b_id in range(batch_size):
+                # Apply inverse normalization
+                # inv_gen_img = inv_normalize(gen_images_batch[b_id])
+                inv_gen_img=gen_images_batch[b_id]
+                # inv_orig_img = inv_normalize(orig_images_batch[b_id])
 
-
-        gen_img_list = []
-        gen_images_batch = gen_images.detach().cpu()
-        gen_img_list.append(gen_images_batch)
-        orig_images_batch=image.detach().cpu()
-
-        # Save images
-        for b_id in range(batch_size):
-            # Apply inverse normalization
-            # inv_gen_img = inv_normalize(gen_images_batch[b_id])
-            inv_gen_img=gen_images_batch[b_id]
-            # inv_orig_img = inv_normalize(orig_images_batch[b_id])
-            inv_orig_img = orig_images_batch[b_id]
-
-            # Convert to numpy and save - Generated Image
-            gen_img_np = np.clip(inv_gen_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-            gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
-            cv2.imwrite(os.path.join(args.log_path, '{}.png'.format(str(10000*step  + b_id).zfill(5))), gen_img_np)
-
-            # Convert to numpy and save - Original Image
-            orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-            orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
-            cv2.imwrite(os.path.join(args.log_path, 'orig_{}.png'.format(str(10000*step + b_id).zfill(5))), orig_img_np)
+                # Convert to numpy and save - Generated Image
+                gen_img_np = np.clip(inv_gen_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
+                gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
+                cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(10000*step  + b_id).zfill(5))), gen_img_np)
         
 
     # vqgan visualization
