@@ -519,13 +519,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
+
+
+
+        loss = self.forward_loss(gt_indices, logits, token_all_mask)
         del latent
         del latent_mask
         del slots
         torch.cuda.empty_cache()
-
-
-        loss = self.forward_loss(gt_indices, logits, token_all_mask)
 
         return loss, imgs, token_all_mask,attn[:,1:,:],attn_dec,logits
 
