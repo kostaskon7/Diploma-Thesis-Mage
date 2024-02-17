@@ -78,9 +78,11 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         new_slots = torch.stack(new_slots_list, dim=0)  # This will have shape [16, 7, ...]
 
         # Proceed with the modified slots tensor
-        logits, _ = model.forward_decoder(x, new_slots, token_drop_mask, token_all_mask)
+
+        logits, _ = model.forward_decoder(x[:16,:,:], new_slots, token_drop_mask[:16,:], token_all_mask[:16,:])
         
         logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
+        break
 
         # get token prediction
         sample_dist = torch.distributions.categorical.Categorical(logits=logits)
@@ -116,37 +118,37 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
   
 
-        if(per_iter):
-            batch_size=32
+    if(per_iter):
+        batch_size=32
 
-            # #Save images every iteration
-            probabilities = torch.nn.functional.softmax(logits, dim=-1)
-            reconstructed_indices = torch.argmax(probabilities, dim=-1)
-            # Correctly replace masked indices in reconstructed_indices with 1023
-            # print(reconstructed_indices)
-            reconstructed_indices = torch.where(token_indices == 2024, torch.tensor(0, device=token_indices.device), reconstructed_indices)
-            # print(reconstructed_indices)
+        # #Save images every iteration
+        probabilities = torch.nn.functional.softmax(logits, dim=-1)
+        reconstructed_indices = torch.argmax(probabilities, dim=-1)
+        # Correctly replace masked indices in reconstructed_indices with 1023
+        # print(reconstructed_indices)
+        # reconstructed_indices = torch.where(token_indices == 2024, torch.tensor(0, device=token_indices.device), reconstructed_indices)
+        # print(reconstructed_indices)
 
-            z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
-            gen_images_batch = model.vqgan.decode(z_q)
+        z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(16, 16, 16, codebook_emb_dim))
+        gen_images_batch = model.vqgan.decode(z_q)
 
-            # Save images
-            for b_id in range(batch_size):
-                # Apply inverse normalization
-                # inv_gen_img = inv_normalize(gen_images_batch[b_id])
-                inv_gen_img=gen_images_batch[b_id]
-                # inv_orig_img = inv_normalize(orig_images_batch[b_id])
+        # Save images
+        for b_id in range(16):
+            # Apply inverse normalization
+            # inv_gen_img = inv_normalize(gen_images_batch[b_id])
+            inv_gen_img=gen_images_batch[b_id]
+            # inv_orig_img = inv_normalize(orig_images_batch[b_id])
 
-                # Convert to numpy and save - Generated Image
-                gen_img_np = np.clip(inv_gen_img.cpu().numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-                gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
-                cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(10000*step  + b_id).zfill(5))), gen_img_np)
-        
-
+            # Convert to numpy and save - Generated Image
+            gen_img_np = np.clip(inv_gen_img.cpu().numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
+            gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(10000*step  + b_id).zfill(5))), gen_img_np)
+    
+    return(gen_images_batch)
     # vqgan visualization
-    z_q = model.vqgan.quantize.get_codebook_entry(sampled_ids, shape=(bsz, 16, 16, codebook_emb_dim))
-    gen_images = model.vqgan.decode(z_q)
-    return gen_images
+    # z_q = model.vqgan.quantize.get_codebook_entry(sampled_ids, shape=(bsz, 16, 16, codebook_emb_dim))
+    # gen_images = model.vqgan.decode(z_q)
+    # return gen_images
 
 
 parser = argparse.ArgumentParser('MAGE generation', add_help=False)
@@ -243,7 +245,7 @@ for batch, data in iterator:
 
         orig_images_batch=image.detach().cpu()
         # save img
-        for b_id in range(args.batch_size):
+        for b_id in range(int(args.batch_size/2)):
 
             gen_img = np.clip(gen_images_batch[b_id].numpy().transpose([1, 2, 0]) * 255, 0, 255)
             gen_img = gen_img.astype(np.uint8)[:, :, ::-1]
