@@ -271,6 +271,66 @@ class MaskedGenerativeEncoderViT(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
+    def forward_encoder_mask(self, x):
+        # tokenization
+        with torch.no_grad():
+            z_q, _, token_tuple = self.vqgan.encode(x)
+
+        _, _, token_indices = token_tuple
+        token_indices = token_indices.reshape(z_q.size(0), -1)
+        gt_indices = token_indices.clone().detach().long()
+
+        # masking
+        bsz, seq_len = token_indices.size()
+        mask_ratio_min = self.mask_ratio_min
+        mask_rate = self.mask_ratio_generator.rvs(1)[0]
+
+        num_masked_tokens = int(np.ceil(seq_len * mask_rate))
+
+        # it is possible that two elements of the noise is the same, so do a while loop to avoid it
+        while True:
+            noise = torch.rand(bsz, seq_len, device=x.device)  # noise in [0, 1]
+            sorted_noise, _ = torch.sort(noise, dim=1)  # ascend: small is remove, large is keep
+            cutoff_mask = sorted_noise[:, num_masked_tokens-1:num_masked_tokens]
+            token_all_mask = (noise <= cutoff_mask).float()
+            if token_all_mask.sum() == bsz*num_masked_tokens:
+                break
+            else:
+                print("Rerandom the noise!")
+
+        token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
+
+        # print(mask_rate, num_dropped_tokens, num_masked_tokens, token_drop_mask.sum(dim=1), token_all_mask.sum(dim=1))
+        token_indices[token_all_mask.nonzero(as_tuple=True)] = self.mask_token_label
+        # print("Masekd num token:", torch.sum(token_indices == self.mask_token_label, dim=1))
+
+        # concate class token
+        token_indices = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
+        token_indices[:, 0] = self.fake_class_label
+        token_drop_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_drop_mask], dim=1)
+        token_all_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_all_mask], dim=1)
+        token_indices = token_indices.long()
+        # bert embedding
+        input_embeddings = self.token_emb(token_indices)
+        # print("Input embedding shape:", input_embeddings.shape)
+        bsz, seq_len, emb_dim = input_embeddings.shape
+
+        # dropping
+        token_keep_mask = 1 - token_drop_mask
+        input_embeddings_after_drop = input_embeddings[token_keep_mask.nonzero(as_tuple=True)].reshape(bsz, -1, emb_dim)
+        # print("Input embedding after drop shape:", input_embeddings_after_drop.shape)
+
+        # apply Transformer blocks
+        x = input_embeddings_after_drop
+        for blk in self.blocks:
+            x = blk(x)
+        x = self.norm(x)
+        # print("Encoder representation shape:", x.shape)
+
+        return x, gt_indices, token_drop_mask, token_all_mask
+
+    
+
     def forward_encoder(self, x):
         # tokenization
         with torch.no_grad():

@@ -73,7 +73,7 @@ def get_args_parser():
                         help='epochs to warmup LR')
 
     # MAGE params
-    parser.add_argument('--mask_ratio_min', type=float, default=0.5,
+    parser.add_argument('--mask_ratio_min', type=float, default=0.7,
                         help='Minimum mask ratio')
     parser.add_argument('--mask_ratio_max', type=float, default=1.0,
                         help='Maximum mask ratio')
