@@ -245,17 +245,17 @@ for batch, data in iterator:
 
         orig_images_batch=image.detach().cpu()
         # save img
-        for b_id in range(int(args.batch_size/2)):
-
+        for b_id in range(int(args.batch_size)):
+          if(b_id<int(args.batch_size/2)):
             gen_img = np.clip(gen_images_batch[b_id].numpy().transpose([1, 2, 0]) * 255, 0, 255)
             gen_img = gen_img.astype(np.uint8)[:, :, ::-1]
             cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(10000*batch+b_id).zfill(5))), gen_img)
 
 
 
-            inv_orig_img = orig_images_batch[b_id]
-            orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-            orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
-            cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(10000*batch + b_id).zfill(5))), orig_img_np)
+          inv_orig_img = orig_images_batch[b_id]
+          orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
+          orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
+          cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(10000*batch + b_id).zfill(5))), orig_img_np)
 
     break
