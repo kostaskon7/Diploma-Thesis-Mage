@@ -511,7 +511,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
 
 
-        slots, attn, init_slots, attn_logits = self.slot_attention(latent)
+        slots, attn, _, _ = self.slot_attention(latent)
 
         # print(latent.shape)
         # logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
@@ -519,6 +519,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
+        del latent
+        del latent_mask
+        del slots
+        torch.cuda.empty_cache()
 
 
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
