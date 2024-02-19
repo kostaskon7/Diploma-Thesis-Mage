@@ -262,7 +262,7 @@ def main(args):
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
-    for epoch in range(args.start_epoch, 4):
+    for epoch in range(args.start_epoch, 16):
         if args.distributed:
             train_loader.sampler.set_epoch(epoch)
         train_stats = train_one_epoch(
