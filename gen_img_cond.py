@@ -10,6 +10,8 @@ from spot.datasets import COCO2017
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from tqdm import tqdm
+import torch
+import torch.nn.functional as F
 
 
 
@@ -108,16 +110,38 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         if(with_mask_vis):
             batch_size=32
 
+            # Assuming token_indices is of shape [32, 256] with 2024 indicating masks
+            batch_size, hw = token_indices.shape  # hw is 256 in your case
+
+            # Generate a boolean mask for where token_indices equals 2024
+            mask = token_indices == 2024
+
+
+            # Reshape mask to [batch_size, 1, 16, 16] for interpolation
+            mask = mask.view(batch_size, 1, 16, 16)
+
+            # Interpolate mask to [batch_size, 1, 256, 256]
+            mask_upsampled = F.interpolate(mask.float(), size=(256, 256), mode='nearest').bool()
+
+            # Expand mask to match image channels (assuming RGB, so repeat 3 times across dim=1)
+            mask_upsampled = mask_upsampled.expand(-1, 3, -1, -1)
+
+            
+
             # #Save images every iteration
             probabilities = torch.nn.functional.softmax(logits, dim=-1)
             reconstructed_indices = torch.argmax(probabilities, dim=-1)
             # Correctly replace masked indices in reconstructed_indices with 1023
             # print(reconstructed_indices)
-            reconstructed_indices = torch.where(token_indices == 2024, torch.tensor(0, device=token_indices.device), reconstructed_indices)
+            # reconstructed_indices = torch.where(token_indices == 2024, torch.tensor(0, device=token_indices.device), reconstructed_indices)
             # print(reconstructed_indices)
 
             z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
             gen_images_batch = model.vqgan.decode(z_q)
+
+            # Assuming gen_images_batch is the tensor [batch_size, 3, 256, 256] from VQGAN's decode
+            # Set pixels to black (0) where mask_upsampled is True
+            gen_images_batch[mask_upsampled] = 0
 
             # Save images
             for b_id in range(batch_size):
