@@ -85,6 +85,7 @@ def get_args_parser():
 
     parser.add_argument('--recon',  type=int, default=None, help='Reconstruct image')
     parser.add_argument('--finish_epoch',  type=int, default=None, help='last epoch')
+    parser.add_argument('--loss_lambda',  type=int, default=0.3, help='lambda value for lossimportance')
     
     
     return parser
