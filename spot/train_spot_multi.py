@@ -187,8 +187,18 @@ def train(args):
         model.load_state_dict(checkpoint['model'], strict=True)
         msg = model.load_state_dict(checkpoint['model'], strict=True)
         print(msg)
-
     elif args.checkpoint_path.endswith("mage-vitb-1600.pth"):
+        start_epoch = 0
+        best_val_loss = math.inf
+        best_epoch = 0
+        best_val_ari = 0
+        best_val_ari_slot = 0
+        best_mbo_c = 0
+        best_mbo_i = 0
+        best_fg_iou= 0 
+        best_mbo_c_slot = 0
+        best_mbo_i_slot = 0
+        best_fg_iou_slot= 0 
         model.load_state_dict(checkpoint['model'], strict=True)
         msg = model.load_state_dict(checkpoint['model'], strict=True)
         print(msg)
