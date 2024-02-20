@@ -71,6 +71,7 @@ class SPOT(nn.Module):
 
         embed_dim=1024
         decoder_embed_dim=512
+        self.patch_embed = PatchEmbed(args.image_size, patch_size, in_chans, embed_dim)
         num_patches = self.patch_embed.num_patches
         decoder_num_heads=16
         patch_size=16
@@ -525,6 +526,7 @@ class SPOT(nn.Module):
             # dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target[:, 1:, :])
             dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target)
             logits = self.forward_decoder_mage(latent_mask,slots ,token_drop_mask, token_all_mask)
+            self.dec_preds=logits
 
 
 
@@ -556,6 +558,8 @@ class SPOT(nn.Module):
             loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
 
             loss_mage = forward_loss_mage(gt_indices, logits, token_all_mask)
+
+            
         # Reshape the slot and decoder-slot attentions.
         # slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
         slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
@@ -565,7 +569,7 @@ class SPOT(nn.Module):
         
 
 
-        return loss_out, slots_attns, dec_slots_attns, slots, dec_recon, attn_logits
+        return loss_out,loss_mage, slots_attns, dec_slots_attns, slots, dec_recon, attn_logits
 
 
 

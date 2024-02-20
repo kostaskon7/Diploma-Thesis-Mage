@@ -85,7 +85,7 @@ def get_args_parser():
 
     parser.add_argument('--recon',  type=int, default=None, help='Reconstruct image')
     parser.add_argument('--finish_epoch',  type=int, default=None, help='last epoch')
-    parser.add_argument('--loss_lambda',  type=int, default=0.3, help='lambda value for lossimportance')
+    parser.add_argument('--loss_lambda',  type=int, default=0.5, help='lambda value for lossimportance')
     
     
     return parser
@@ -247,9 +247,11 @@ def train(args):
             lr_value = optimizer.param_groups[0]['lr']
             
             optimizer.zero_grad()
-            mse, _, _, _, _, _ = model(image)
+            mse, loss_mage, _, _, _, _, _ = model(image)
 
-            mse.backward()
+            loss= model.loss_lambda*mse - loss_mage*(1-mse)
+
+            loss.backward()
             total_norm = clip_grad_norm_(model.parameters(), args.clip, 'inf')
             total_norm = total_norm.item()
             optimizer.step()
@@ -260,6 +262,8 @@ def train(args):
                           epoch+1, batch, train_epoch_size, lr_value, mse.item(), total_norm))
     
                     writer.add_scalar('TRAIN/mse', mse.item(), global_step)
+                    writer.add_scalar('TRAIN/loss_mage', loss_mage.item(), global_step)
+                    writer.add_scalar('TRAIN/loss', loss.item(), global_step)
                     writer.add_scalar('TRAIN/lr_main', lr_value, global_step)
                     writer.add_scalar('TRAIN/total_norm', total_norm, global_step)
 
@@ -283,7 +287,7 @@ def train(args):
                 if args.recon and (epoch==args.finish_epoch-1):
                 # if args.recon :
 
-                    mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image,gen=True)
+                    mse, default_slots_attns, dec_slots_attns, _, _, _ = model(image)
                     logits=model.dec_preds
 
                     codebook_emb_dim=256
