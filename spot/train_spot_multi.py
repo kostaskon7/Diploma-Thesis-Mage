@@ -199,6 +199,7 @@ def train(args):
         best_mbo_c_slot = 0
         best_mbo_i_slot = 0
         best_fg_iou_slot= 0 
+        checkpoint = torch.load(args.checkpoint_path, map_location='cpu')
         model.load_state_dict(checkpoint['model'], strict=True)
         msg = model.load_state_dict(checkpoint['model'], strict=True)
         print(msg)
