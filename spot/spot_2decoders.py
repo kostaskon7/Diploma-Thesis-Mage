@@ -71,16 +71,16 @@ class SPOT(nn.Module):
 
         embed_dim=1024
         decoder_embed_dim=512
-        self.patch_embed = PatchEmbed(args.image_size, patch_size, in_chans, embed_dim)
-        num_patches = self.patch_embed.num_patches
-        decoder_num_heads=16
         patch_size=16
+        decoder_num_heads=16
         mlp_ratio=4
         norm_layer=partial(nn.LayerNorm, eps=1e-6)
         dropout_rate = 0.1
         decoder_depth=8
         in_chans=3
         vocab_size = self.encoder.codebook_size + 1000 + 1
+        self.patch_embed = PatchEmbed(args.image_size, patch_size, in_chans, embed_dim)
+        num_patches = self.patch_embed.num_patches
 
 
         self.decoder_embed = nn.Linear(embed_dim, decoder_embed_dim, bias=True)
