@@ -222,6 +222,64 @@ class SPOT(nn.Module):
         
         # return x[:,1:,:],token_emb[:,1:,:],token_indices[:,1:]
         return x,token_emb,token_indices
+    
+    def forward_encoder_mage(self, x,encoder):
+        # tokenization
+        with torch.no_grad():
+            z_q, _, token_tuple = encoder.vqgan.encode(x)
+
+        _, _, token_indices = token_tuple
+        token_indices = token_indices.reshape(z_q.size(0), -1)
+        gt_indices = token_indices.clone().detach().long()
+
+        # masking
+        bsz, seq_len = token_indices.size()
+        mask_ratio_min = encoder.mask_ratio_min
+        mask_rate = encoder.mask_ratio_generator.rvs(1)[0]
+
+        num_dropped_tokens = int(np.ceil(seq_len * mask_ratio_min))
+        num_masked_tokens = int(np.ceil(seq_len * mask_rate))
+
+        # it is possible that two elements of the noise is the same, so do a while loop to avoid it
+        while True:
+            noise = torch.rand(bsz, seq_len, device=x.device)  # noise in [0, 1]
+            sorted_noise, _ = torch.sort(noise, dim=1)  # ascend: small is remove, large is keep
+            cutoff_drop = sorted_noise[:, num_dropped_tokens-1:num_dropped_tokens]
+            cutoff_mask = sorted_noise[:, num_masked_tokens-1:num_masked_tokens]
+            token_drop_mask = (noise <= cutoff_drop).float()
+            token_all_mask = (noise <= cutoff_mask).float()
+            if token_drop_mask.sum() == bsz*num_dropped_tokens and token_all_mask.sum() == bsz*num_masked_tokens:
+                break
+            else:
+                print("Rerandom the noise!")
+        # print(mask_rate, num_dropped_tokens, num_masked_tokens, token_drop_mask.sum(dim=1), token_all_mask.sum(dim=1))
+        token_indices[token_all_mask.nonzero(as_tuple=True)] = encoder.mask_token_label
+        # print("Masekd num token:", torch.sum(token_indices == self.mask_token_label, dim=1))
+
+        # concate class token
+        token_indices = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
+        token_indices[:, 0] = encoder.fake_class_label
+        token_drop_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_drop_mask], dim=1)
+        token_all_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_all_mask], dim=1)
+        token_indices = token_indices.long()
+        # bert embedding
+        input_embeddings = encoder.token_emb(token_indices)
+        # print("Input embedding shape:", input_embeddings.shape)
+        bsz, seq_len, emb_dim = input_embeddings.shape
+
+        # dropping
+        token_keep_mask = 1 - token_drop_mask
+        input_embeddings_after_drop = input_embeddings[token_keep_mask.nonzero(as_tuple=True)].reshape(bsz, -1, emb_dim)
+        # print("Input embedding after drop shape:", input_embeddings_after_drop.shape)
+
+        # apply Transformer blocks
+        x = input_embeddings_after_drop
+        for blk in encoder.blocks:
+            x = blk(x)
+        x = encoder.norm(x)
+        # print("Encoder representation shape:", x.shape)
+
+        return x, gt_indices, token_drop_mask, token_all_mask
 
 
     def forward_decoder(self, slots, emb_target):
@@ -399,6 +457,21 @@ class SPOT(nn.Module):
 
 
         return dec_output, dec_slots_attns
+    
+
+    def forward_loss_mage(self, gt_indices, logits, mask):
+        bsz, seq_len = gt_indices.size()
+        # logits and mask are with seq_len+1 but gt_indices is with seq_len
+        loss = self.criterion(logits[:, 8:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
+
+        # print(loss.shape)
+        loss = loss.reshape(bsz, seq_len)
+        # print(loss.shape)
+        loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
+        # print(loss)
+        # print("Telos")
+        return loss
+    
 
     def get_embeddings_n_slots(self, image):
         """
@@ -420,18 +493,17 @@ class SPOT(nn.Module):
         """
 
         B, _, H, W = image.size()
-        emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
-
-        emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
-
         with torch.no_grad():
-            if self.second_encoder is not None:
-                emb_target,_,_ = self.forward_encoder(image, self.second_encoder)
-            else:
-                if self.use_token_embs:
-                    emb_target = token_emb.clone().detach()
-                else:
-                    emb_target = emb_input.clone().detach()
+            latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mage(image, self.encoder)
+
+            emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
+
+        
+
+        if self.use_token_embs:
+            emb_target = token_emb.clone().detach()
+        else:
+            emb_target = emb_input.clone().detach()
         # emb_target shape: B, N, D
         # print(emb_target.shape)
 
@@ -450,6 +522,8 @@ class SPOT(nn.Module):
         else :
             # dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target[:, 1:, :])
             dec_recon, dec_slots_attns = self.forward_decoder(slots, emb_target)
+            logits = self.forward_decoder_mage(latent_mask,slots ,token_drop_mask, token_all_mask)
+
 
 
 
@@ -479,6 +553,7 @@ class SPOT(nn.Module):
             # loss_out = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
             loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
 
+            loss_mage = forward_loss_mage(gt_indices, logits, token_all_mask)
         # Reshape the slot and decoder-slot attentions.
         # slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
         slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
