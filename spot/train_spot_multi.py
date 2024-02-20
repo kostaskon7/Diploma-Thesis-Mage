@@ -171,7 +171,7 @@ def train(args):
     
     model = SPOT(encoder, args, encoder_second)
     
-    if os.path.isfile(args.checkpoint_path):
+    if os.path.isfile(args.checkpoint_path) and (not args.checkpoint_path.endswith("mage-vitb-1600.pth")):
         checkpoint = torch.load(args.checkpoint_path, map_location='cpu')
         start_epoch = checkpoint['epoch']
         best_val_loss = checkpoint['best_val_loss']
@@ -184,6 +184,11 @@ def train(args):
         best_mbo_i_slot = checkpoint['best_mbo_i_slot']
         best_fg_iou_slot = checkpoint['best_fg_iou_slot']
         best_epoch = checkpoint['best_epoch']
+        model.load_state_dict(checkpoint['model'], strict=True)
+        msg = model.load_state_dict(checkpoint['model'], strict=True)
+        print(msg)
+
+    elif args.checkpoint_path.endswith("mage-vitb-1600.pth"):
         model.load_state_dict(checkpoint['model'], strict=True)
         msg = model.load_state_dict(checkpoint['model'], strict=True)
         print(msg)
