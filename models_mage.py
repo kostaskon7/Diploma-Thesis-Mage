@@ -206,10 +206,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
             truncate='none', # or other options as per your requirement
-            init_method='shared_gaussian',  # or 'shared_gaussian'
-            num_heads=6,       # specify the number of heads for attention
-            drop_path=0.0        # specify dropout path rate
+            init_method='shared_gaussian'  # or 'shared_gaussian'
         )
+            # num_heads=6,       # specify the number of heads for attention
+            # drop_path=0.0        # specify dropout path rate
+        
 
         # --------------------------------------------------------------------------
         # MAGE decoder specifics
