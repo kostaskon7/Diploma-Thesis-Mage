@@ -588,6 +588,103 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         
         return x,normalized_atts_slots
+    
+    def forward_decoder_spot(self, slots, emb_target):
+        # Prepate the input tokens for the decoder transformer:
+        # (1) insert a learnable beggining-of-sequence ([BOS]) token at the beggining of each target embedding sequence.
+        # (2) remove the last token of the target embedding sequence
+        # (3) no need to add positional embeddings since positional information already exists at the DINO's outptu.
+        
+
+        if self.training:
+            if self.train_permutations == 'standard':
+                which_permutations = [0] # USE [0] FOR THE STANDARD ORDER
+            elif self.train_permutations == 'random':
+                which_permutations = [random.choice(self.perm_ind)]
+            elif self.train_permutations == 'all':
+                which_permutations = self.perm_ind
+            else:
+                raise
+        else:
+            if self.eval_permutations == 'standard':
+                which_permutations = [0] # USE [0] FOR THE STANDARD ORDER
+            elif self.eval_permutations == 'random':
+                which_permutations = [random.choice(self.perm_ind)]
+            elif self.eval_permutations == 'all':
+                which_permutations = self.perm_ind
+            else:
+                raise
+        
+        all_dec_slots_attns = []
+        all_dec_output = []
+        for perm_id in which_permutations:
+            current_perm = self.permutations[perm_id]
+
+            bos_token = self.bos_tokens[perm_id]
+            bos_token = bos_token.expand(emb_target.shape[0], -1, -1)
+            
+            use_pos_emb = self.cappa > 0
+            parallel_dec = self.cappa > 0 and ((self.cappa >= 1.0) or (self.training and random.random() < self.cappa))
+            #print(f"Paralled Decoder (CAPPA) {parallel_dec}")
+            # Input to the decoder
+            if parallel_dec: # Use parallel decoder
+                dec_input = self.mask_token.to(emb_target.dtype).expand(emb_target.shape[0], -1, -1)
+            else: # Use autoregressive decoder
+                # first_element = [p for p in current_perm if p == 0]
+                # filtered_perm = [p for p in current_perm if p != 0]
+                # dec_input = torch.cat((emb_target[:, first_element , :], emb_target[:, filtered_perm, :]), dim=1)
+
+                # dec_input = emb_target[:, :-1 , :]
+                # print(emb_target)
+
+                # dec_input = torch.cat((bos_token,emb_target[:, first_element , :],emb_target[:,1:,:][:, filtered_perm , :]), dim=1)
+                dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:,:-1,:]), dim=1)
+
+            if use_pos_emb:
+                # Add position embedding if they exist.
+                dec_input = dec_input + self.pos_embed.to(emb_target.dtype)
+
+            # dec_input has the same shape as emb_target, which is [B, N, D]
+            dec_input = self.input_proj(dec_input)
+            print(slots.shape)
+            # Apply the decoder
+            dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
+
+            if self.dec_type=='transformer':
+                dec_output = self.dec(dec_input, dec_input_slots, causal_mask=(not parallel_dec))
+                # decoder_output shape [B, N, D]
+
+                dec_slots_attns = self.dec_slots_attns[0]
+                self.dec_slots_attns = []
+
+                # sum over the heads and 
+                dec_slots_attns = dec_slots_attns.sum(dim=1) # [B, N, num_slots]
+                # dec_slots_attns shape [B, num_heads, N, num_slots]
+                # L1-normalize over the slots so as to sum to 1.
+                dec_slots_attns = dec_slots_attns / dec_slots_attns.sum(dim=2, keepdim=True)
+                inv_current_perm = torch.argsort(current_perm)
+
+
+                dec_slots_attns = dec_slots_attns[:,inv_current_perm,:]
+                dec_output = dec_output[:,inv_current_perm,:]
+
+            elif self.dec_type=='mlp':
+                dec_output, dec_slots_attns = self.dec(dec_input_slots)
+                dec_slots_attns = dec_slots_attns.transpose(1,2)
+
+            else:
+                raise
+            
+            all_dec_slots_attns.append(dec_slots_attns)
+            all_dec_output.append(dec_output)
+
+
+        mean_dec_slots_attns = torch.stack(all_dec_slots_attns).mean(0)
+        mean_dec_output = torch.stack(all_dec_output).mean(0)
+
+
+        return mean_dec_output, mean_dec_slots_attns
+
 
 
     # [19:16:56.286655] 32
@@ -619,16 +716,16 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         slots, attn, _, _ = self.slot_attention(latent)
-        slots=self.slot_proj(slots)
-        print("Autaaaaaaaa")
-        print(latent.shape)
-        print(slots.shape)
+        slots_proj=self.slot_proj(slots)
+
 
         # print(latent.shape)
         # logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
         # logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
 
-        logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
+
+        dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
 
 
