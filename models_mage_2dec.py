@@ -13,10 +13,6 @@ import numpy as np
 import scipy.stats as stats
 from slot_attn import SlotAttentionEncoder
 import math
-from spot.utils_spot import *
-from spot.transformer import TransformerDecoder
-
-
 
 
 
@@ -201,18 +197,20 @@ class MaskedGenerativeEncoderViT(nn.Module):
                   drop=dropout_rate, attn_drop=dropout_rate)
             for i in range(depth)])
         self.norm = norm_layer(embed_dim)
-
         # --------------------------------------------------------------------------
         self.slot_attention = SlotAttentionEncoder(
             num_iterations=3,  # specify the number of iterations
             num_slots=7,       # specify the number of slots
-            input_channels=768,  # since it should match the output of your encoder
+            input_channels=768,  # since it should match the output of your encoder ###embed_dim
             slot_size=256,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
             truncate='none', # or other options as per your requirement
-            init_method='shared_gaussian',  # or 'shared_gaussian'
+            init_method='shared_gaussian'  # or 'shared_gaussian'
         )
+            # num_heads=6,       # specify the number of heads for attention
+            # drop_path=0.0        # specify dropout path rate
+        
 
         # --------------------------------------------------------------------------
         # MAGE decoder specifics
@@ -232,84 +230,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.decoder_norm = norm_layer(decoder_embed_dim)
         self.decoder_pred = nn.Linear(decoder_embed_dim, patch_size**2 * in_chans, bias=True) # decoder to patch
         # --------------------------------------------------------------------------
-
-
-
-        self.input_proj = nn.Sequential(
-            linear(embed_dim, embed_dim, bias=False),
-            nn.LayerNorm(embed_dim),
-        )
-        
-        size = int(math.sqrt(img_size))
-        standard_order = torch.arange(size**2) # This is the default "left_top"
-        
-        self.cappa = -1
-        self.train_permutations = 'random'
-        
-        if self.train_permutations == 'standard':
-            self.permutations = [standard_order]
-            self.eval_permutations = 'standard'
-        
-        else:
-            standard_order_2d = standard_order.reshape(size,size)
-            
-            perm_top_left = torch.tensor([standard_order_2d[row,col] for col in range(0, size, 1) for row in range(0, size, 1)])
-            
-            perm_top_right = torch.tensor([standard_order_2d[row,col] for col in range(size-1, -1, -1) for row in range(0, size, 1)])
-            perm_right_top = torch.tensor([standard_order_2d[row,col] for row in range(0, size, 1) for col in range(size-1, -1, -1)])
-            
-            perm_bottom_right = torch.tensor([standard_order_2d[row,col] for col in range(size-1, -1, -1) for row in range(size-1, -1, -1)])
-            perm_right_bottom = torch.tensor([standard_order_2d[row,col] for row in range(size-1, -1, -1) for col in range(size-1, -1, -1)])
-            
-            perm_bottom_left = torch.tensor([standard_order_2d[row,col] for col in range(0, size, 1) for row in range(size-1, -1, -1)])
-            perm_left_bottom = torch.tensor([standard_order_2d[row,col] for row in range(size-1, -1, -1) for col in range(0, size, 1)])
-            
-            perm_spiral = spiral_pattern(standard_order_2d, how = 'top_right')
-            perm_spiral = torch.tensor((perm_spiral[::-1]).copy())
-    
-            self.permutations = [standard_order, # left_top
-                                 perm_top_left, 
-                                 perm_top_right, 
-                                 perm_right_top, 
-                                 perm_bottom_right, 
-                                 perm_right_bottom,
-                                 perm_bottom_left,
-                                 perm_left_bottom,
-                                 perm_spiral
-                                 ]
-            self.eval_permutations = 'standard'#args.eval_permutations
-
-        self.perm_ind = list(range(len(self.permutations)))
-
-        self.bos_tokens = nn.Parameter(torch.zeros(len(self.permutations), 1, 1, embed_dim))
-        torch.nn.init.normal_(self.bos_tokens, std=.02)
-        
-        
-
-        self.slot_proj = nn.Sequential(
-            linear(img_size, embed_dim, bias=False),
-            nn.LayerNorm(embed_dim),
-        )
-        self.dec_input_dim = embed_dim
-        
-        self.dec = TransformerDecoder(
-            4, img_size, embed_dim, 6, 0.0, None)
-        # if self.use_token_inds_target:
-        #     self.dec_predictor = nn.Linear(self.d_model, self.encoder.codebook_size)
-        if self.cappa > 0:
-            assert (self.train_permutations == 'standard') and (self.eval_permutations == 'standard')   
-            self.mask_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-            self.pos_embed = nn.Parameter(torch.zeros(1, 6, embed_dim))
-            torch.nn.init.normal_(self.pos_embed, std=.02)
-            torch.nn.init.normal_(self.mask_token, std=.02)
-                  
-
-
-
-        self.dec_slots_attns = []
-        def hook_fn_forward_attn(module, input):
-            self.dec_slots_attns.append(input[0])
-        self.remove_handle = self.dec._modules["blocks"][-1]._modules["encoder_decoder_attn"]._modules["attn_dropout"].register_forward_pre_hook(hook_fn_forward_attn)
 
         # --------------------------------------------------------------------------
         # MlmLayer
@@ -513,106 +433,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print("Logits shape:", x.shape)
 
         return x
-    
-
-
-    def forward_decoder_spot(self, slots, emb_target):
-        # Prepate the input tokens for the decoder transformer:
-        # (1) insert a learnable beggining-of-sequence ([BOS]) token at the beggining of each target embedding sequence.
-        # (2) remove the last token of the target embedding sequence
-        # (3) no need to add positional embeddings since positional information already exists at the DINO's outptu.
-        
-
-        if self.training:
-            if self.train_permutations == 'standard':
-                which_permutations = [0] # USE [0] FOR THE STANDARD ORDER
-            elif self.train_permutations == 'random':
-                which_permutations = [random.choice(self.perm_ind)]
-            elif self.train_permutations == 'all':
-                which_permutations = self.perm_ind
-            else:
-                raise
-        else:
-            if self.eval_permutations == 'standard':
-                which_permutations = [0] # USE [0] FOR THE STANDARD ORDER
-            elif self.eval_permutations == 'random':
-                which_permutations = [random.choice(self.perm_ind)]
-            elif self.eval_permutations == 'all':
-                which_permutations = self.perm_ind
-            else:
-                raise
-        
-        all_dec_slots_attns = []
-        all_dec_output = []
-        for perm_id in which_permutations:
-            current_perm = self.permutations[perm_id]
-
-            bos_token = self.bos_tokens[perm_id]
-            bos_token = bos_token.expand(emb_target.shape[0], -1, -1)
-            
-            use_pos_emb = self.cappa > 0
-            parallel_dec = self.cappa > 0 and ((self.cappa >= 1.0) or (self.training and random.random() < self.cappa))
-            #print(f"Paralled Decoder (CAPPA) {parallel_dec}")
-            # Input to the decoder
-            if parallel_dec: # Use parallel decoder
-                dec_input = self.mask_token.to(emb_target.dtype).expand(emb_target.shape[0], -1, -1)
-            else: # Use autoregressive decoder
-                # first_element = [p for p in current_perm if p == 0]
-                # filtered_perm = [p for p in current_perm if p != 0]
-                # dec_input = torch.cat((emb_target[:, first_element , :], emb_target[:, filtered_perm, :]), dim=1)
-
-                # dec_input = emb_target[:, :-1 , :]
-                # print(emb_target)
-
-                # dec_input = torch.cat((bos_token,emb_target[:, first_element , :],emb_target[:,1:,:][:, filtered_perm , :]), dim=1)
-                dec_input = torch.cat((bos_token, emb_target[:,current_perm,:][:,:-1,:]), dim=1)
-
-            if use_pos_emb:
-                # Add position embedding if they exist.
-                dec_input = dec_input + self.pos_embed.to(emb_target.dtype)
-
-            # dec_input has the same shape as emb_target, which is [B, N, D]
-            dec_input = self.input_proj(dec_input)
-            print(slots.shape)
-            # Apply the decoder
-            dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
-
-            if self.dec_type=='transformer':
-                dec_output = self.dec(dec_input, dec_input_slots, causal_mask=(not parallel_dec))
-                # decoder_output shape [B, N, D]
-
-                dec_slots_attns = self.dec_slots_attns[0]
-                self.dec_slots_attns = []
-
-                # sum over the heads and 
-                dec_slots_attns = dec_slots_attns.sum(dim=1) # [B, N, num_slots]
-                # dec_slots_attns shape [B, num_heads, N, num_slots]
-                # L1-normalize over the slots so as to sum to 1.
-                dec_slots_attns = dec_slots_attns / dec_slots_attns.sum(dim=2, keepdim=True)
-                inv_current_perm = torch.argsort(current_perm)
-
-
-                dec_slots_attns = dec_slots_attns[:,inv_current_perm,:]
-                dec_output = dec_output[:,inv_current_perm,:]
-
-            elif self.dec_type=='mlp':
-                dec_output, dec_slots_attns = self.dec(dec_input_slots)
-                dec_slots_attns = dec_slots_attns.transpose(1,2)
-
-            else:
-                raise
-            
-            all_dec_slots_attns.append(dec_slots_attns)
-            all_dec_output.append(dec_output)
-
-
-        mean_dec_slots_attns = torch.stack(all_dec_slots_attns).mean(0)
-        mean_dec_output = torch.stack(all_dec_output).mean(0)
-
-
-        return mean_dec_output, mean_dec_slots_attns
-
-
 
     def forward_decoder(self, x,slots, token_drop_mask, token_all_mask):
         # embed tokens
@@ -686,16 +506,16 @@ class MaskedGenerativeEncoderViT(nn.Module):
         return loss
 
     def forward(self, imgs):
-        with torch.no_grad():  
-            latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+        latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
 
-            latent, _, _, _ = self.forward_encoder(imgs)
+        latent, _, _, _ = self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-        print("Autaaaaaaa")
-        print(latent.shape)
 
 
         slots, attn, _, _ = self.slot_attention(latent)
+        print("Autaaaaaaaa")
+        print(latent.shape)
+        print(slots.shape)
 
         # print(latent.shape)
         # logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
@@ -703,9 +523,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
-
-        dec_recon, dec_slots_attns = self.forward_decoder_spot(slots, latent)
-
 
 
 
