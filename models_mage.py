@@ -512,6 +512,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         slots, attn, _, _ = self.slot_attention(latent)
+        print(slots.shape)
 
         # print(latent.shape)
         # logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
