@@ -394,7 +394,9 @@ class SPOT(nn.Module):
         else:
             # loss_out = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
             loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
-
+        print(B)
+        print(H_enc)
+        print(W_enc)
         # Reshape the slot and decoder-slot attentions.
         # slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
         slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
