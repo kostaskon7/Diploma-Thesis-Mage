@@ -512,6 +512,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         slots, attn, _, _ = self.slot_attention(latent)
+        print("Autaaaaaaaa")
         print(slots.shape)
 
         # print(latent.shape)
