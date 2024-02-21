@@ -13,6 +13,12 @@ import numpy as np
 import scipy.stats as stats
 from slot_attn import SlotAttentionEncoder
 import math
+from utils_spot import *
+from spot.transformer import TransformerDecoder
+from spot.mlp import MlpDecoder
+
+
+
 
 
 
@@ -149,7 +155,7 @@ class MlmLayer(nn.Module):
 class MaskedGenerativeEncoderViT(nn.Module):
     """ Masked Autoencoder with VisionTransformer backbone
     """
-    def __init__(self, img_size=256, patch_size=16, in_chans=3,
+    def __init__(self, args,img_size=256, patch_size=16, in_chans=3,
                  embed_dim=1024, depth=24, num_heads=16,
                  decoder_embed_dim=512, decoder_depth=8, decoder_num_heads=16,
                  mlp_ratio=4., norm_layer=nn.LayerNorm, norm_pix_loss=False,
@@ -230,6 +236,104 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.decoder_norm = norm_layer(decoder_embed_dim)
         self.decoder_pred = nn.Linear(decoder_embed_dim, patch_size**2 * in_chans, bias=True) # decoder to patch
         # --------------------------------------------------------------------------
+        # Spot----------------------------------------------------------------------
+
+        self.slot_attn = SlotAttentionEncoder(
+            args.num_iterations, args.num_slots,
+            args.d_model, args.slot_size, args.mlp_hidden_size, args.pos_channels,
+            args.truncate, args.init_method)
+
+        self.input_proj = nn.Sequential(
+            linear(args.d_model, args.d_model, bias=False),
+            nn.LayerNorm(args.d_model),
+        )
+        
+        size = int(math.sqrt(img_size))
+        standard_order = torch.arange(size**2) # This is the default "left_top"
+        
+        self.cappa = args.cappa
+        self.train_permutations = args.train_permutations
+        
+        if self.train_permutations == 'standard':
+            self.permutations = [standard_order]
+            self.eval_permutations = 'standard'
+        
+        else:
+            standard_order_2d = standard_order.reshape(size,size)
+            
+            perm_top_left = torch.tensor([standard_order_2d[row,col] for col in range(0, size, 1) for row in range(0, size, 1)])
+            
+            perm_top_right = torch.tensor([standard_order_2d[row,col] for col in range(size-1, -1, -1) for row in range(0, size, 1)])
+            perm_right_top = torch.tensor([standard_order_2d[row,col] for row in range(0, size, 1) for col in range(size-1, -1, -1)])
+            
+            perm_bottom_right = torch.tensor([standard_order_2d[row,col] for col in range(size-1, -1, -1) for row in range(size-1, -1, -1)])
+            perm_right_bottom = torch.tensor([standard_order_2d[row,col] for row in range(size-1, -1, -1) for col in range(size-1, -1, -1)])
+            
+            perm_bottom_left = torch.tensor([standard_order_2d[row,col] for col in range(0, size, 1) for row in range(size-1, -1, -1)])
+            perm_left_bottom = torch.tensor([standard_order_2d[row,col] for row in range(size-1, -1, -1) for col in range(0, size, 1)])
+            
+            perm_spiral = spiral_pattern(standard_order_2d, how = 'top_right')
+            perm_spiral = torch.tensor((perm_spiral[::-1]).copy())
+    
+            self.permutations = [standard_order, # left_top
+                                 perm_top_left, 
+                                 perm_top_right, 
+                                 perm_right_top, 
+                                 perm_bottom_right, 
+                                 perm_right_bottom,
+                                 perm_bottom_left,
+                                 perm_left_bottom,
+                                 perm_spiral
+                                 ]
+            self.eval_permutations = args.eval_permutations
+
+        self.perm_ind = list(range(len(self.permutations)))
+
+        self.bos_tokens = nn.Parameter(torch.zeros(len(self.permutations), 1, 1, args.d_model))
+        torch.nn.init.normal_(self.bos_tokens, std=.02)
+        
+        self.dec_type = args.dec_type
+        self.use_slot_proj = args.use_slot_proj
+        
+        if self.dec_type=='mlp' and not self.use_slot_proj:
+            self.slot_proj = nn.Identity()
+            self.dec_input_dim = args.slot_size
+        else:
+            self.slot_proj = nn.Sequential(
+                linear(args.slot_size, args.d_model, bias=False),
+                nn.LayerNorm(args.d_model),
+            )
+            self.dec_input_dim = args.d_model
+        
+        if self.dec_type=='transformer':
+            self.dec = TransformerDecoder(
+                args.num_dec_blocks, args.max_tokens, args.d_model, args.num_heads, args.dropout, args.num_cross_heads)
+            if self.use_token_inds_target:
+                self.dec_predictor = nn.Linear(self.d_model, self.encoder.codebook_size)
+
+                  
+        elif self.dec_type=='mlp':
+            self.dec = MlpDecoder(self.dec_input_dim, args.d_model, args.max_tokens, args.mlp_dec_hidden)
+
+            assert (self.train_permutations == 'standard') and (self.eval_permutations == 'standard')  
+        else:
+            raise
+
+        if self.dec_type=='transformer':
+            # Register hook for capturing the cross-attention (of the query patch
+            # tokens over the key/value slot tokens) from the last decoder
+            # transformer block of the decoder.
+            self.dec_slots_attns = []
+            def hook_fn_forward_attn(module, input):
+                self.dec_slots_attns.append(input[0])
+            self.remove_handle = self.dec._modules["blocks"][-1]._modules["encoder_decoder_attn"]._modules["attn_dropout"].register_forward_pre_hook(hook_fn_forward_attn)
+
+
+
+
+
+
+
 
         # --------------------------------------------------------------------------
         # MlmLayer
@@ -562,7 +666,7 @@ def mage_vit_base_patch16(**kwargs):
     model = MaskedGenerativeEncoderViT(
         patch_size=16, embed_dim=768, depth=12, num_heads=12,
         decoder_embed_dim=768, decoder_depth=8, decoder_num_heads=16,
-        mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
+        mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), args=kwargs.args, **kwargs)
 
     model.freeze_encoder_decoder()
 

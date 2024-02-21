@@ -113,6 +113,30 @@ def get_args_parser():
     parser.add_argument('--dist_on_itp', action='store_true')
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
+    
+
+    # Spot
+    parser.add_argument('--num_dec_blocks', type=int, default=4)
+    parser.add_argument('--d_model', type=int, default=768)
+    parser.add_argument('--num_heads', type=int, default=6)
+    parser.add_argument('--dropout', type=float, default=0.0)
+    
+    parser.add_argument('--num_iterations', type=int, default=3)
+    parser.add_argument('--num_slots', type=int, default=7)
+    parser.add_argument('--slot_size', type=int, default=256)
+    parser.add_argument('--mlp_hidden_size', type=int, default=1024)
+    parser.add_argument('--img_channels', type=int, default=3)
+    parser.add_argument('--pos_channels', type=int, default=4)
+    parser.add_argument('--num_cross_heads', type=int, default=None)
+
+    parser.add_argument('--dec_type',  type=str, default='transformer', help='type of decoder transformer or mlp')
+    parser.add_argument('--cappa', type=float, default=-1)
+    parser.add_argument('--mlp_dec_hidden',  type=int, default=2048, help='Dimension of decoder mlp hidden layers')
+    parser.add_argument('--use_slot_proj',  type=bool_flag, default=True, help='Use an extra projection before MLP decoder')
+    
+    parser.add_argument('--train_permutations',  type=str, default='random', help='which permutation')
+    parser.add_argument('--eval_permutations',  type=str, default='standard', help='which permutation')
+
 
     return parser
 
@@ -188,7 +212,7 @@ def main(args):
 
     model = models_mage_2dec.__dict__[args.model](mask_ratio_mu=args.mask_ratio_mu, mask_ratio_std=args.mask_ratio_std,
                                              mask_ratio_min=args.mask_ratio_min, mask_ratio_max=args.mask_ratio_max,
-                                             vqgan_ckpt_path=vqgan_ckpt_path)
+                                             vqgan_ckpt_path=vqgan_ckpt_path,args=args)
 
     model.to(device)
 
