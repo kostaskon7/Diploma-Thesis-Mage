@@ -237,7 +237,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.decoder_pred = nn.Linear(decoder_embed_dim, patch_size**2 * in_chans, bias=True) # decoder to patch
         # --------------------------------------------------------------------------
         # Spot----------------------------------------------------------------------
-
+        self.d_model = args.d_model
         self.slot_attn = SlotAttentionEncoder(
             args.num_iterations, args.num_slots,
             args.d_model, args.slot_size, args.mlp_hidden_size, args.pos_channels,
@@ -729,12 +729,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
 
-        loss = self.forward_loss(gt_indices, logits, token_all_mask)
+        loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
+        loss_spot = ((latent_mask[:,1:,:] - dec_recon) ** 2).sum()/(16*16*16*self.d_model)
         del latent
         del latent_mask
         del slots
         torch.cuda.empty_cache()
 
+        loss=(loss_mage,loss_spot)
         return loss, imgs, token_all_mask,attn[:,1:,:],attn_dec,logits
 
     def freeze_encoder_decoder(self):

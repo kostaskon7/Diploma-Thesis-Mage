@@ -114,6 +114,9 @@ def get_args_parser():
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
     
+    parser.add_argument('--use_decs', default=None,type=int,
+                    help='2 decoders used')
+    
 
     # Spot
     parser.add_argument('--num_dec_blocks', type=int, default=4)
@@ -336,21 +339,7 @@ def main(args):
     
                 val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
                 
-                # DINOSAUR uses as attention masks the attenton maps of the decoder
-                # over the slots, which bilinearly resizes to match the image resolution
-                # dec_slots_attns shape: [B, num_slots, H_enc, W_enc]
-                # print(default_slots_attns.shape)
-                # print(dec_slots_attns.shape)
-                # print(batch_size)
-                # default_slots_attns = default_slots_attns[:, 1:, :]
-                # dec_slots_attns=dec_slots_attns[:, 1:, :]
-
-                # print(default_slots_attns.shape)
-                # print(dec_slots_attns.shape)
-                # print(batch_size)
-                #################
-                ##Recon
-                # if(epoch>8):
+                val_loss_mage, val_loss_spot = val_loss
                 codebook_emb_dim=256
                 logits = logits[:, 8:, :model.codebook_size]
                 # logits = logits[:, 1:, :model.codebook_size]
@@ -434,7 +423,7 @@ def main(args):
             mbo_i_slot = 100 * MBO_i_slot_metric.compute()
             fg_iou_slot = 100 * fg_iou_slot_metric.compute()
             
-            log_writer.add_scalar('VAL/val', val_loss, epoch)
+            log_writer.add_scalar('VAL/val', val_loss_mage, epoch)
             log_writer.add_scalar('VAL/ari (slots)', ari_slot, epoch)
             log_writer.add_scalar('VAL/ari (decoder)', ari, epoch)
             log_writer.add_scalar('VAL/mbo_c', mbo_c, epoch)
@@ -457,8 +446,8 @@ def main(args):
             ari_slot_metric.reset()
             fg_iou_slot_metric.reset()
             
-            if (val_loss < best_val_loss):
-                best_val_loss = val_loss
+            if (val_loss_mage < best_val_loss):
+                best_val_loss = val_loss_mage
                 
                 best_val_ari_slot = ari_slot
                 best_mbo_c = mbo_c

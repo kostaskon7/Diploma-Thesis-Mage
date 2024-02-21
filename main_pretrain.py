@@ -113,6 +113,9 @@ def get_args_parser():
     parser.add_argument('--dist_on_itp', action='store_true')
     parser.add_argument('--dist_url', default='env://',
                         help='url used to set up distributed training')
+    
+    parser.add_argument('--use_decs', default=None,type=int,
+                help='2 decoders used')
 
     return parser
 
