@@ -725,8 +725,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
 
         dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
-        print(attn_dec.shape)
-        print(dec_slots_attns.shape)
         #[Batch,decoder264,2025]
 
 
@@ -739,7 +737,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         torch.cuda.empty_cache()
 
         loss=(loss_mage,loss_spot)
-        return loss, imgs, token_all_mask,attn[:,1:,:],attn_dec,logits
+        return loss, imgs, token_all_mask,attn[:,1:,:],dec_slots_attns,logits
 
     def freeze_encoder_decoder(self):
         # Freeze encoder
