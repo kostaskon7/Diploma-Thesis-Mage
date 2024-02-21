@@ -305,6 +305,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
             )
             self.dec_input_dim = args.d_model
         
+        args.max_tokens=img_size
+
         if self.dec_type=='transformer':
             self.dec = TransformerDecoder(
                 args.num_dec_blocks, args.max_tokens, args.d_model, args.num_heads, args.dropout, args.num_cross_heads)
