@@ -48,6 +48,9 @@ class SPOT(nn.Module):
         self.num_slots = args.num_slots
         self.d_model = args.d_model
 
+        print(args.num_iterations, args.num_slots,
+            args.d_model, args.slot_size, args.mlp_hidden_size, args.pos_channels,
+            args.truncate, args.init_method)
 
 
         self.slot_attn = SlotAttentionEncoder(
