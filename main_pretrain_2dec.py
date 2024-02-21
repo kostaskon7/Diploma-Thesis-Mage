@@ -138,6 +138,7 @@ def get_args_parser():
     parser.add_argument('--eval_permutations',  type=str, default='standard', help='which permutation')
 
     parser.add_argument('--truncate',  type=str, default='none', help='bi-level or fixed-point or none')
+    parser.add_argument('--init_method', default='shared_gaussian', help='embedding or shared_gaussian')
 
 
     return parser
