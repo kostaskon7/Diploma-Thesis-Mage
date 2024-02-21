@@ -693,6 +693,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
             latent, _, _, _ = self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
+        print(latent.shape)
 
 
         slots, attn, _, _ = self.slot_attention(latent)
