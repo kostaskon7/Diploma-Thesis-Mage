@@ -295,8 +295,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         
         self.dec = TransformerDecoder(
             4, img_size, embed_dim, 6, 0.0, None)
-        if self.use_token_inds_target:
-            self.dec_predictor = nn.Linear(self.d_model, self.encoder.codebook_size)
+        # if self.use_token_inds_target:
+        #     self.dec_predictor = nn.Linear(self.d_model, self.encoder.codebook_size)
         if self.cappa > 0:
             assert (self.train_permutations == 'standard') and (self.eval_permutations == 'standard')   
             self.mask_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
