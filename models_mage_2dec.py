@@ -310,8 +310,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         if self.dec_type=='transformer':
             self.dec = TransformerDecoder(
                 args.num_dec_blocks, args.max_tokens, args.d_model, args.num_heads, args.dropout, args.num_cross_heads)
-            if self.use_token_inds_target:
-                self.dec_predictor = nn.Linear(self.d_model, self.encoder.codebook_size)
+
 
                   
         elif self.dec_type=='mlp':
