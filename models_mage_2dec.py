@@ -201,13 +201,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
                   drop=dropout_rate, attn_drop=dropout_rate)
             for i in range(depth)])
         self.norm = norm_layer(embed_dim)
-        print("Autaaaaaaaaaa")
-        print(embed_dim)
+
         # --------------------------------------------------------------------------
         self.slot_attention = SlotAttentionEncoder(
             num_iterations=3,  # specify the number of iterations
             num_slots=7,       # specify the number of slots
-            input_channels=embed_dim,  # since it should match the output of your encoder
+            input_channels=img_size,  # since it should match the output of your encoder
             slot_size=768,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
