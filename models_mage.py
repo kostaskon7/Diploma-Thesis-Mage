@@ -523,8 +523,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print(latent.shape)
         # logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
         # logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
-        with torch.no_grad():
-            logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
 
 
