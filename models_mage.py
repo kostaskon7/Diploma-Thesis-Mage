@@ -222,10 +222,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         )
             # num_heads=6,       # specify the number of heads for attention
             # drop_path=0.0        # specify dropout path rate
-        self.slot_proj = nn.Sequential(
-            linear(self.slot_attention.slot_size, self.slot_attention.input_channels, bias=False),
-            nn.LayerNorm(self.slot_attention.input_channels),
-        )
+        # self.slot_proj = nn.Sequential(
+        #     linear(self.slot_attention.slot_size, self.slot_attention.input_channels, bias=False),
+        #     nn.LayerNorm(self.slot_attention.input_channels),
+        # )
 
         # --------------------------------------------------------------------------
         # MAGE decoder specifics
