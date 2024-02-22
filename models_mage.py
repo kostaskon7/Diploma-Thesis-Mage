@@ -200,21 +200,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
             for i in range(depth)])
         self.norm = norm_layer(embed_dim)
         # --------------------------------------------------------------------------
-        # self.slot_attention = SlotAttentionEncoder(
-        #     num_iterations=3,  # specify the number of iterations
-        #     num_slots=7,       # specify the number of slots
-        #     input_channels=768,  # since it should match the output of your encoder ###embed_dim
-        #     slot_size=256,       # specify the slot size
-        #     mlp_hidden_size=1024, # specify the MLP hidden size
-        #     pos_channels=4,    # specify the positional channels size
-        #     truncate='none', # or other options as per your requirement
-        #     init_method='shared_gaussian'  # or 'shared_gaussian'
-        # )
         self.slot_attention = SlotAttentionEncoder(
             num_iterations=3,  # specify the number of iterations
             num_slots=7,       # specify the number of slots
             input_channels=768,  # since it should match the output of your encoder ###embed_dim
-            slot_size=768,       # specify the slot size
+            slot_size=256,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
             truncate='none', # or other options as per your requirement
@@ -222,10 +212,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         )
             # num_heads=6,       # specify the number of heads for attention
             # drop_path=0.0        # specify dropout path rate
-        # self.slot_proj = nn.Sequential(
-        #     linear(self.slot_attention.slot_size, self.slot_attention.input_channels, bias=False),
-        #     nn.LayerNorm(self.slot_attention.input_channels),
-        # )
+        self.slot_proj = nn.Sequential(
+            linear(self.slot_attention.slot_size, self.slot_attention.input_channels, bias=False),
+            nn.LayerNorm(self.slot_attention.input_channels),
+        )
 
         # --------------------------------------------------------------------------
         # MAGE decoder specifics
