@@ -352,6 +352,7 @@ class SPOT(nn.Module):
         # print(emb_target.shape)
 
         # Apply the slot attention
+        print(emb_input.shape)
         slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_input)
         print(slots.shape)
         # slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_target)
