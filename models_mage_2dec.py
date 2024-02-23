@@ -749,17 +749,17 @@ class MaskedGenerativeEncoderViT(nn.Module):
                 param.requires_grad = False
 
         # Freeze decoder
-        # self.mask_token.requires_grad = False
-        # self.decoder_pos_embed_learned.requires_grad = False
-        # for param in self.decoder_norm.parameters():
-        #     param.requires_grad = False
-        # for block in self.decoder_blocks:
-        #     for param in block.parameters():
-        #         param.requires_grad = False
-        # for param in self.decoder_embed.parameters():
-        #     param.requires_grad = False
-        # for param in self.decoder_pred.parameters():
-        #     param.requires_grad = False
+        self.mask_token.requires_grad = False
+        self.decoder_pos_embed_learned.requires_grad = False
+        for param in self.decoder_norm.parameters():
+            param.requires_grad = False
+        for block in self.decoder_blocks:
+            for param in block.parameters():
+                param.requires_grad = False
+        for param in self.decoder_embed.parameters():
+            param.requires_grad = False
+        for param in self.decoder_pred.parameters():
+            param.requires_grad = False
         # Add any other components as needed
 
 
