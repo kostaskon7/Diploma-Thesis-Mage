@@ -208,11 +208,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
             truncate='none', # or other options as per your requirement
-            init_method='shared_gaussian',  # or 'shared_gaussian'
+            init_method='shared_gaussian')  # or 'shared_gaussian'
         
-            num_heads=num_heads,       # specify the number of heads for attention
-            drop_path=0.0        # specify dropout path rate
-        )
+        #     num_heads=num_heads,       # specify the number of heads for attention
+        #     drop_path=0.0        # specify dropout path rate
+        # )
 
         self.slot_proj = nn.Sequential(
             linear(self.slot_attention.slot_size, self.slot_attention.input_channels, bias=False),
@@ -519,9 +519,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             latent, _, _, _ = self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
 
-        print(latent.shape)
         slots, attn, _, _ = self.slot_attention(latent)
-        print(slots.shape)
         slots=self.slot_proj(slots)
         # print(latent.shape)
         # logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
