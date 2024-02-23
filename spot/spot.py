@@ -48,9 +48,7 @@ class SPOT(nn.Module):
         self.num_slots = args.num_slots
         self.d_model = args.d_model
 
-        print(args.num_iterations, args.num_slots,
-            args.d_model, args.slot_size, args.mlp_hidden_size, args.pos_channels,
-            args.truncate, args.init_method)
+
 
 
         self.slot_attn = SlotAttentionEncoder(
@@ -232,7 +230,6 @@ class SPOT(nn.Module):
 
             # dec_input has the same shape as emb_target, which is [B, N, D]
             dec_input = self.input_proj(dec_input)
-            print(slots.shape)
             # Apply the decoder
             dec_input_slots = self.slot_proj(slots) # shape: [B, num_slots, D]
 
@@ -339,7 +336,6 @@ class SPOT(nn.Module):
 
         B, _, H, W = image.size()
         emb_input, token_emb, token_indices = self.forward_encoder(image, self.encoder)
-        print(emb_input.shape)
         with torch.no_grad():
             if self.second_encoder is not None:
                 emb_target,_,_ = self.forward_encoder(image, self.second_encoder)
@@ -352,9 +348,7 @@ class SPOT(nn.Module):
         # print(emb_target.shape)
 
         # Apply the slot attention
-        print(emb_input.shape)
         slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_input)
-        print(slots.shape)
         # slots, slots_attns, init_slots, attn_logits = self.slot_attn(emb_target)
 
         attn_logits = attn_logits.squeeze()
@@ -395,9 +389,7 @@ class SPOT(nn.Module):
         else:
             # loss_out = ((emb_target - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)
             loss_out = ((emb_target[:,1:,:] - dec_recon) ** 2).sum()/(B*H_enc*W_enc*self.d_model)# changed emb_target shape
-        print(B)
-        print(H_enc)
-        print(W_enc)
+
         # Reshape the slot and decoder-slot attentions.
         # slots_attns = slots_attns.transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
         slots_attns = slots_attns[:,1:,:].transpose(-1, -2).reshape(B, self.num_slots, H_enc, W_enc)
