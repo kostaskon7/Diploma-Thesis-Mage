@@ -56,7 +56,7 @@ class SPOT(nn.Module):
         self.slot_attn = SlotAttentionEncoder(
             args.num_iterations, args.num_slots,
             args.d_model, args.slot_size, args.mlp_hidden_size, args.pos_channels,
-            args.truncate, args.init_method,num_heads=6)
+            args.truncate, args.init_method)
 
         self.input_proj = nn.Sequential(
             linear(args.d_model, args.d_model, bias=False),
