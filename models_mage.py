@@ -208,8 +208,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
             truncate='none', # or other options as per your requirement
-            init_method='shared_gaussian',
-            num_heads=4)  # or 'shared_gaussian'
+            init_method='shared_gaussian')  # or 'shared_gaussian'
         
         #     num_heads=num_heads,       # specify the number of heads for attention
         #     drop_path=0.0        # specify dropout path rate
@@ -515,10 +514,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
     def forward(self, imgs):
         # with torch.no_grad():
-        # latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
-        latent, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder(imgs)
+        latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+        # latent, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder(imgs)
 
-        # latent, _, _, _ = self.forward_encoder(imgs)
+        latent, _, _, _ = self.forward_encoder(imgs)
         # slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
 
         slots, attn, _, _ = self.slot_attention(latent)
@@ -526,7 +525,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print(latent.shape)
         # logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
         # logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
-        logits,attn_dec = self.forward_decoder(latent,slots ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
         #[Batch,decoder264,2025]
 
 
@@ -566,7 +565,7 @@ def mage_vit_base_patch16(**kwargs):
         decoder_embed_dim=768, decoder_depth=8, decoder_num_heads=16,
         mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    model.freeze_encoder_decoder()
+    # model.freeze_encoder_decoder()
 
     return model
 
