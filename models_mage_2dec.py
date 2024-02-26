@@ -442,70 +442,23 @@ class MaskedGenerativeEncoderViT(nn.Module):
         with torch.no_grad():
             z_q, _, token_tuple = self.vqgan.encode(x)
 
-        #z_q torch.Size([32, 256, 16, 16])
         _, _, token_indices = token_tuple
         token_indices = token_indices.reshape(z_q.size(0), -1)
-        gt_indices = token_indices.clone().detach().long()
-        #token_indices 256,256,256.... batch size times
-        #gt_indices torch.Size([32, 256])
-
-        # masking
-        bsz, seq_len = token_indices.size()
-
-        token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
-        token_all_mask = torch.zeros(bsz, seq_len, device=x.device).float()    # Mask no tokens
-        #both torch.Size([32, 256])
-        token_indices[token_all_mask.nonzero(as_tuple=True)] = self.mask_token_label
-        # print("Masekd num token:", torch.sum(token_indices == self.mask_token_label, dim=1))
 
         # concate class token
-        token_indices = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
-        token_indices[:, 0] = self.fake_class_label
-        token_drop_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_drop_mask], dim=1)
-        token_all_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_all_mask], dim=1)
+        token_indices = token_indices.cuda()
+        token_indices = torch.cat(
+            [torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
+        token_indices[:, 0] = self.fake_class_label#Na to dw auto
         token_indices = token_indices.long()
-        #torch.Size([32, 257])
         # bert embedding
-        input_embeddings = self.token_emb(token_indices)
-        # print("Input embedding shape:", input_embeddings.shape)
-        bsz, seq_len, emb_dim = input_embeddings.shape
-
-        # dropping
-        token_keep_mask = 1 - token_drop_mask
-        #input_embeddings_after_drop = input_embeddings[token_keep_mask.nonzero(as_tuple=True)].reshape(bsz, -1, emb_dim)
-        # print("Input embedding after drop shape:", input_embeddings_after_drop.shape)
-
-        # apply Transformer blocks
-        #x = input_embeddings_after_drop
-        x = input_embeddings
+        x = self.token_emb(token_indices)
+        token_emb = x
 
         for blk in self.blocks:
             x = blk(x)
-        x = self.norm(x)
-        # print("Encoder representation shape:", x.shape)
-        # Mask all tokens for the decoding phase
-        _, _, token_indices = token_tuple
-        token_indices = token_indices.reshape(z_q.size(0), -1)
-        gt_indices = token_indices.clone().detach().long()
 
-        # masking
-        bsz, seq_len = token_indices.size()
-
-        # After training mask all tokens
-        token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
-        token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()    # Mask all tokens
-        
-        token_indices[token_all_mask.nonzero(as_tuple=True)] = self.mask_token_label
-        #print("Masekd num token after encoder:", torch.sum(token_indices == self.mask_token_label, dim=1))
-
-        # concate class token
-        token_indices = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(device=token_indices.device), token_indices], dim=1)
-        token_indices[:, 0] = self.fake_class_label
-        token_drop_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_drop_mask], dim=1)
-        token_all_mask = torch.cat([torch.zeros(token_indices.size(0), 1).cuda(), token_all_mask], dim=1)
-        token_indices = token_indices.long()
-
-        return x, gt_indices, token_drop_mask, token_all_mask
+        return x
     
 
     def forward_decoder_generation(self, x, token_drop_mask, token_all_mask):
@@ -707,10 +660,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         return loss
 
     def forward(self, imgs):
-        with torch.no_grad():
-            latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+        latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
 
-            latent, _, _, _ = self.forward_encoder(imgs)
+        latent= self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
 
 
