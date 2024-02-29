@@ -675,9 +675,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # [32, 257, 768]
         # [32, 257, 7]
         #TBD2
+        print(slots.shape)
         attn=attn.clone().detach()
         slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
-        slots_pool = slots_pool.transpose(-1, -2)
+        # slots_pool = slots_pool.transpose(-1, -2)
         print(slots_pool.shape)
 
         # print(latent.shape)
