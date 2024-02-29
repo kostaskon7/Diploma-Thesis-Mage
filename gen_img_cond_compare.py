@@ -64,7 +64,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         token_all_mask = token_indices == mask_token_id
 
         token_drop_mask = torch.zeros_like(token_indices)
-        if step == 0:
+        if step < 2:
           # token embedding
           input_embeddings = model.token_emb(token_indices)
 
