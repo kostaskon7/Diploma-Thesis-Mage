@@ -677,6 +677,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #TBD2
         print(slots.shape)
         attn=attn.clone().detach()
+        # Latent another transformation?
         slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
         # slots_pool = slots_pool.transpose(-1, -2)
         print(slots_pool.shape)
