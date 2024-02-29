@@ -668,13 +668,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots, attn, _, _ = self.slot_attention(latent)
         #TBD
-        slots_nograd=slots.clone().detach()
+        # slots_nograd=slots.clone().detach()
 
-        slots_proj=self.slot_proj(slots_nograd)
+        # slots_proj=self.slot_proj(slots_nograd)
 
         # [32, 257, 768]
         # [32, 257, 7]
-
+        #TBD2
+        attn=attn.clone().detach()
         slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
         slots_pool = slots_pool.transpose(-1, -2)
         print(slots_pool.shape)
