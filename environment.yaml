@@ -24,4 +24,5 @@ dependencies:
     - more-itertools>=8.0.0
     - transformers
     - timm==0.3.2
+    - pycocotools
     - -e .
