@@ -15,7 +15,8 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 400
     accum_iter = args.accum_iter
-
+    loss_mage=0
+    loss_mage_spot=0
     optimizer.zero_grad()
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
