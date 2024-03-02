@@ -734,7 +734,7 @@ def mage_vit_base_patch16(**kwargs):
         decoder_embed_dim=768, decoder_depth=8, decoder_num_heads=16,
         mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    model.freeze_encoder_decoder()
+    # model.freeze_encoder_decoder()
 
     return model
 
