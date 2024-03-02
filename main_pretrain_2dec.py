@@ -437,8 +437,8 @@ def main(args):
             log_writer.add_scalar('VAL/fg_iou (slots)', fg_iou_slot, epoch)
             
             #print(args.log_path)
-            print('====> Epoch: {:3} \t Loss = {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
-                epoch, val_loss_mage, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+            print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
+                epoch, val_loss_mage,val_loss_spot, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
             
             ari_metric.reset()
             MBO_c_metric.reset()
