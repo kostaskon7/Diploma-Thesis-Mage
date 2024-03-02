@@ -278,6 +278,8 @@ def main(args):
     best_mbo_i_slot = 0
     best_fg_iou_slot= 0 
 
+    val_loss_spot=0
+    val_loss_mage=0
 
 
     MBO_c_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).to(device)
