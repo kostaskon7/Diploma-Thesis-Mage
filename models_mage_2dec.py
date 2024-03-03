@@ -672,24 +672,24 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots, attn, _, _ = self.slot_attention(latent)
         #TBD
-        # slots_nograd=slots.clone().detach()
+        slots_nograd=slots.clone().detach()
 
-        # slots_proj=self.slot_proj2(slots_nograd)
+        slots_proj=self.slot_proj2(slots_nograd)
 
         # [32, 257, 768]
         # [32, 257, 7]
         #TBD2
-        attn=attn.clone().detach()
+        # attn=attn.clone().detach()
         # Latent another transformation?
-        slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
+        # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
         # print(latent.shape)
         # logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
         # logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
         #TBD
-        # logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
         #TBD2
-        logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+        # logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
         dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
