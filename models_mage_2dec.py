@@ -704,7 +704,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         loss=(loss_mage,loss_spot)
         return loss, imgs, token_all_mask,attn[:,1:,:],dec_slots_attns,logits
 
-    def freeze_encoder_decoder(self):
+    def freeze_encoder(self):
         # Freeze encoder
         self.cls_token.requires_grad = False
         for param in self.patch_embed.parameters():
@@ -713,6 +713,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             for param in block.parameters():
                 param.requires_grad = False
 
+    def freeze_decoder(self):
         # Freeze decoder
         self.mask_token.requires_grad = False
         self.decoder_pos_embed_learned.requires_grad = False
@@ -725,7 +726,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
             param.requires_grad = False
         for param in self.decoder_pred.parameters():
             param.requires_grad = False
-        # Add any other components as needed
 
 
 def mage_vit_base_patch16(**kwargs):
@@ -734,8 +734,10 @@ def mage_vit_base_patch16(**kwargs):
         decoder_embed_dim=768, decoder_depth=8, decoder_num_heads=16,
         mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    model.freeze_encoder_decoder()
+    model.freeze_encoder()
 
+    model.freeze_decoder()
+    
     return model
 
 
