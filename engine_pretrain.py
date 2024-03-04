@@ -32,7 +32,8 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
                 loss, _, _,_,_,_ = model(samples)
                 loss_mage, loss_mage_spot = loss
 
-                loss=(0.8*loss_mage)+(0.2*loss_mage_spot)
+                # loss=(0.8*loss_mage)+(0.2*loss_mage_spot)
+                loss=loss_mage_spot
             else:
                 loss, _, _,_,_,_ = model(samples)
 
