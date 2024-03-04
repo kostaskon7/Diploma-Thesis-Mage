@@ -698,7 +698,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
-        loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(16*16*16*self.d_model)
+        loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(8*16*16*self.d_model)
         torch.cuda.empty_cache()
 
 
