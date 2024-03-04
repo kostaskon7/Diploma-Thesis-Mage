@@ -516,5 +516,5 @@ if __name__ == '__main__':
     args = args.parse_args()
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-    args.log_dir = args.output_dir
+    # args.log_dir = args.output_dir
     main(args)
