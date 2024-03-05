@@ -668,7 +668,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         latent= self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-
+        latent=latent[:,:1:,:]
 
         slots, attn, _, _ = self.slot_attention(latent)
         #TBD
@@ -695,10 +695,16 @@ class MaskedGenerativeEncoderViT(nn.Module):
         dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
 
+        H_enc, W_enc = int(math.sqrt(latent.shape[1])), int(math.sqrt(latent.shape[1]))
+
+        bsz, _ = gt_indices.size()
+
 
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
-        loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(8*16*16*self.d_model)
+        # loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
+        loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
+
         torch.cuda.empty_cache()
 
         # print(latent.shape)
@@ -710,7 +716,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print(dec_recon.shape)
 
         loss=(loss_mage,loss_spot)
-        return loss, imgs, token_all_mask,attn[:,1:,:],dec_slots_attns,logits
+        # return loss, imgs, token_all_mask,attn[:,1:,:],dec_slots_attns,logits
+        return loss, imgs, token_all_mask,attn,dec_slots_attns,logits
+
 
     def freeze_encoder(self):
         # Freeze encoder
