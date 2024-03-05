@@ -699,7 +699,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         H_enc, W_enc = int(math.sqrt(latent.shape[1])), int(math.sqrt(latent.shape[1]))
 
         bsz, _ = gt_indices.size()
-        print(H_enc,W_enc,bsz)
 
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
