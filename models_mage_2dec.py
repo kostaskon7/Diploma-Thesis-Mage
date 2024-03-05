@@ -689,7 +689,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
         # print(latent.shape)
-        logits = self.forward_decoder(latent_mask, slots_proj,token_drop_mask, token_all_mask)
+        logits,_ = self.forward_decoder(latent_mask, slots_proj,token_drop_mask, token_all_mask)
         # logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
         #TBD
         # logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
