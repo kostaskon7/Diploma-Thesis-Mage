@@ -672,10 +672,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
         latent=latent[:,1:,:]
 
         slots, attn, _, _ = self.slot_attention(latent)
-        #TBD
-        slots_nograd=slots.clone().detach()
+        slots_proj=self.slot_proj2(slots)
 
-        slots_proj=self.slot_proj2(slots_nograd)
+        #TBD
+        # slots_nograd=slots.clone().detach()
+
+        # slots_proj=self.slot_proj2(slots_nograd)
 
         # [32, 257, 768]
         # [32, 257, 7]
@@ -685,10 +687,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
         # print(latent.shape)
-        # logits = self.forward_decoder(latent, token_drop_mask, token_all_mask)
+        logits = self.forward_decoder(latent, slots_proj,token_drop_mask, token_all_mask)
         # logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
         #TBD
-        logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
+        # logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
         #TBD2
         # logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
@@ -752,7 +754,7 @@ def mage_vit_base_patch16(**kwargs):
 
     model.freeze_encoder()
 
-    # model.freeze_decoder()
+    model.freeze_decoder()
 
     return model
 
