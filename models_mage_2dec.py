@@ -208,7 +208,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             num_iterations=3,  # specify the number of iterations
             num_slots=7,       # specify the number of slots
             input_channels=768,  # since it should match the output of your encoder ###embed_dim
-            slot_size=768,       # specify the slot size
+            slot_size=256,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
             truncate='none', # or other options as per your requirement
@@ -674,7 +674,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots, attn, _, _ = self.slot_attention(latent)
         # slots_proj=slots
-        # slots_proj=self.slot_proj2(slots)
+        slots_proj=self.slot_proj2(slots)
 
         #TBD
         # slots_nograd=slots.clone().detach()
@@ -689,7 +689,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
         # print(latent.shape)
-        logits = self.forward_decoder(latent_mask, slots,token_drop_mask, token_all_mask)
+        logits = self.forward_decoder(latent_mask, slots_proj,token_drop_mask, token_all_mask)
         # logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
         #TBD
         # logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
