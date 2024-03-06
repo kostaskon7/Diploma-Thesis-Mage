@@ -40,7 +40,9 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     image=image.cuda()
 
-    latent, gt_indices, token_drop_mask, token_all_mask = model.forward_encoder(image)
+    # latent, gt_indices, token_drop_mask, token_all_mask = model.forward_encoder(image)
+    latent = model.forward_encoder(image)
+
     #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
     slots, attn, init_slots, attn_logits = model.slot_attention(latent)
 
