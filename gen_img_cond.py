@@ -324,6 +324,4 @@ for batch, data in iterator:
             orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
             orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(b_id).zfill(5))), orig_img_np)
-    if counter > 0:
-        break
-    counter =counter + 1
+    break
