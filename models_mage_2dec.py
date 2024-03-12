@@ -674,12 +674,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots, attn, _, _ = self.slot_attention(latent)
         # slots_proj=slots
-        # slots_proj=self.slot_proj2(slots)
+        slots_proj=self.slot_proj2(slots)
 
         #TBD
-        slots_nograd=slots.clone().detach()
+        # slots_nograd=slots.clone().detach()
 
-        slots_proj=self.slot_proj2(slots_nograd)
+        # slots_proj=self.slot_proj2(slots_nograd)
 
         # [32, 257, 768]
         # [32, 257, 7]
