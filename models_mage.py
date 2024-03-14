@@ -568,7 +568,7 @@ def mage_vit_base_patch16(**kwargs):
 
     model.freeze_encoder()
 
-    model.freeze_decoder()
+    # model.freeze_decoder()
 
     return model
 
