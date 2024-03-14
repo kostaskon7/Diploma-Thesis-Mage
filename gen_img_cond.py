@@ -45,7 +45,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     latent = model.forward_encoder(image)
 
     #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-    slots, attn, init_slots, attn_logits = model.slot_attention(latent)
+    slots, attn, init_slots, attn_logits = model.slot_attention(latent[:,1:,:])
     slots=model.slot_proj2(slots)
 
     initial_token_indices = mask_token_id * torch.ones(bsz, unknown_number_in_the_beginning)
