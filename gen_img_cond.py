@@ -41,12 +41,12 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     image=image.cuda()
 
-    latent, gt_indices, _, _ = model.forward_encoder(image)
-    # latent = model.forward_encoder(image)
+    # latent, gt_indices, _, _ = model.forward_encoder(image)
+    latent = model.forward_encoder(image)
 
     #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
     slots, attn, init_slots, attn_logits = model.slot_attention(latent)
-    # slots=model.slot_proj2(slots)
+    slots=model.slot_proj2(slots)
 
     initial_token_indices = mask_token_id * torch.ones(bsz, unknown_number_in_the_beginning)
 
@@ -250,15 +250,15 @@ vqgan_ckpt_path = args.vqgan_jax_strongaug
 
 
 
-# model = models_mage_2dec.__dict__[args.model](norm_pix_loss=False,
-#                                          mask_ratio_mu=0.55, mask_ratio_std=0.25,
-#                                          mask_ratio_min=0.0, mask_ratio_max=1.0,
-#                                          vqgan_ckpt_path=vqgan_ckpt_path,args=args)
-
-model = models_mage.__dict__[args.model](norm_pix_loss=False,
+model = models_mage_2dec.__dict__[args.model](norm_pix_loss=False,
                                          mask_ratio_mu=0.55, mask_ratio_std=0.25,
                                          mask_ratio_min=0.0, mask_ratio_max=1.0,
-                                         vqgan_ckpt_path=vqgan_ckpt_path)
+                                         vqgan_ckpt_path=vqgan_ckpt_path,args=args)
+
+# model = models_mage.__dict__[args.model](norm_pix_loss=False,
+#                                          mask_ratio_mu=0.55, mask_ratio_std=0.25,
+#                                          mask_ratio_min=0.0, mask_ratio_max=1.0,
+#                                          vqgan_ckpt_path=vqgan_ckpt_path)
 model.to(0)
 
 checkpoint = torch.load(args.ckpt, map_location='cpu')
