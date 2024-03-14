@@ -3,6 +3,7 @@ import os
 import math
 import argparse
 import models_mage_2dec
+import models_mage
 import numpy as np
 from tqdm import tqdm
 import cv2
@@ -247,15 +248,17 @@ args = parser.parse_args()
 
 vqgan_ckpt_path = args.vqgan_jax_strongaug
 
-model = models_mage_2dec.__dict__[args.model](norm_pix_loss=False,
-                                         mask_ratio_mu=0.55, mask_ratio_std=0.25,
-                                         mask_ratio_min=0.0, mask_ratio_max=1.0,
-                                         vqgan_ckpt_path=vqgan_ckpt_path,args=args)
 
-# model = models_mage.__dict__[args.model](norm_pix_loss=False,
+
+# model = models_mage_2dec.__dict__[args.model](norm_pix_loss=False,
 #                                          mask_ratio_mu=0.55, mask_ratio_std=0.25,
 #                                          mask_ratio_min=0.0, mask_ratio_max=1.0,
-#                                          vqgan_ckpt_path=vqgan_ckpt_path)
+#                                          vqgan_ckpt_path=vqgan_ckpt_path,args=args)
+
+model = models_mage.__dict__[args.model](norm_pix_loss=False,
+                                         mask_ratio_mu=0.55, mask_ratio_std=0.25,
+                                         mask_ratio_min=0.0, mask_ratio_max=1.0,
+                                         vqgan_ckpt_path=vqgan_ckpt_path)
 model.to(0)
 
 checkpoint = torch.load(args.ckpt, map_location='cpu')
