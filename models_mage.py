@@ -204,7 +204,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             num_iterations=3,  # specify the number of iterations
             num_slots=7,       # specify the number of slots
             input_channels=768,  # since it should match the output of your encoder ###embed_dim
-            slot_size=256,       # specify the slot size
+            slot_size=768,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
             truncate='none', # or other options as per your requirement
