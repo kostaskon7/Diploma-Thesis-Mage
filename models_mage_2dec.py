@@ -465,7 +465,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         for blk in self.blocks:
             x = blk(x)
-        x = self.norm(x)
+        # x = self.norm(x)
 
         return x
     
