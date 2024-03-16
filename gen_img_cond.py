@@ -288,6 +288,7 @@ parser.add_argument('--init_method', default='shared_gaussian', help='embedding 
                     
 
 args = parser.parse_args()
+args.log_dir=args.output_dir
 log_writer = SummaryWriter(log_dir=args.log_dir)
 
 
