@@ -49,8 +49,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     
     val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
 
-    default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
-    dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
+    default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
+    dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
     # default_slots_attns=default_slots_attns.unsqueeze(3)
     # dec_slots_attns=dec_slots_attns.unsqueeze(3)
 
