@@ -14,6 +14,10 @@ from tqdm import tqdm
 import torch
 import torch.nn.functional as F
 from spot.utils_spot import inv_normalize, cosine_scheduler, visualize, bool_flag, load_pretrained_encoder
+import torchvision.utils as vutils
+from torch.utils.tensorboard import SummaryWriter
+
+
 
 
 
@@ -40,6 +44,37 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     _CONFIDENCE_OF_KNOWN_TOKENS = +np.inf
 
     image=image.cuda()
+
+############################
+    
+    val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
+
+    default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
+    dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
+    # default_slots_attns=default_slots_attns.unsqueeze(3)
+    # dec_slots_attns=dec_slots_attns.unsqueeze(3)
+
+
+    default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
+    dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
+    # dec_attns shape [B, num_slots, H, W]
+    default_attns = default_attns.unsqueeze(2)
+    dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
+
+    pred_default_mask = default_attns.argmax(1).squeeze(1)
+    pred_dec_mask = dec_attns.argmax(1).squeeze(1)
+
+    image_int = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
+    rgb_default_attns = image_int.unsqueeze(1) * default_attns + 1. - default_attns
+    rgb_dec_attns = image_int.unsqueeze(1) * dec_attns + 1. - dec_attns
+
+    vis_recon = visualize(image_int, true_mask_c, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
+    grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
+    grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
+    log_writer.add_image('VAL_recon/epoch={:03}'.format(1), grid)
+    
+
+#########################
 
     # latent, gt_indices, _, _ = model.forward_encoder(image)
     latent = model.forward_encoder(image)
@@ -218,6 +253,8 @@ parser.add_argument('--dataset', default='coco', type=str,
                     help='dataset name')
 parser.add_argument('--vqgan_jax_strongaug', default='vqgan_jax_strongaug.ckpt', type=str,
                     help='dataset name')
+parser.add_argument('--log_dir', default='./output_dir',
+                    help='path where to tensorboard log')
 
 
 
@@ -245,9 +282,14 @@ parser.add_argument('--eval_permutations',  type=str, default='standard', help='
 
 parser.add_argument('--truncate',  type=str, default='none', help='bi-level or fixed-point or none')
 parser.add_argument('--init_method', default='shared_gaussian', help='embedding or shared_gaussian')
+
+
+
                     
 
 args = parser.parse_args()
+log_writer = SummaryWriter(log_dir=args.log_dir)
+
 
 vqgan_ckpt_path = args.vqgan_jax_strongaug
 
@@ -331,3 +373,5 @@ for batch, data in iterator:
             orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(b_id).zfill(5))), orig_img_np)
     break
+
+log_writer.close()
