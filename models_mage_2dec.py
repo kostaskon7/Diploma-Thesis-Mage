@@ -189,8 +189,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
                                                     (mask_ratio_max - mask_ratio_mu) / mask_ratio_std,
                                                     loc=mask_ratio_mu, scale=mask_ratio_std)
 
-        print("EDWWWWWWWWWWWWWWWWWWWWWW")
-        print(self.mask_ratio_min)
+
         # --------------------------------------------------------------------------
         # MAGE encoder specifics
         dropout_rate = 0.1
