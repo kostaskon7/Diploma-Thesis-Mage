@@ -433,10 +433,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.criterion = LabelSmoothingCrossEntropy(smoothing=0.1)
 
         # Initialize cross attention
-        if self.cross_attn:
-            initialize_decoder_blocks_to_zeros(self.decoder_blocks)
+
 
         self.initialize_weights()
+
+        if self.cross_attn:
+            initialize_decoder_blocks_to_zeros(self.decoder_blocks)
 
 
         for block in self.decoder_blocks:
