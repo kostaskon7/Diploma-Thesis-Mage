@@ -131,9 +131,6 @@ class Block(nn.Module):
             x = x + self.drop_path(y)
             if self.dec and self.cross_attn:
                 x_cross = self.encoder_decoder_attn_layer_norm(x)
-                print(slots)
-                print(type(slots))
-                print(slots.shape)
                 x = x + self.mage_cross_attn(x_cross,slots,slots)
             x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
@@ -442,6 +439,17 @@ class MaskedGenerativeEncoderViT(nn.Module):
             initialize_decoder_blocks_to_zeros(self.decoder_blocks)
 
         self.initialize_weights()
+
+
+        for block in self.decoder_blocks:
+            # Access the MultiHeadAttention instance
+            mage_cross_attn = block.mage_cross_attn
+            
+            # Initialize proj_q, proj_k, proj_v, proj_o weights to zero
+            # torch.nn.init.constant_(mage_cross_attn.proj_q.weight, 0)
+            # torch.nn.init.constant_(mage_cross_attn.proj_k.weight, 0)
+            # torch.nn.init.constant_(mage_cross_attn.proj_v.weight, 0)
+            print(mage_cross_attn.proj_o.weight)
 
     def initialize_weights(self):
         # initialization
