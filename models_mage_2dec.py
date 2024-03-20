@@ -51,12 +51,60 @@ class Attention(nn.Module):
         x = self.proj(x)
         x = self.proj_drop(x)
         return x, attn
+    
+
+class MultiHeadAttention(nn.Module):
+    
+    def __init__(self, d_model, num_heads, dropout=0., gain=1.):
+        super().__init__()
+        
+        assert d_model % num_heads == 0, "d_model must be divisible by num_heads"
+        self.d_model = d_model
+        self.num_heads = num_heads
+        
+        self.attn_dropout = nn.Dropout(dropout)
+        self.output_dropout = nn.Dropout(dropout)
+        
+        self.proj_q = linear(d_model, d_model, bias=False)
+        self.proj_k = linear(d_model, d_model, bias=False)
+        self.proj_v = linear(d_model, d_model, bias=False)
+        self.proj_o = linear(d_model, d_model, bias=False, gain=gain)
+    
+    
+    def forward(self, q, k, v, attn_mask=None):
+        """
+        q: batch_size x target_len x d_model
+        k: batch_size x source_len x d_model
+        v: batch_size x source_len x d_model
+        attn_mask: target_len x source_len
+        return: batch_size x target_len x d_model
+        """
+        B, T, _ = q.shape
+        _, S, _ = k.shape
+        
+        q = self.proj_q(q).view(B, T, self.num_heads, -1).transpose(1, 2)
+        k = self.proj_k(k).view(B, S, self.num_heads, -1).transpose(1, 2)
+        v = self.proj_v(v).view(B, S, self.num_heads, -1).transpose(1, 2)
+        
+        q = q * (q.shape[-1] ** (-0.5))
+        attn = torch.matmul(q, k.transpose(-1, -2))
+        
+        if attn_mask is not None:
+            attn = attn.masked_fill(attn_mask, float('-inf'))
+        
+        attn = F.softmax(attn, dim=-1)
+        attn = self.attn_dropout(attn)
+        
+        output = torch.matmul(attn, v).transpose(1, 2).reshape(B, T, -1)
+        output = self.proj_o(output)
+        output = self.output_dropout(output)
+        return output
 
 
 class Block(nn.Module):
 
     def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
-                 drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm):
+                 drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm,dec=False):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = Attention(
@@ -66,16 +114,47 @@ class Block(nn.Module):
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
+        self.dec=dec
+        if dec:
+            self.encoder_decoder_attn_layer_norm = nn.LayerNorm(dim)
 
-    def forward(self, x, return_attention=False):
+            self.mage_cross_attn = MultiHeadAttention(dim, num_heads, attn_drop)
+
+    def forward(self, x,slots=None, return_attention=False):
         if return_attention:
             _, attn = self.attn(self.norm1(x))
             return attn
         else:
+            
             y, _ = self.attn(self.norm1(x))
             x = x + self.drop_path(y)
+            if self.dec:
+                x_cross = self.encoder_decoder_attn_layer_norm(x)
+                x = x + self.mage_cross_attn(x_cross,slots,slots)
             x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
+    
+def initialize_decoder_blocks_to_zeros(decoder_blocks):
+    for block in decoder_blocks:
+        if block.dec:
+            # Access the MultiHeadAttention instance
+            mage_cross_attn = block.mage_cross_attn
+            
+            # Initialize proj_q, proj_k, proj_v, proj_o weights to zero
+            # torch.nn.init.constant_(mage_cross_attn.proj_q.weight, 0)
+            # torch.nn.init.constant_(mage_cross_attn.proj_k.weight, 0)
+            # torch.nn.init.constant_(mage_cross_attn.proj_v.weight, 0)
+            torch.nn.init.constant_(mage_cross_attn.proj_o.weight, 0)
+            
+            # If there are biases and you want to reset them as well, uncomment the following lines:
+            # if mage_cross_attn.proj_q.bias is not None:
+            #     torch.nn.init.constant_(mage_cross_attn.proj_q.bias, 0)
+            # if mage_cross_attn.proj_k.bias is not None:
+            #     torch.nn.init.constant_(mage_cross_attn.proj_k.bias, 0)
+            # if mage_cross_attn.proj_v.bias is not None:
+            #     torch.nn.init.constant_(mage_cross_attn.proj_v.bias, 0)
+            # if mage_cross_attn.proj_o.bias is not None:
+            #     torch.nn.init.constant_(mage_cross_attn.proj_o.bias, 0)
 
 
 class LabelSmoothingCrossEntropy(nn.Module):
@@ -164,6 +243,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         super().__init__()
 
         self.epsilon = epsilon
+        self.cross_attn = args.cross_attn
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
@@ -231,7 +311,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         self.decoder_blocks = nn.ModuleList([
             Block(decoder_embed_dim, decoder_num_heads, mlp_ratio, qkv_bias=True, qk_scale=None, norm_layer=norm_layer,
-                  drop=dropout_rate, attn_drop=dropout_rate)
+                  drop=dropout_rate, attn_drop=dropout_rate,dec=True)
             for i in range(decoder_depth)])
 
         self.decoder_norm = norm_layer(decoder_embed_dim)
@@ -353,6 +433,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         self.criterion = LabelSmoothingCrossEntropy(smoothing=0.1)
 
+        # Initialize cross attention
+        initialize_decoder_blocks_to_zeros(self.decoder_blocks)
+
         self.initialize_weights()
 
     def initialize_weights(self):
@@ -376,6 +459,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # initialize nn.Linear and nn.LayerNorm
         self.apply(self._init_weights)
 
+        
+
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             # we use xavier_uniform following official JAX ViT:
@@ -385,6 +470,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         elif isinstance(m, nn.LayerNorm):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
+
+
+
 
     def forward_encoder_mask(self, x):
         # tokenization
@@ -526,12 +614,19 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # apply Transformer blocks
         # for blk in self.decoder_blocks:
         #     x = blk(x)
+        if self.cross_attn:
+            slots_for_dec=slots
+        else:
+            slots_for_dec=None
+
         for i, blk in enumerate(self.decoder_blocks):
             if i == len(self.decoder_blocks) - 1: # last block
                 # Get attention matrix from last block
                 with torch.no_grad(): # r
-                    atts = blk(x, return_attention=True)
-            x = blk(x)
+                    atts = blk(x,slots=slots_for_dec, return_attention=True)
+            x = blk(x,slots=slots_for_dec)
+
+        
 
         x = self.decoder_norm(x)
 
@@ -692,7 +787,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #TBD2
         # attn=attn.clone().detach()
         # Latent another transformation?
+        # attn_onehot = torch.nn.functional.one_hot(slots_attns.argmax(1), num_classes=args.num_slots).permute(0,3,1,2)
+
         slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
+
         slots_pool=self.slot_proj2(slots_pool)
 
         # print(latent.shape)

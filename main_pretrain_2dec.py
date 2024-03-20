@@ -116,6 +116,8 @@ def get_args_parser():
     
     parser.add_argument('--use_decs', default=None,type=int,
                     help='2 decoders used')
+    parser.add_argument('--cross_attn', default=None,type=int,
+                    help='cross attention on decoder')
     
 
     # Spot
