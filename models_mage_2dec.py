@@ -137,7 +137,6 @@ class Block(nn.Module):
     
 def initialize_decoder_blocks_to_zeros(decoder_blocks):
     for block in decoder_blocks:
-        if block.dec:
             # Access the MultiHeadAttention instance
             
             # Initialize proj_q, proj_k, proj_v, proj_o weights to zero
