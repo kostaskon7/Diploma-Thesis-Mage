@@ -104,7 +104,7 @@ class MultiHeadAttention(nn.Module):
 class Block(nn.Module):
 
     def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop=0., attn_drop=0.,
-                 drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm,dec=False):
+                 drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm,dec=False,cross_attn=False):
         super().__init__()
         self.norm1 = norm_layer(dim)
         self.attn = Attention(
@@ -115,7 +115,8 @@ class Block(nn.Module):
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
         self.dec=dec
-        if dec:
+        self.cross_attn=cross_attn
+        if dec and cross_attn:
             self.encoder_decoder_attn_layer_norm = nn.LayerNorm(dim)
 
             self.mage_cross_attn = MultiHeadAttention(dim, num_heads, attn_drop)
@@ -128,7 +129,7 @@ class Block(nn.Module):
             
             y, _ = self.attn(self.norm1(x))
             x = x + self.drop_path(y)
-            if self.dec:
+            if self.dec and self.cross_attn:
                 x_cross = self.encoder_decoder_attn_layer_norm(x)
                 print(slots)
                 print(type(slots))
@@ -314,7 +315,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         self.decoder_blocks = nn.ModuleList([
             Block(decoder_embed_dim, decoder_num_heads, mlp_ratio, qkv_bias=True, qk_scale=None, norm_layer=norm_layer,
-                  drop=dropout_rate, attn_drop=dropout_rate,dec=True)
+                  drop=dropout_rate, attn_drop=dropout_rate,dec=True,cross_attn=self.cross_attn)
             for i in range(decoder_depth)])
 
         self.decoder_norm = norm_layer(decoder_embed_dim)
@@ -437,7 +438,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.criterion = LabelSmoothingCrossEntropy(smoothing=0.1)
 
         # Initialize cross attention
-        initialize_decoder_blocks_to_zeros(self.decoder_blocks)
+        if self.cross_attn:
+            initialize_decoder_blocks_to_zeros(self.decoder_blocks)
 
         self.initialize_weights()
 
