@@ -131,7 +131,6 @@ class Block(nn.Module):
             x = x + self.drop_path(y)
             if self.dec and self.cross_attn:
                 x_cross = self.encoder_decoder_attn_layer_norm(x)
-                print(self.mage_cross_attn(x_cross,slots,slots))
                 x = x + self.mage_cross_attn(x_cross,slots,slots)
             x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x
