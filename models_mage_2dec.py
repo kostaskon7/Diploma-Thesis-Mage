@@ -139,13 +139,12 @@ def initialize_decoder_blocks_to_zeros(decoder_blocks):
     for block in decoder_blocks:
         if block.dec:
             # Access the MultiHeadAttention instance
-            mage_cross_attn = block.mage_cross_attn
             
             # Initialize proj_q, proj_k, proj_v, proj_o weights to zero
             # torch.nn.init.constant_(mage_cross_attn.proj_q.weight, 0)
             # torch.nn.init.constant_(mage_cross_attn.proj_k.weight, 0)
             # torch.nn.init.constant_(mage_cross_attn.proj_v.weight, 0)
-            torch.nn.init.constant_(mage_cross_attn.proj_o.weight, 0)
+            torch.nn.init.constant_(block.mage_cross_attn.proj_o.weight, 0)
             
             # If there are biases and you want to reset them as well, uncomment the following lines:
             # if mage_cross_attn.proj_q.bias is not None:
@@ -443,13 +442,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         for block in self.decoder_blocks:
             # Access the MultiHeadAttention instance
-            mage_cross_attn = block.mage_cross_attn
             
             # Initialize proj_q, proj_k, proj_v, proj_o weights to zero
             # torch.nn.init.constant_(mage_cross_attn.proj_q.weight, 0)
             # torch.nn.init.constant_(mage_cross_attn.proj_k.weight, 0)
             # torch.nn.init.constant_(mage_cross_attn.proj_v.weight, 0)
-            print(mage_cross_attn.proj_o.weight)
+            print(block.mage_cross_attn.proj_o.weight)
 
     def initialize_weights(self):
         # initialization
