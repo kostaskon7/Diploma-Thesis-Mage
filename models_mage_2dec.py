@@ -441,15 +441,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
             initialize_decoder_blocks_to_zeros(self.decoder_blocks)
 
 
-        for block in self.decoder_blocks:
-            # Access the MultiHeadAttention instance
-            
-            # Initialize proj_q, proj_k, proj_v, proj_o weights to zero
-            # torch.nn.init.constant_(mage_cross_attn.proj_q.weight, 0)
-            # torch.nn.init.constant_(mage_cross_attn.proj_k.weight, 0)
-            # torch.nn.init.constant_(mage_cross_attn.proj_v.weight, 0)
-            print(block.mage_cross_attn.proj_o.weight)
-
     def initialize_weights(self):
         # initialization
         # initialize (and freeze) pos_embed by sin-cos embedding
