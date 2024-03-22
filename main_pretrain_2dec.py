@@ -337,21 +337,21 @@ def main(args):
 
             counter = 0
     
-            for batch, (image, true_mask_i, true_mask_c, mask_ignore) in enumerate(tqdm(val_loader)):
-                image = image.cuda()
-                true_mask_i = true_mask_i.cuda()
-                true_mask_c = true_mask_c.cuda()
-                mask_ignore = mask_ignore.cuda() 
+            # for batch, (image, true_mask_i, true_mask_c, mask_ignore) in enumerate(tqdm(val_loader)):
+            #     image = image.cuda()
+            #     true_mask_i = true_mask_i.cuda()
+            #     true_mask_c = true_mask_c.cuda()
+            #     mask_ignore = mask_ignore.cuda() 
                 
-                batch_size = image.shape[0]
-                counter += batch_size
+            #     batch_size = image.shape[0]
+            #     counter += batch_size
     
-                val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
+            #     val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
 
-                if args.both_mboi:
-                    dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
+            #     if args.both_mboi:
+            #         dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
                 
-                val_loss_mage, val_loss_spot = val_loss
+            #     val_loss_mage, val_loss_spot = val_loss
                 # codebook_emb_dim=256
                 # logits = logits[:, 8:, :model.codebook_size]
                 # # logits = logits[:, 1:, :model.codebook_size]
