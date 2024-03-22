@@ -302,14 +302,14 @@ def main(args):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
-        if args.distributed:
-            train_loader.sampler.set_epoch(epoch)
-        train_stats = train_one_epoch(
-            model, train_loader,
-            optimizer, device, epoch, loss_scaler,
-            log_writer=log_writer,
-            args=args
-        )
+        # if args.distributed:
+        #     train_loader.sampler.set_epoch(epoch)
+        # train_stats = train_one_epoch(
+        #     model, train_loader,
+        #     optimizer, device, epoch, loss_scaler,
+        #     log_writer=log_writer,
+        #     args=args
+        # )
         # if args.output_dir and (epoch % 40 == 0 or epoch + 1 == args.epochs):
         #     misc.save_model(
         #         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
@@ -337,21 +337,21 @@ def main(args):
 
             counter = 0
     
-            # for batch, (image, true_mask_i, true_mask_c, mask_ignore) in enumerate(tqdm(val_loader)):
-            #     image = image.cuda()
-            #     true_mask_i = true_mask_i.cuda()
-            #     true_mask_c = true_mask_c.cuda()
-            #     mask_ignore = mask_ignore.cuda() 
+            for batch, (image, true_mask_i, true_mask_c, mask_ignore) in enumerate(tqdm(val_loader)):
+                image = image.cuda()
+                true_mask_i = true_mask_i.cuda()
+                true_mask_c = true_mask_c.cuda()
+                mask_ignore = mask_ignore.cuda() 
                 
-            #     batch_size = image.shape[0]
-            #     counter += batch_size
+                batch_size = image.shape[0]
+                counter += batch_size
     
-            #     val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
+                val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
 
-            #     if args.both_mboi:
-            #         dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
+                if args.both_mboi:
+                    dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
                 
-            #     val_loss_mage, val_loss_spot = val_loss
+                val_loss_mage, val_loss_spot = val_loss
                 # codebook_emb_dim=256
                 # logits = logits[:, 8:, :model.codebook_size]
                 # # logits = logits[:, 1:, :model.codebook_size]
