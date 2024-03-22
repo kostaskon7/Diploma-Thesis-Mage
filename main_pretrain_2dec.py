@@ -118,6 +118,8 @@ def get_args_parser():
                     help='2 decoders used')
     parser.add_argument('--cross_attn', default=None,type=int,
                     help='cross attention on decoder')
+    parser.add_argument('--both_mboi', default=None,type=int,
+                    help='cross attention on decoder')
     
 
     # Spot
@@ -275,6 +277,7 @@ def main(args):
     best_val_ari_slot = 0
     best_mbo_c = 0
     best_mbo_i = 0
+    best_mbo_i_mage = 0
     best_fg_iou= 0 
     best_mbo_c_slot = 0
     best_mbo_i_slot = 0
@@ -286,6 +289,8 @@ def main(args):
 
     MBO_c_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).to(device)
     MBO_i_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).to(device)
+    if args.both_mboi:
+        MBO_i_metric_mage = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).to(device)
     fg_iou_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).to(device)
     ari_metric = ARIMetric(foreground = True, ignore_overlaps = True).to(device)
     
@@ -342,6 +347,9 @@ def main(args):
                 counter += batch_size
     
                 val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
+
+                if args.both_mboi:
+                    dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
                 
                 val_loss_mage, val_loss_spot = val_loss
                 # codebook_emb_dim=256
@@ -380,18 +388,20 @@ def main(args):
 
                 default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
                 dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
-                # default_slots_attns=default_slots_attns.unsqueeze(3)
-                # dec_slots_attns=dec_slots_attns.unsqueeze(3)
+                
 
 
                 default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
                 dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
+                
                 # dec_attns shape [B, num_slots, H, W]
                 default_attns = default_attns.unsqueeze(2)
                 dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
+                
     
                 pred_default_mask = default_attns.argmax(1).squeeze(1)
                 pred_dec_mask = dec_attns.argmax(1).squeeze(1)
+                
                 # print("Unsqueeze")
                 # print(default_attns.shape)
                 # print(true_mask_i.shape)
@@ -400,6 +410,16 @@ def main(args):
                 # print(pred_default_mask.shape)
                 # print(true_mask_i.shape)
                 # print(true_mask_c.shape)
+                if args.both_mboi:
+                    mage_dec_slots_attns = mage_dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
+                    mage_dec_attns = F.interpolate(mage_dec_slots_attns, size=256, mode='bilinear')
+                    mage_dec_attns = mage_dec_attns.unsqueeze(2)
+                    pred_mage_dec_mask = mage_dec_attns.argmax(1).squeeze(1)
+                    pred_mage_dec_mask_reshaped = torch.nn.functional.one_hot(pred_mage_dec_mask).to(torch.float32).permute(0,3,1,2).cuda()
+                    MBO_i_metric_mage.update(pred_mage_dec_mask_reshaped, true_mask_i_reshaped, mask_ignore)
+                
+
+
     
 
                 # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
@@ -426,6 +446,10 @@ def main(args):
             mbo_c_slot = 100 * MBO_c_slot_metric.compute()
             mbo_i_slot = 100 * MBO_i_slot_metric.compute()
             fg_iou_slot = 100 * fg_iou_slot_metric.compute()
+
+            if args.both_mboi:
+                mbo_i_mage = 100 * MBO_i_metric.compute()
+                log_writer.add_scalar('VAL/mbo_i_mage', mbo_i_mage, epoch)
             
             log_writer.add_scalar('VAL/val_spot', val_loss_spot, epoch)
             log_writer.add_scalar('VAL/val_mage', val_loss_mage, epoch)
@@ -437,10 +461,16 @@ def main(args):
             log_writer.add_scalar('VAL/mbo_c (slots)', mbo_c_slot, epoch)
             log_writer.add_scalar('VAL/mbo_i (slots)', mbo_i_slot, epoch)
             log_writer.add_scalar('VAL/fg_iou (slots)', fg_iou_slot, epoch)
-            
-            #print(args.log_path)
-            print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
-                epoch, val_loss_mage,val_loss_spot, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+
+
+            if args.both_mboi:
+                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t mBO_i_mage = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
+                epoch, val_loss_mage,val_loss_spot, ari, ari_slot, mbo_c, mbo_i, mbo_i_mage, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+                MBO_i_metric_mage.reset()
+
+            else:
+                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
+                    epoch, val_loss_mage,val_loss_spot, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
             
             ari_metric.reset()
             MBO_c_metric.reset()
@@ -472,7 +502,6 @@ def main(args):
                 #torch.save(model.state_dict(), os.path.join(args.output_dir, 'best_model.pt'))
                 
             if epoch%visualize_per_epoch==0 or epoch==args.epochs-1:
-                image = inv_normalize(image)
                 image = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
                 rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
                 rgb_dec_attns = image.unsqueeze(1) * dec_attns + 1. - dec_attns
@@ -481,6 +510,18 @@ def main(args):
                 grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
                 grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
                 log_writer.add_image('VAL_recon/epoch={:03}'.format(epoch), grid)
+
+            if best_mbo_i_mage< mbo_i_mage and epoch%visualize_per_epoch==0 and args.both_mboi:
+                best_mbo_i_mage = mbo_i_mage
+                image = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
+                rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
+                rgb_dec_attns = image.unsqueeze(1) * mage_dec_attns + 1. - mage_dec_attns
+    
+                vis_recon = visualize(image, true_mask_c, pred_mage_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
+                grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
+                grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
+                log_writer.add_image('VAL_recon_mage/epoch={:03}'.format(epoch), grid)
+
     
             log_writer.add_scalar('VAL/best_loss', best_val_loss, epoch)
     

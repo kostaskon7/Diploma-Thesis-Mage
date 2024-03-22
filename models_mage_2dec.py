@@ -243,6 +243,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         self.epsilon = epsilon
         self.cross_attn = args.cross_attn
+        self.both_mboi = args.both_mboi
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
@@ -828,8 +829,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print(dec_recon.shape)
 
         loss=(loss_mage,loss_spot)
-        # return loss, imgs, token_all_mask,attn[:,1:,:],dec_slots_attns,logits
-        return loss, imgs, token_all_mask,attn,attn_dec,logits
+
+        if self.both_mboi:
+            dec_slots_attns=(dec_slots_attns,attn_dec)
+
+        return loss, imgs, token_all_mask,attn,dec_slots_attns,logits
 
 
     def freeze_encoder(self):
