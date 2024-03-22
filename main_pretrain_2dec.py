@@ -451,7 +451,7 @@ def main(args):
             fg_iou_slot = 100 * fg_iou_slot_metric.compute()
 
             if args.both_mboi:
-                mbo_i_mage = 100 * MBO_i_metric.compute()
+                mbo_i_mage = 100 * MBO_i_metric_mage.compute()
                 log_writer.add_scalar('VAL/mbo_i_mage', mbo_i_mage, epoch)
             
             log_writer.add_scalar('VAL/val_spot', val_loss_spot, epoch)
