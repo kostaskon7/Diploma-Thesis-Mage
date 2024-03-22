@@ -410,6 +410,13 @@ def main(args):
                 # print(pred_default_mask.shape)
                 # print(true_mask_i.shape)
                 # print(true_mask_c.shape)
+
+                # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
+                true_mask_i_reshaped = torch.nn.functional.one_hot(true_mask_i).to(torch.float32).permute(0,3,1,2).cuda()
+                true_mask_c_reshaped = torch.nn.functional.one_hot(true_mask_c).to(torch.float32).permute(0,3,1,2).cuda()
+                pred_dec_mask_reshaped = torch.nn.functional.one_hot(pred_dec_mask).to(torch.float32).permute(0,3,1,2).cuda()
+                pred_default_mask_reshaped = torch.nn.functional.one_hot(pred_default_mask).to(torch.float32).permute(0,3,1,2).cuda()
+
                 if args.both_mboi:
                     mage_dec_slots_attns = mage_dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
                     mage_dec_attns = F.interpolate(mage_dec_slots_attns, size=256, mode='bilinear')
@@ -422,11 +429,7 @@ def main(args):
 
     
 
-                # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
-                true_mask_i_reshaped = torch.nn.functional.one_hot(true_mask_i).to(torch.float32).permute(0,3,1,2).cuda()
-                true_mask_c_reshaped = torch.nn.functional.one_hot(true_mask_c).to(torch.float32).permute(0,3,1,2).cuda()
-                pred_dec_mask_reshaped = torch.nn.functional.one_hot(pred_dec_mask).to(torch.float32).permute(0,3,1,2).cuda()
-                pred_default_mask_reshaped = torch.nn.functional.one_hot(pred_default_mask).to(torch.float32).permute(0,3,1,2).cuda()
+
                 
                 MBO_i_metric.update(pred_dec_mask_reshaped, true_mask_i_reshaped, mask_ignore)
                 MBO_c_metric.update(pred_dec_mask_reshaped, true_mask_c_reshaped, mask_ignore)
