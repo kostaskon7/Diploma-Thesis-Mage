@@ -829,7 +829,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         loss=(loss_mage,loss_spot)
         # return loss, imgs, token_all_mask,attn[:,1:,:],dec_slots_attns,logits
-        return loss, imgs, token_all_mask,attn,dec_slots_attns,logits
+        return loss, imgs, token_all_mask,attn,attn_dec[:,1:,:],logits
 
 
     def freeze_encoder(self):
