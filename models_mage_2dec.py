@@ -384,14 +384,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
                 linear(args.slot_size, args.d_model, bias=False),
                 nn.LayerNorm(args.d_model),
             )
-            self.slot_proj2 = nn.Sequential(
-                linear(args.slot_size, args.d_model, bias=False),
-                nn.LayerNorm(args.d_model),
-            )
             # self.slot_proj2 = nn.Sequential(
-            #     linear(args.d_model, args.d_model, bias=False),
+            #     linear(args.slot_size, args.d_model, bias=False),
             #     nn.LayerNorm(args.d_model),
             # )
+            self.slot_proj2 = nn.Sequential(
+                linear(args.d_model, args.d_model, bias=False),
+                nn.LayerNorm(args.d_model),
+            )
             self.dec_input_dim = args.d_model
         
         args.max_tokens=img_size
@@ -779,7 +779,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots, attn, _, _ = self.slot_attention(latent)
         # slots_proj=slots
-        slots_proj=self.slot_proj2(slots)
+        # slots_proj=self.slot_proj2(slots)
 
         #TBD
         # slots_nograd=slots.clone().detach()
@@ -789,21 +789,21 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # [32, 257, 768]
         # [32, 257, 7]
         #TBD2
-        # attn=attn.clone().detach()
+        attn=attn.clone().detach()
         # Latent another transformation?
         # attn_onehot = torch.nn.functional.one_hot(slots_attns.argmax(1), num_classes=args.num_slots).permute(0,3,1,2)
 
-        # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
+        slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-        # slots_pool=self.slot_proj2(slots_pool)
+        slots_pool=self.slot_proj2(slots_pool)
 
         # print(latent.shape)
         # logits,_ = self.forward_decoder(latent_mask, slots_proj,token_drop_mask, token_all_mask)
         # logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
         #TBD
-        logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
+        # logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
         #TBD2
-        # logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
         dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
