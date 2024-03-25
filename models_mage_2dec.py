@@ -792,10 +792,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
         attn=attn.clone().detach()
         # Latent another transformation?
         print(attn.shape)
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(1), num_classes=7).permute(0,3,1,2)
+        attn_onehot = torch.nn.functional.one_hot(attn.argmax(1), num_classes=7).permute(0,1,2)
         print(attn_onehot.shape)
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         print(slots_pool.shape)
+        print(slots.shape)
 
 
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
