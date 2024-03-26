@@ -119,7 +119,7 @@ if not os.path.exists(save_folder):
 val_sampler = None
 
 if args.dataset == 'coco':
-  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
+  val_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
   val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
 
@@ -177,7 +177,7 @@ all_outputs = torch.stack(collected_outputs, dim=0)  # This will give a shape [t
 
 # Make sure your KMeans supports GPU, and `all_outputs_reshape` is on the right device
 kmeans = KMeans(num_classes=81, mode='euclidean', verbose=1, device=device)
-labels = kmeans.fit_predict(all_outputs)
+labels = kmeans.fit(all_outputs)
 
 # Save your model
 torch.save(model.state_dict(), 'model.pth')
