@@ -143,16 +143,10 @@ collected_outputs = []
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Assuming args.dataset is defined somewhere in your code
-if args.dataset == 'coco':
-    iterator = enumerate(tqdm(val_loader))
-else:
-    iterator = enumerate(tqdm(data_loader_train))
+
 counter=0
-for batch, data in iterator:
-    if args.dataset == 'coco':
-        image = data
-    else:
-        image, _ = data
+for batch, image in enumerate(val_loader):
+
 
     image=image.cuda()
     with torch.no_grad():
