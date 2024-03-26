@@ -145,7 +145,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Assuming args.dataset is defined somewhere in your code
 
 counter=0
-for batch, image in enumerate(val_loader):
+for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
 
     image=image.cuda()
