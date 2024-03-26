@@ -34,7 +34,7 @@ def mask_by_random_topk(mask_len, probs, temperature=1.0):
     return masking
 
 
-def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=True,with_mask_vis=True,data_used='coco'):
+def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=True,with_mask_vis=True,data_used='coco',slot_vis=True):
     torch.manual_seed(seed)
     np.random.seed(seed)
     codebook_emb_dim = 256
@@ -45,8 +45,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     image=image.cuda()
 
-############################
-    if data_used == 'coco':
+############################ Create Slot vis
+    if data_used == 'coco' and slot_vis:
     
         val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
 
