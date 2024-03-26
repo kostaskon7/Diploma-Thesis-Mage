@@ -160,17 +160,12 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         slots, attn, _, _ = model.slot_attention(latent)
         collected_outputs.append(slots)
     
-    # Iterate over the batch dimension and append each [7, 256] tensor individually
-all_outputs = torch.stack(collected_outputs, dim=0)
-all_outputs = all_outputs.view(-1, 7, 256)
+all_outputs = torch.cat(collected_outputs, dim=0)
+# Now all_outputs is [total_images, 7, 256], directly ready for KMeans without additional reshaping
 
 
 
-# At this point, collected_outputs is a list of [7, 256] tensors
-# If you need a single tensor for KMeans, you'll likely need to concatenate them
-# You might need to adjust dimensions depending on how KMeans expects the data
-# all_outputs = torch.stack(collected_outputs, dim=0)  # This will give a shape [total_images, 7, 256]
-# all_outputs_reshape = all_outputs.view(-1, 256)  # Reshape for KMeans, now [total_images * 7, 256]
+
 
 # Make sure your KMeans supports GPU, and `all_outputs_reshape` is on the right device
 kmeans = KMeans(num_classes=81, mode='euclidean', verbose=1, device=device)
