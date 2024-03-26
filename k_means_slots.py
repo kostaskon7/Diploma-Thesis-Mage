@@ -150,7 +150,7 @@ else:
 counter=0
 for batch, data in iterator:
     if args.dataset == 'coco':
-        image, true_mask_i, true_mask_c, mask_ignore = data
+        image = data
     else:
         image, _ = data
 
