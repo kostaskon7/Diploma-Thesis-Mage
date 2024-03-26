@@ -78,6 +78,9 @@ parser.add_argument('--use_decs', default=None,type=int,
 parser.add_argument('--cross_attn', default=None,type=int,
                 help='cross attention on decoder')
 
+parser.add_argument('--both_mboi', default=None,type=int,
+                help='cross attention on decoder')
+
 
 
                     
