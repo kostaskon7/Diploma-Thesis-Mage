@@ -17,6 +17,8 @@ from spot.utils_spot import inv_normalize, cosine_scheduler, visualize, bool_fla
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 from torch_kmeans import KMeans
+from kmeans_pytorch import kmeans
+
 
 
 
@@ -169,8 +171,8 @@ all_slots_reshaped = all_slots.view(-1, 256)
 
 
 # Make sure your KMeans supports GPU, and `all_outputs_reshape` is on the right device
-kmeans = KMeans(num_classes=81, mode='euclidean', verbose=1, device=device)
-labels = kmeans.fit(all_slots_reshaped)
+kmeans_model = kmeans(num_classes=81, mode='euclidean', verbose=1, device=device)
+labels = kmeans_model.fit(all_slots_reshaped)
 
 # Save your model
 torch.save(model.state_dict(), 'model.pth')
