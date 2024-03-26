@@ -158,10 +158,13 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         latent=latent[:,1:,:]
 
         slots, attn, _, _ = model.slot_attention(latent)
+        collected_outputs.append(slots)
     
     # Iterate over the batch dimension and append each [7, 256] tensor individually
-    for single_output in slots:
-        collected_outputs.append(single_output.detach())
+all_outputs = torch.stack(collected_outputs, dim=0)
+all_outputs = all_outputs.view(-1, 7, 256)
+
+
 
 # At this point, collected_outputs is a list of [7, 256] tensors
 # If you need a single tensor for KMeans, you'll likely need to concatenate them
