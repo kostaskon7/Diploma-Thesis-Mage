@@ -171,8 +171,12 @@ all_slots_reshaped = all_slots.view(-1, 256)
 
 
 # Make sure your KMeans supports GPU, and `all_outputs_reshape` is on the right device
-kmeans_model = kmeans(num_classes=81, mode='euclidean', verbose=1, device=device)
-labels = kmeans_model.fit(all_slots_reshaped)
+# kmeans_model = kmeans(num_classes=81, mode='euclidean', verbose=1, device=device)
+# labels = kmeans_model.fit(all_slots_reshaped)
+
+cluster_ids_x, cluster_centers = kmeans(
+    X=all_slots_reshaped, num_clusters=81, distance='euclidean', device=device
+)
 
 # Save your model
-torch.save(model.state_dict(), 'model.pth')
+torch.save(cluster_centers, 'cluster_centers.pth')
