@@ -175,7 +175,7 @@ all_slots_reshaped = all_slots.view(-1, 256)
 # labels = kmeans_model.fit(all_slots_reshaped)
 
 cluster_ids_x, cluster_centers = kmeans(
-    X=all_slots_reshaped, num_clusters=81, distance='euclidean', device=device,tol=5e-3
+    X=all_slots_reshaped, num_clusters=81, distance='euclidean', device=device,tol=6e-3
 )
 
 # Save your model
