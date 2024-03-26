@@ -166,11 +166,11 @@ for batch, data in iterator:
 # If you need a single tensor for KMeans, you'll likely need to concatenate them
 # You might need to adjust dimensions depending on how KMeans expects the data
 all_outputs = torch.stack(collected_outputs, dim=0)  # This will give a shape [total_images, 7, 256]
-all_outputs_reshape = all_outputs.view(-1, 256)  # Reshape for KMeans, now [total_images * 7, 256]
+# all_outputs_reshape = all_outputs.view(-1, 256)  # Reshape for KMeans, now [total_images * 7, 256]
 
 # Make sure your KMeans supports GPU, and `all_outputs_reshape` is on the right device
 kmeans = KMeans(num_classes=81, mode='euclidean', verbose=1, device=device)
-labels = kmeans.fit_predict(all_outputs_reshape)
+labels = kmeans.fit_predict(all_outputs)
 
 # Save your model
 torch.save(model.state_dict(), 'model.pth')
