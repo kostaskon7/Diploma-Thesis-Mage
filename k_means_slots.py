@@ -160,7 +160,8 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         slots, attn, _, _ = model.slot_attention(latent)
         collected_outputs.append(slots)
     
-all_outputs = torch.cat(collected_outputs, dim=0)
+all_slots = torch.cat(collected_outputs, dim=0)
+all_slots_reshaped = all_slots.view(-1, 256)
 # Now all_outputs is [total_images, 7, 256], directly ready for KMeans without additional reshaping
 
 
@@ -169,7 +170,7 @@ all_outputs = torch.cat(collected_outputs, dim=0)
 
 # Make sure your KMeans supports GPU, and `all_outputs_reshape` is on the right device
 kmeans = KMeans(num_classes=81, mode='euclidean', verbose=1, device=device)
-labels = kmeans.fit(all_outputs)
+labels = kmeans.fit(all_slots_reshaped)
 
 # Save your model
 torch.save(model.state_dict(), 'model.pth')
