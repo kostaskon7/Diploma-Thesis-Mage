@@ -156,10 +156,17 @@ for batch, data in iterator:
 
     image=image.cuda()
     with torch.no_grad():
-        val_loss, _, _, default_slots_attns, _, _ = model(image)
+        # val_loss, _, _, default_slots_attns, _, _ = model(image)
+        latent_mask, gt_indices, token_drop_mask, token_all_mask = model.forward_encoder_mask(image)
+
+        latent= model.forward_encoder(image)
+        #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
+        latent=latent[:,1:,:]
+
+        slots, attn, _, _ = model.slot_attention(latent)
     
     # Iterate over the batch dimension and append each [7, 256] tensor individually
-    for single_output in default_slots_attns:
+    for single_output in slots:
         collected_outputs.append(single_output.detach())
 
 # At this point, collected_outputs is a list of [7, 256] tensors
