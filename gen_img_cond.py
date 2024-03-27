@@ -128,11 +128,11 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         
         # Find top k slots
-        # if step==0:
-        #     n_top_slots = 2
-        #     slots_summed_values = slots.sum(dim=2)
-        #     _, top_slot_indices = slots_summed_values.topk(n_top_slots, dim=1)
-        #     slots = torch.gather(slots, 1, top_slot_indices.unsqueeze(-1).expand(-1, -1, slots.size(2)))
+        if step==0:
+            n_top_slots = 1
+            slots_summed_values = slots.sum(dim=2)
+            _, top_slot_indices = slots_summed_values.topk(n_top_slots, dim=1)
+            slots = torch.gather(slots, 1, top_slot_indices.unsqueeze(-1).expand(-1, -1, slots.size(2)))
 
         if step==0:
             slots_reshaped = slots.view(-1, 256)
