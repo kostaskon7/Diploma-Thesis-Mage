@@ -386,8 +386,8 @@ def main(args):
                 #     cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), orig_img_np)
                                     ################ Recon
 
-                default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
-                dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
+                default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, args.num_slots, 16, 16)
+                dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, args.num_slots, 16, 16)
                 
 
 
@@ -418,7 +418,7 @@ def main(args):
                 pred_default_mask_reshaped = torch.nn.functional.one_hot(pred_default_mask).to(torch.float32).permute(0,3,1,2).cuda()
 
                 if args.both_mboi:
-                    mage_dec_slots_attns = mage_dec_slots_attns.transpose(-1, -2).reshape(batch_size, 7, 16, 16)
+                    mage_dec_slots_attns = mage_dec_slots_attns.transpose(-1, -2).reshape(batch_size, model.slot_attention.num_slots, 16, 16)
                     mage_dec_attns = F.interpolate(mage_dec_slots_attns, size=256, mode='bilinear')
                     mage_dec_attns = mage_dec_attns.unsqueeze(2)
                     pred_mage_dec_mask = mage_dec_attns.argmax(1).squeeze(1)

@@ -822,13 +822,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         torch.cuda.empty_cache()
 
-        # print(latent.shape)
-        # print(latent_mask.shape)
-        # print(slots.shape)
-        # print(attn.shape)
-        # print(slots_proj.shape)
-        # print(logits.shape)
-        # print(dec_recon.shape)
+
 
         loss=(loss_mage,loss_spot)
 
