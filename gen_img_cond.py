@@ -134,20 +134,20 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         #     _, top_slot_indices = slots_summed_values.topk(n_top_slots, dim=1)
         #     slots = torch.gather(slots, 1, top_slot_indices.unsqueeze(-1).expand(-1, -1, slots.size(2)))
 
+        if step==0:
+            slots_reshaped = slots.view(-1, 256)
 
-        slots_reshaped = slots.view(-1, 256)
+            # Predict cluster IDs for each slot
+            cluster_ids = kmeans_predict(
+                slots_reshaped, cluster_centers, 'euclidean', device=device
+            )
 
-        # Predict cluster IDs for each slot
-        cluster_ids = kmeans_predict(
-            slots_reshaped, cluster_centers, 'euclidean', device=device
-        )
+            # Replace each slot with its corresponding cluster center
+            # This will use the predicted cluster IDs to gather the appropriate cluster centers
+            slots_replaced = cluster_centers[cluster_ids]
 
-        # Replace each slot with its corresponding cluster center
-        # This will use the predicted cluster IDs to gather the appropriate cluster centers
-        slots_replaced = cluster_centers[cluster_ids]
-
-        # Reshape back to the original slots tensor shape
-        slots_replaced = slots_replaced.view_as(slots)
+            # Reshape back to the original slots tensor shape
+            slots_replaced = slots_replaced.view_as(slots)
         logits,_ = model.forward_decoder(x, slots_replaced, token_drop_mask, token_all_mask)
         logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
 
