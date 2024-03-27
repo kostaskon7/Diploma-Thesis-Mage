@@ -337,7 +337,7 @@ parser.add_argument('--both_mboi', default=None,type=int,
 
 
                     
-
+torch.manual_seed(0)
 args = parser.parse_args()
 args.log_dir=args.output_dir
 log_writer = SummaryWriter(log_dir=args.log_dir)
