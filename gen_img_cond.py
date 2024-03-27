@@ -136,7 +136,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             slots=slots[:,0,:]
 
         if step==0:
-            slots_reshaped = slots.view(-1, 256)
+            slots_reshaped = slots.reshape(-1, 256)
 
             # Predict cluster IDs for each slot
             cluster_ids = kmeans_predict(
