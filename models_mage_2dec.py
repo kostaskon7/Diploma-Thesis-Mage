@@ -289,7 +289,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             num_iterations=3,  # specify the number of iterations
             num_slots=7,       # specify the number of slots
             input_channels=768,  # since it should match the output of your encoder ###embed_dim
-            slot_size=256,       # specify the slot size
+            slot_size=args.slot_size,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
             truncate='none', # or other options as per your requirement
@@ -384,14 +384,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
                 linear(args.slot_size, args.d_model, bias=False),
                 nn.LayerNorm(args.d_model),
             )
-            # self.slot_proj2 = nn.Sequential(
-            #     linear(args.slot_size, args.d_model, bias=False),
-            #     nn.LayerNorm(args.d_model),
-            # )
             self.slot_proj2 = nn.Sequential(
-                linear(args.d_model, args.d_model, bias=False),
+                linear(args.slot_size, args.d_model, bias=False),
                 nn.LayerNorm(args.d_model),
             )
+            # self.slot_proj2 = nn.Sequential(
+            #     linear(args.d_model, args.d_model, bias=False),
+            #     nn.LayerNorm(args.d_model),
+            # )
             self.dec_input_dim = args.d_model
         
         args.max_tokens=img_size
@@ -779,7 +779,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots, attn, _, _ = self.slot_attention(latent)
         # slots_proj=slots
-        # slots_proj=self.slot_proj2(slots)
+        slots_proj=self.slot_proj2(slots)
 
         #TBD
         # slots_nograd=slots.clone().detach()
@@ -789,23 +789,23 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # [32, 257, 768]
         # [32, 257, 7]
         #TBD2
-        attn=attn.clone().detach()
+        # attn=attn.clone().detach()
         # Latent another transformation?
         # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
         # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
-        slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
+        # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-        slots_pool=self.slot_proj2(slots_pool)
+        # slots_pool=self.slot_proj2(slots_pool)
 
         # print(latent.shape)
         # logits,_ = self.forward_decoder(latent_mask, slots_proj,token_drop_mask, token_all_mask)
         # logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
         #TBD
-        # logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
         #TBD2
-        logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+        # logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
         dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
