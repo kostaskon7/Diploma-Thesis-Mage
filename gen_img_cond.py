@@ -294,6 +294,8 @@ parser.add_argument('--cross_attn', default=None,type=int,
                 help='cross attention on decoder')
 parser.add_argument('--slot_vis', default=None,type=int,
                 help='slot_vis on decoder')
+parser.add_argument('--both_mboi', default=None,type=int,
+                help='both_mboi logs decoder')
 
 
 
