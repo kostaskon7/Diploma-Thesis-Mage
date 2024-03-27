@@ -287,7 +287,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # --------------------------------------------------------------------------
         self.slot_attention = SlotAttentionEncoder(
             num_iterations=3,  # specify the number of iterations
-            num_slots=7,       # specify the number of slots
+            num_slots=args.num_slots,       # specify the number of slots
             input_channels=768,  # since it should match the output of your encoder ###embed_dim
             slot_size=args.slot_size,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
@@ -641,7 +641,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #print(atts.shape)
         #[32,16,264,264]
         atts=atts.sum(dim=1)
-        atts_slots = atts[:,8:,:7]
+        atts_slots = atts[:,self.model.slot_attention.num_slots+1:,:self.model.slot_attention.num_slots]#8,7
         atts_slots=atts_slots+self.epsilon
         sums = atts_slots.sum(dim=2, keepdim=True)
         # Replace zero sums to avoid division by zero
@@ -758,7 +758,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward_loss(self, gt_indices, logits, mask):
         bsz, seq_len = gt_indices.size()
         # logits and mask are with seq_len+1 but gt_indices is with seq_len
-        loss = self.criterion(logits[:, 8:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
+        loss = self.criterion(logits[:, self.model.slot_attention.num_slots+1:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
         # loss = self.criterion(logits[:, 1:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
 
         # print(loss.shape)

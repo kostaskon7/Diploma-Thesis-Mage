@@ -510,7 +510,7 @@ def main(args):
                 rgb_dec_attns = image.unsqueeze(1) * dec_attns + 1. - dec_attns
     
                 vis_recon = visualize(image, true_mask_c, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
-                grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
+                grid = vutils.make_grid(vis_recon, nrow=2*args.num_slots + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
                 grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
                 log_writer.add_image('VAL_recon/epoch={:03}'.format(epoch), grid)
 
@@ -521,7 +521,7 @@ def main(args):
                 rgb_dec_attns = image.unsqueeze(1) * mage_dec_attns + 1. - mage_dec_attns
     
                 vis_recon = visualize(image, true_mask_c, pred_mage_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
-                grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
+                grid = vutils.make_grid(vis_recon, nrow=2*args.num_slots + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
                 grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
                 log_writer.add_image('VAL_recon_mage/epoch={:03}'.format(epoch), grid)
 
