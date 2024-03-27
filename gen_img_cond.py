@@ -16,6 +16,8 @@ import torch.nn.functional as F
 from spot.utils_spot import inv_normalize, cosine_scheduler, visualize, bool_flag, load_pretrained_encoder
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
+from kmeans_pytorch import kmeans, kmeans_predict
+
 
 
 
@@ -43,7 +45,18 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     unknown_number_in_the_beginning = 256
     _CONFIDENCE_OF_KNOWN_TOKENS = +np.inf
 
+    if torch.cuda.is_available():
+        device = torch.device('cuda:0')
+    else:
+        device = torch.device('cpu')
+
     image=image.cuda()
+
+    # Assuming you've saved the cluster centers as 'cluster_centers.pth'
+    cluster_centers = torch.load('cluster_centers.pth')
+    # Ensure the cluster centers are on the correct device
+    cluster_centers = cluster_centers.cuda()
+
 
 ############################ Create Slot vis
     if data_used == 'coco' and slot_vis:
@@ -115,15 +128,35 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         
         # Find top k slots
-        n_top_slots = 2
-        slots_summed_values = slots.sum(dim=2)
-        _, top_slot_indices = slots_summed_values.topk(n_top_slots, dim=1)
-        slots = torch.gather(slots, 1, top_slot_indices.unsqueeze(-1).expand(-1, -1, slots.size(2)))
+        # if step==0:
+        #     n_top_slots = 2
+        #     slots_summed_values = slots.sum(dim=2)
+        #     _, top_slot_indices = slots_summed_values.topk(n_top_slots, dim=1)
+        #     slots = torch.gather(slots, 1, top_slot_indices.unsqueeze(-1).expand(-1, -1, slots.size(2)))
+
+
+        slots_reshaped = slots.view(-1, 256)
+
+        # Predict cluster IDs for each slot
+        cluster_ids = kmeans_predict(
+            slots_reshaped, cluster_centers, 'euclidean', device=device
+        )
+
+        # Replace each slot with its corresponding cluster center
+        # This will use the predicted cluster IDs to gather the appropriate cluster centers
+        slots_replaced = cluster_centers[cluster_ids]
+
+        # Reshape back to the original slots tensor shape
+        slots_replaced = slots_replaced.view_as(slots)
+        logits,_ = model.forward_decoder(x, slots_replaced, token_drop_mask, token_all_mask)
+        logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
+
+
 
         # decoder
-        logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
+        # logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
-        logits = logits[:, n_top_slots+1:, :codebook_size]
+        # logits = logits[:, n_top_slots+1:, :codebook_size]
 
         # get token prediction
         sample_dist = torch.distributions.categorical.Categorical(logits=logits)
