@@ -133,9 +133,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             # slots_summed_values = slots.sum(dim=2)
             # _, top_slot_indices = slots_summed_values.topk(n_top_slots, dim=1)
             # slots = torch.gather(slots, 1, top_slot_indices.unsqueeze(-1).expand(-1, -1, slots.size(2)))
-            print(slots.shape)
-            slots=slots[:,0,:]
-            print(slots.shape)
+            slots=slots[:,0,:].unsqueeze(1)
 
         if step==0:
             slots_reshaped = slots.view(-1, 256)
