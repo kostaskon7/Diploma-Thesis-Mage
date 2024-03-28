@@ -204,6 +204,8 @@ def main(args):
     #     drop_last=True,
     # )
 
+    torch.manual_seed(0)
+
     log_writer = SummaryWriter(log_dir=args.log_dir)
     train_sampler = None
     val_sampler = None
@@ -543,7 +545,7 @@ def main(args):
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict()
             }
-            torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
+            # torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
 
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
             model.k=model.k+1
