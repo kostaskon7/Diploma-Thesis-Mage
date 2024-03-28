@@ -795,11 +795,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #TBD2
         attn=attn.clone().detach()
         # Latent another transformation?
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
-        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
-        # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
+        slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
         slots_pool=self.slot_proj2(slots_pool)
 
@@ -868,11 +868,11 @@ def mage_vit_base_patch16(**kwargs):
 
     model.freeze_encoder()
 
-    model.freeze_decoder()
+    # model.freeze_decoder()
 
-    for block in model.decoder_blocks:
-        for param in block.mage_cross_attn.parameters():
-            param.requires_grad = True
+    # for block in model.decoder_blocks:
+    #     for param in block.mage_cross_attn.parameters():
+    #         param.requires_grad = True
 
 
 
