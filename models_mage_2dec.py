@@ -318,7 +318,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.decoder_pred = nn.Linear(decoder_embed_dim, patch_size**2 * in_chans, bias=True) # decoder to patch
 
 
-        self.k=0
         # --------------------------------------------------------------------------
         # Spot----------------------------------------------------------------------
         self.d_model = args.d_model
@@ -628,7 +627,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         for i, blk in enumerate(self.decoder_blocks):
-            if i == len(self.decoder_blocks) -self.k - 1: # last block
+            if i == len(self.decoder_blocks) - 1: # last block
                 # Get attention matrix from last block
                 with torch.no_grad(): # r
                     atts = blk(x,slots=slots_for_dec, return_attention=True)
@@ -795,11 +794,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #TBD2
         attn=attn.clone().detach()
         # Latent another transformation?
-        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
-        # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
-        slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
+        # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
         slots_pool=self.slot_proj2(slots_pool)
 

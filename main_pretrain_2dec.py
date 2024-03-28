@@ -548,7 +548,6 @@ def main(args):
             torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
 
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
-            model.k=model.k+1
         #     if(epoch>25):
         #         break
         # if(epoch>25):
