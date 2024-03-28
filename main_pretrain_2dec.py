@@ -467,11 +467,21 @@ def main(args):
             log_writer.add_scalar('VAL/mbo_i (slots)', mbo_i_slot, epoch)
             log_writer.add_scalar('VAL/fg_iou (slots)', fg_iou_slot, epoch)
 
+            mage_list=mage_dec_slots_attns
+            for i in range(len(model.decoder_blocks)):
+                mage_dec_slots_attns=mage_list[i]
+                mage_dec_slots_attns = mage_dec_slots_attns.transpose(-1, -2).reshape(batch_size, model.slot_attention.num_slots, 16, 16)
+                mage_dec_attns = F.interpolate(mage_dec_slots_attns, size=256, mode='bilinear')
+                mage_dec_attns = mage_dec_attns.unsqueeze(2)
+                pred_mage_dec_mask = mage_dec_attns.argmax(1).squeeze(1)
+                pred_mage_dec_mask_reshaped = torch.nn.functional.one_hot(pred_mage_dec_mask).to(torch.float32).permute(0,3,1,2).cuda()
+                MBO_i_metric_mage.update(pred_mage_dec_mask_reshaped, true_mask_i_reshaped, mask_ignore)
+                mbo_i_mage = 100 * MBO_i_metric_mage.compute()
 
-            if args.both_mboi:
-                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t mBO_i_mage = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
-                epoch, val_loss_mage,val_loss_spot, ari, ari_slot, mbo_c, mbo_i, mbo_i_mage, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
-                MBO_i_metric_mage.reset()
+                if args.both_mboi:
+                    print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t mBO_i_mage = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
+                    epoch, val_loss_mage,val_loss_spot, ari, ari_slot, mbo_c, mbo_i, mbo_i_mage, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+                    MBO_i_metric_mage.reset()
 
             else:
                 print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
