@@ -627,18 +627,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
             slots_for_dec=None
 
 
-        attn=[]
         for i, blk in enumerate(self.decoder_blocks):
-            # if i == len(self.decoder_blocks) -self.k - 1: # last block
+            if i == len(self.decoder_blocks) -self.k - 1: # last block
                 # Get attention matrix from last block
-            with torch.no_grad(): # r
-                atts=blk(x,slots=slots_for_dec, return_attention=True)
-                atts=atts.sum(dim=1)
-                atts_slots = atts[:,self.slot_attention.num_slots+1:,:self.slot_attention.num_slots]#8,7
-                atts_slots=atts_slots+self.epsilon
-                sums = atts_slots.sum(dim=2, keepdim=True)
-                normalized_atts_slots = atts_slots / sums
-                attn.append(normalized_atts_slots)
+                with torch.no_grad(): # r
+                    atts = blk(x,slots=slots_for_dec, return_attention=True)
             x = blk(x,slots=slots_for_dec)
 
         
@@ -651,16 +644,16 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         #print(atts.shape)
         #[32,16,264,264]
-        # atts=atts.sum(dim=1)
-        # atts_slots = atts[:,self.slot_attention.num_slots+1:,:self.slot_attention.num_slots]#8,7
-        # atts_slots=atts_slots+self.epsilon
-        # sums = atts_slots.sum(dim=2, keepdim=True)
-        # normalized_atts_slots = atts_slots / sums
+        atts=atts.sum(dim=1)
+        atts_slots = atts[:,self.slot_attention.num_slots+1:,:self.slot_attention.num_slots]#8,7
+        atts_slots=atts_slots+self.epsilon
+        sums = atts_slots.sum(dim=2, keepdim=True)
+        # Replace zero sums to avoid division by zero
+        normalized_atts_slots = atts_slots / sums
         #[32,256,7]
 
         
-        # return x,normalized_atts_slots
-        return x,attn
+        return x,normalized_atts_slots
     
     def forward_decoder_spot(self, slots, emb_target):
         # Prepate the input tokens for the decoder transformer:
