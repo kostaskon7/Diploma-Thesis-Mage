@@ -59,33 +59,61 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
 
 ############################ Create Slot vis
-    if data_used == 'coco' and slot_vis:
+    if slot_vis:
+        if data_used == 'coco' :
     
-        val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
+            val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
 
-        default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
-        dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
-        # default_slots_attns=default_slots_attns.unsqueeze(3)
-        # dec_slots_attns=dec_slots_attns.unsqueeze(3)
+            default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
+            dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
+            # default_slots_attns=default_slots_attns.unsqueeze(3)
+            # dec_slots_attns=dec_slots_attns.unsqueeze(3)
 
 
-        default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
-        dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
-        # dec_attns shape [B, num_slots, H, W]
-        default_attns = default_attns.unsqueeze(2)
-        dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
+            default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
+            dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
+            # dec_attns shape [B, num_slots, H, W]
+            default_attns = default_attns.unsqueeze(2)
+            dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
 
-        pred_default_mask = default_attns.argmax(1).squeeze(1)
-        pred_dec_mask = dec_attns.argmax(1).squeeze(1)
+            pred_default_mask = default_attns.argmax(1).squeeze(1)
+            pred_dec_mask = dec_attns.argmax(1).squeeze(1)
 
-        image_int = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
-        rgb_default_attns = image_int.unsqueeze(1) * default_attns + 1. - default_attns
-        rgb_dec_attns = image_int.unsqueeze(1) * dec_attns + 1. - dec_attns
+            image_int = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
+            rgb_default_attns = image_int.unsqueeze(1) * default_attns + 1. - default_attns
+            rgb_dec_attns = image_int.unsqueeze(1) * dec_attns + 1. - dec_attns
 
-        vis_recon = visualize(image_int, true_mask_c, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
-        grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
-        grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
-        log_writer.add_image('VAL_recon/epoch={:03}'.format(1), grid)
+            vis_recon = visualize(image_int, true_mask_c, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
+            grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
+            grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
+            log_writer.add_image('VAL_recon/epoch={:03}'.format(1), grid)
+        else:
+            val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
+
+            default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
+            dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
+            # default_slots_attns=default_slots_attns.unsqueeze(3)
+            # dec_slots_attns=dec_slots_attns.unsqueeze(3)
+
+
+            default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
+            dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
+            # dec_attns shape [B, num_slots, H, W]
+            default_attns = default_attns.unsqueeze(2)
+            dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
+
+            pred_default_mask = default_attns.argmax(1).squeeze(1)
+            pred_dec_mask = dec_attns.argmax(1).squeeze(1)
+
+            image_int = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
+            rgb_default_attns = image_int.unsqueeze(1) * default_attns + 1. - default_attns
+            rgb_dec_attns = image_int.unsqueeze(1) * dec_attns + 1. - dec_attns
+
+            vis_recon = visualize(image_int, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
+            grid = vutils.make_grid(vis_recon, nrow=2*6 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
+            grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
+            log_writer.add_image('VAL_recon/epoch={:03}'.format(1), grid)
+
     
 
 #########################
