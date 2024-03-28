@@ -109,8 +109,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             rgb_default_attns = image_int.unsqueeze(1) * default_attns + 1. - default_attns
             rgb_dec_attns = image_int.unsqueeze(1) * dec_attns + 1. - dec_attns
 
-            vis_recon = visualize(image_int, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
-            grid = vutils.make_grid(vis_recon, nrow=2*6 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
+            vis_recon = visualize(image_int, pred_dec_mask, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
+            grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
             grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
             log_writer.add_image('VAL_recon/epoch={:03}'.format(1), grid)
 
