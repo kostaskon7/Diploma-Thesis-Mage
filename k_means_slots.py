@@ -162,7 +162,7 @@ else:
     
 # torch.save(collected_outputs, 'all_slots.pth')
 
-collected_outputs =torch.load('all_slots.pt')
+collected_outputs =torch.load('all_slots.pth')
 
 all_slots = torch.cat(collected_outputs, dim=0)
 
