@@ -141,28 +141,26 @@ else:
         drop_last=True,
     )
 
-# collected_outputs = []
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+collected_outputs = []
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# # Assuming args.dataset is defined somewhere in your code
+# Assuming args.dataset is defined somewhere in your code
 
-# counter=0
-# for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
+counter=0
+for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
 
-#     image=image.cuda()
-#     with torch.no_grad():
-#         # val_loss, _, _, default_slots_attns, _, _ = model(image)
-#         latent= model.forward_encoder(image)
-#         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-#         latent=latent[:,1:,:]
+    image=image.cuda()
+    with torch.no_grad():
+        # val_loss, _, _, default_slots_attns, _, _ = model(image)
+        latent= model.forward_encoder(image)
+        #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
+        latent=latent[:,1:,:]
 
-#         slots, attn, _, _ = model.slot_attention(latent)
-#         collected_outputs.append(slots)
+        slots, attn, _, _ = model.slot_attention(latent)
+        collected_outputs.append(slots)
     
-# torch.save(collected_outputs, 'all_slots.pth')
 
-collected_outputs =torch.load('all_slots.pth')
 
 all_slots = torch.cat(collected_outputs, dim=0)
 
