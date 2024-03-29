@@ -186,7 +186,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             centers = kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
 
             # Reshape back to the original slots shape
-            slots = centers.reshape(-1, slots_tensor.shape[1], 256)  # Use the original num_slots
+            slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
             slots = torch.tensor(slots).cuda()
 
 
@@ -216,6 +216,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         #     slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
 
         # logits,_ = model.forward_decoder(x, slots_replaced, token_drop_mask, token_all_mask)
+
         logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
 
