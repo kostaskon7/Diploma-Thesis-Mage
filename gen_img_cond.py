@@ -17,6 +17,8 @@ from spot.utils_spot import inv_normalize, cosine_scheduler, visualize, bool_fla
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 from kmeans_pytorch import kmeans, kmeans_predict
+from joblib import load
+import torch
 
 
 
@@ -54,8 +56,16 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # Assuming you've saved the cluster centers as 'cluster_centers.pth'
     cluster_centers = torch.load('cluster_centers.pth')
-    # Ensure the cluster centers are on the correct device
+    # # Ensure the cluster centers are on the correct device
     cluster_centers = cluster_centers.cuda()
+
+
+
+    # Load the model
+    kmeans = load('kmeans_model.joblib')
+
+ 
+
 
 
 ############################ Create Slot vis
@@ -119,13 +129,19 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 #########################
 
     # latent, gt_indices, _, _ = model.forward_encoder(image)
-    latent = model.forward_encoder(image)
+    # latent = model.forward_encoder(image)
 
-    #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-    slots, attn, init_slots, attn_logits = model.slot_attention(latent[:,1:,:])
+    # #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
+    # slots, attn, init_slots, attn_logits = model.slot_attention(latent[:,1:,:])
+    
     
 
-    slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
+    # slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
+
+
+
+
+
     slots=model.slot_proj2(slots)
 
     initial_token_indices = mask_token_id * torch.ones(bsz, unknown_number_in_the_beginning)
@@ -152,16 +168,35 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             x = blk(x)
         x = model.norm(x)
 
-        # slots, attn, init_slots, attn_logits = model.slot_attention(x)
+        
+
+        if step==0:
+            slots, attn, init_slots, attn_logits = model.slot_attention(x)
+            slots_pool = torch.matmul(attn.transpose(-1, -2), x)
+            slots_pool = model.slot_proj2(slots_pool)
+
+            # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
+            slots_tensor = slots_pool  # Replace with your actual tensor
+            slots_2d = slots_tensor.reshape(-1, 256).cpu().numpy()  # Reshape to 2D for prediction
+
+            # Predict cluster assignments
+            cluster_assignments = kmeans.predict(slots_2d)
+
+            # Replace slots with cluster centers
+            centers = kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+
+            # Reshape back to the original slots shape
+            slots = centers.reshape(-1, slots_tensor.shape[1], 256)  # Use the original num_slots
+
 
         
         # Find top k slots
-        if step==0:
-            n_top_slots = 6
-            slots_summed_values = slots.sum(dim=2)
-            _, top_slot_indices = slots_summed_values.topk(n_top_slots, dim=1)
-            slots = torch.gather(slots, 1, top_slot_indices.unsqueeze(-1).expand(-1, -1, slots.size(2)))
-            # slots=slots[:,2,:].unsqueeze(1)
+        # if step==0:
+        #     n_top_slots = 6
+        #     slots_summed_values = slots.sum(dim=2)
+        #     _, top_slot_indices = slots_summed_values.topk(n_top_slots, dim=1)
+        #     slots = torch.gather(slots, 1, top_slot_indices.unsqueeze(-1).expand(-1, -1, slots.size(2)))
+        #     # slots=slots[:,2,:].unsqueeze(1)
 
         # if step==0:
         #     slots_reshaped = slots.reshape(-1, 256)
@@ -177,6 +212,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         #     # Reshape back to the original slots tensor shape
         #     slots_replaced = slots_replaced.view_as(slots)
+        #     slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
+
         # logits,_ = model.forward_decoder(x, slots_replaced, token_drop_mask, token_all_mask)
         logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
@@ -185,8 +222,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # decoder
         # logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
-        # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
-        logits = logits[:, n_top_slots+1:, :codebook_size]
+        logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
+        # logits = logits[:, n_top_slots+1:, :codebook_size]
 
         # get token prediction
         sample_dist = torch.distributions.categorical.Categorical(logits=logits)
