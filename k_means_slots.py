@@ -160,11 +160,18 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         slots, attn, _, _ = model.slot_attention(latent)
         collected_outputs.append(slots)
     
-all_slots = torch.cat(collected_outputs, dim=0)
-all_slots_reshaped = all_slots.view(-1, 256)
-# Now all_outputs is [total_images, 7, 256], directly ready for KMeans without additional reshaping
-
 torch.save(collected_outputs, 'all_slots.pth')
+
+print(collected_outputs.shape)
+
+all_slots = torch.cat(collected_outputs, dim=0)
+
+print(all_slots.shape)
+
+all_slots_reshaped = all_slots.view(1,-1, 256)
+# Now all_outputs is [total_images, 7, 256], directly ready for KMeans without additional reshaping
+all_slots_reshaped=all_slots_reshaped.cuda()
+
 
 
 
@@ -172,9 +179,13 @@ torch.save(collected_outputs, 'all_slots.pth')
 # kmeans_model = kmeans(num_classes=81, mode='euclidean', verbose=1, device=device)
 # labels = kmeans_model.fit(all_slots_reshaped)
 
-cluster_ids_x, cluster_centers = kmeans(
-    X=all_slots_reshaped, num_clusters=1024, distance='euclidean', device=device,tol=6e-3
-)
+# cluster_ids_x, cluster_centers = kmeans(
+#     X=all_slots_reshaped, num_clusters=1024, distance='euclidean', device=device,tol=6e-3
+# )
+
+model = KMeans(n_clusters=1024,tol=6e-3)
+model = model.fit(all_slots_reshaped)
+
 
 # Save your model
-torch.save(cluster_centers, 'cluster_centers_1024.pth')
+torch.save(model, 'cluster_centers_1024.pth')
