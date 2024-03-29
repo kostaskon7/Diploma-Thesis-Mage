@@ -224,10 +224,30 @@ data_2d_np = data_2d.cpu().numpy()
 
 # Step 4: Apply MiniBatchKMeans
 n_clusters = 1024  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, batch_size=128)  # Adjust batch_size as necessary
+kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
-dump(kmeans, 'kmeans_model.joblib')
+dump(kmeans, 'kmeans_model1024.joblib')
+
+n_clusters = 2048  # Example: Define the number of clusters
+kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
+kmeans.fit(data_2d_np)
+
+dump(kmeans, 'kmeans_model2048.joblib')
+
+
+n_clusters = 4096  # Example: Define the number of clusters
+kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
+kmeans.fit(data_2d_np)
+
+dump(kmeans, 'kmeans_model4096.joblib')
+
+
+n_clusters = 8192  # Example: Define the number of clusters
+kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
+kmeans.fit(data_2d_np)
+
+dump(kmeans, 'kmeans_model8192.joblib')
 
 
 
