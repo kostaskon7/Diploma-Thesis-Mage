@@ -869,9 +869,10 @@ def mage_vit_base_patch16(**kwargs):
 
     model.freeze_decoder()
 
-    for block in model.decoder_blocks:
-        for param in block.mage_cross_attn.parameters():
-            param.requires_grad = True
+    
+    # for block in model.decoder_blocks:
+    #     for param in block.mage_cross_attn.parameters():
+    #         param.requires_grad = True
 
 
 
