@@ -153,8 +153,6 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
     image=image.cuda()
     with torch.no_grad():
         # val_loss, _, _, default_slots_attns, _, _ = model(image)
-        latent_mask, gt_indices, token_drop_mask, token_all_mask = model.forward_encoder_mask(image)
-
         latent= model.forward_encoder(image)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
@@ -179,4 +177,4 @@ cluster_ids_x, cluster_centers = kmeans(
 )
 
 # Save your model
-torch.save(cluster_centers, 'cluster_centers.pth')
+torch.save(cluster_centers, 'cluster_centers_1024.pth')
