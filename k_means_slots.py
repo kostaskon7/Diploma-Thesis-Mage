@@ -18,6 +18,10 @@ import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 from torch_kmeans import KMeans
 from kmeans_pytorch import kmeans
+from sklearn.cluster import MiniBatchKMeans
+from joblib import dump, load
+
+
 
 
 
@@ -162,23 +166,23 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
     
 
 
-all_slots = torch.cat(collected_outputs, dim=0)
+# all_slots = torch.cat(collected_outputs, dim=0)
 
 
-# all_slots_reshaped = all_slots.view(256,-1, 256)
+# all_slots_reshaped = all_slots.view(-1,7, 256)
 # # Now all_outputs is [total_images, 7, 256], directly ready for KMeans without additional reshaping
 # all_slots_reshaped=all_slots_reshaped.cuda()
 
 
-total_elements = all_slots.numel()
+# total_elements = all_slots.numel()
 
 # Since the last dimension is fixed at 256, calculate the middle dimension dynamically
 # Note: 'total_elements // 256' gives the total size for the first two dimensions combined
 # The new shape's middle dimension is calculated by dividing the total size by the number of batches and then by 256
-new_middle_dimension = (total_elements // 256) // all_slots.shape[0]
+# new_middle_dimension = (total_elements // 256) // all_slots.shape[0]
 
 # Reshape the combined tensor to the new shape
-reshaped_slots = all_slots.reshape(all_slots.shape[0], new_middle_dimension, 256)
+# reshaped_slots = all_slots.reshape(all_slots.shape[0], new_middle_dimension, 256)
 
 
 
@@ -190,9 +194,40 @@ reshaped_slots = all_slots.reshape(all_slots.shape[0], new_middle_dimension, 256
 #     X=all_slots_reshaped, num_clusters=1024, distance='euclidean', device=device,tol=6e-3
 # )
 
-model = KMeans(n_clusters=1024,tol=6e-3)
-model = model.fit(reshaped_slots)
+# model = KMeans(n_clusters=1024,tol=6e-3)
+# model = model.fit(reshaped_slots)
+
+
+
+## MINIBATCH SKLEARN
+
+# Step 1: Concatenate all collected outputs
+all_slots_tensor = torch.cat(collected_outputs, dim=0)
+
+# Step 2: Reshape the tensor to 2D [number_of_samples, 256]
+# Since each original tensor is [batch_size, 7, 256], and you're concatenating along the batch dimension,
+# you can simply reshape it to (-1, 256) to flatten all but the last dimension.
+data_2d = all_slots_tensor.reshape(-1, 256)
+
+# Step 3: Convert to NumPy array if you're using PyTorch
+data_2d_np = data_2d.cpu().numpy()
+
+# Step 4: Apply MiniBatchKMeans
+n_clusters = 10  # Example: Define the number of clusters
+kmeans = MiniBatchKMeans(n_clusters=n_clusters, batch_size=128)  # Adjust batch_size as necessary
+kmeans.fit(data_2d_np)
+
+dump(kmeans, 'kmeans_model.joblib')
+
+
+
+# kmeans = load('kmeans_model.joblib')
+
+
+
+
+
 
 
 # Save your model
-torch.save(model, 'cluster_centers_1024.pth')
+# torch.save(model, 'cluster_centers_1024.pth')
