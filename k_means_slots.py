@@ -167,7 +167,7 @@ all_slots = torch.cat(collected_outputs, dim=0)
 
 all_slots_reshaped = all_slots.view(1,-1, 256)
 # Now all_outputs is [total_images, 7, 256], directly ready for KMeans without additional reshaping
-all_slots_reshaped=all_slots_reshaped.cuda()
+all_slots_reshaped=all_slots_reshaped.cpu()
 
 
 
