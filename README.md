@@ -18,7 +18,7 @@ conda activate mage
 
 ## Testing
 
-python main_pretrain_2dec.py --batch_size 16 --model mage_vit_base_patch16 --resume path/to//mage-vitb-1600.pth --warmup_epochs 5 --vqgan_ckpt_path /path/to/vqgan_jax_strongaug.ckpt --epochs 50  --lr 2.e-4 --weight_decay 0.05 --output_dir /data/outputs/ --data_path /data/coco --use_decs 1
+python main_pretrain_2dec.py --batch_size 16 --model mage_vit_base_patch16 --resume path/to//mage-vitb-1600.pth --warmup_epochs 5 --vqgan_ckpt_path /path/to/vqgan_jax_strongaug.ckpt --epochs 50  --lr 2.e-4 --weight_decay 0.05 --output_dir /data/outputs/ --data_path /data/coco --use_decs 1 --both_mboi 1 --mask_ratio_min 0.5 --log_dir /path/to/logdir --min_lr 4e-5
 
 ### Take the path of the helpers.py file, the created an error
 
