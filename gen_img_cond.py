@@ -187,6 +187,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
             # Reshape back to the original slots shape
             slots = centers.reshape(-1, slots_tensor.shape[1], 256)  # Use the original num_slots
+            slots = torch.tensor(slots).cuda()
 
 
         
