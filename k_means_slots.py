@@ -164,7 +164,7 @@ all_slots = torch.cat(collected_outputs, dim=0)
 all_slots_reshaped = all_slots.view(-1, 256)
 # Now all_outputs is [total_images, 7, 256], directly ready for KMeans without additional reshaping
 
-
+torch.save(collected_outputs, 'all_slots.pth')
 
 
 
