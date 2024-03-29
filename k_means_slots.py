@@ -213,7 +213,7 @@ data_2d = all_slots_tensor.reshape(-1, 256)
 data_2d_np = data_2d.cpu().numpy()
 
 # Step 4: Apply MiniBatchKMeans
-n_clusters = 10  # Example: Define the number of clusters
+n_clusters = 1024  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters, batch_size=128)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
