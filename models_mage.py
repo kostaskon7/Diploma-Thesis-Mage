@@ -513,11 +513,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
         return loss
 
     def forward(self, imgs):
-        # with torch.no_grad():
-        latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
-        # latent, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder(imgs)
+        with torch.no_grad():
+            latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+            # latent, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder(imgs)
 
-        latent, _, _, _ = self.forward_encoder(imgs)
+            latent, _, _, _ = self.forward_encoder(imgs)
         # slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
 
