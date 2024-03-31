@@ -519,6 +519,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         latent, _, _, _ = self.forward_encoder(imgs)
         # slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
+        latent=latent[:,1:,:]
 
         slots, attn, _, _ = self.slot_attention(latent)
         # slots=self.slot_proj(slots)
@@ -533,7 +534,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         loss = self.forward_loss(gt_indices, logits, token_all_mask)
 
 
-        return loss, imgs, token_all_mask,attn[:,1:,:],attn_dec,logits
+        return loss, imgs, token_all_mask,attn,attn_dec,logits
 
     def freeze_encoder(self):
         # Freeze encoder
