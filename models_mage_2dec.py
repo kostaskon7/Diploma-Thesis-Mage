@@ -795,6 +795,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         attn=attn.clone().detach()
         # Latent another transformation?
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+
+        attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
@@ -865,7 +868,7 @@ def mage_vit_base_patch16(**kwargs):
         decoder_embed_dim=768, decoder_depth=8, decoder_num_heads=16,
         mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    model.freeze_encoder()
+    # model.freeze_encoder()
 
     # model.freeze_decoder()
 
