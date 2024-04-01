@@ -796,7 +796,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # Latent another transformation?
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
 
-        attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+        # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
 
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
