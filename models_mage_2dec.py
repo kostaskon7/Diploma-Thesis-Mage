@@ -801,6 +801,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
         slots_pool=self.slot_proj2(slots_pool)
+        breakpoint
 
         # print(latent.shape)
         # logits,_ = self.forward_decoder(latent_mask, slots_proj,token_drop_mask, token_all_mask)
