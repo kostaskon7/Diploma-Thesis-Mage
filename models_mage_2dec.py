@@ -782,7 +782,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots, attn, _, _ = self.slot_attention(latent)
 
-        # attn = attn + self.epsilon
+        attn = attn + self.epsilon
         # attn = attn / torch.sum(attn, dim=-2, keepdim=True)
         # updates = torch.matmul(attn.transpose(-1, -2), v)                           # Shape: [batch_size, num_heads, num_slots, slot_size // num_heads].
 
