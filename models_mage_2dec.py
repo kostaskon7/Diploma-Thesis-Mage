@@ -782,8 +782,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots, attn, _, _ = self.slot_attention(latent)
 
-        attn = attn + self.epsilon
-        # attn = attn / torch.sum(attn, dim=-2, keepdim=True)
         # updates = torch.matmul(attn.transpose(-1, -2), v)                           # Shape: [batch_size, num_heads, num_slots, slot_size // num_heads].
 
         # slots_proj=slots
@@ -801,7 +799,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # Latent another transformation?
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
         breakpoint()
-
+        attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
