@@ -800,9 +800,16 @@ class MaskedGenerativeEncoderViT(nn.Module):
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
         # Average Sum, Dimension 2 sums to 1
         attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+
+        print(attn_onehot.shape)
         
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
+        print(self.decoder_pos_embed_learned.shape)
+
+        decoder_pos_embed_learned_pool=torch.matmul(self.decoder_pos_embed_learned(-1, -2), latent)
+
+        breakpoint()
 
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
