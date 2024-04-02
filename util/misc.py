@@ -255,6 +255,7 @@ class NativeScalerWithGradNormCount:
             else:
                 self._scaler.unscale_(optimizer)
                 norm = get_grad_norm_(parameters)
+            breakpoint()
             self._scaler.step(optimizer)
             self._scaler.update()
         else:
