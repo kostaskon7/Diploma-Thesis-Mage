@@ -807,7 +807,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         print(self.decoder_pos_embed_learned.shape)
         breakpoint()
-        decoder_pos_embed_learned_pool=torch.matmul(self.decoder_pos_embed_learned(-1, -2), latent)
+        decoder_pos_embed_learned_pool=torch.matmul(self.decoder_pos_embed_learned[:,1:,:].transpose(-1, -2), latent)
 
         breakpoint()
 
