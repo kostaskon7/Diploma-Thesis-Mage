@@ -774,8 +774,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
     def forward(self, imgs):
         # with torch.no_grad():
-        latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
         with torch.no_grad():
+            latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+        
             latent= self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
@@ -872,7 +873,7 @@ def mage_vit_base_patch16(**kwargs):
         decoder_embed_dim=768, decoder_depth=8, decoder_num_heads=16,
         mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    # model.freeze_encoder()
+    model.freeze_encoder()
 
     # model.freeze_decoder()
 
