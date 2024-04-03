@@ -808,13 +808,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
         return loss
 
     def forward(self, imgs):
-        breakpoint()
-        latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
-        breakpoint()
+        
         with torch.no_grad():
+            latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
             latent= self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-        breakpoint()
         latent=latent[:,1:,:]
 
         slots, attn, _, _ = self.slot_attention(latent)
@@ -836,7 +834,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # Latent another transformation?
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
         # Average Sum, Dimension 2 sums to 1
-        attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+        # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
 
         
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
@@ -915,7 +913,7 @@ def mage_vit_base_patch16(**kwargs):
         decoder_embed_dim=768, decoder_depth=8, decoder_num_heads=16,
         mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    # model.freeze_encoder()
+    model.freeze_encoder()
 
     # model.freeze_decoder()
 
