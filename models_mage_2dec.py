@@ -642,7 +642,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         expanded_slots_token = self.slots_token.expand(batch_size, num_slots, -1)
 
         # Use where to replace selected slots with slots_token
-        slots = torch.where(final_masking_decision.unsqueeze(-1), expanded_slots_token, slots)
+        slots = torch.where(final_masking_decision.unsqueeze(-1).cuda(), expanded_slots_token.cuda(), slots)
 
 
 
