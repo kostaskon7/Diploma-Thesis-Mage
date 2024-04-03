@@ -148,6 +148,12 @@ def get_args_parser():
     parser.add_argument('--init_method', default='shared_gaussian', help='embedding or shared_gaussian')
 
 
+    # Slot Masking probability
+    parser.add_argument('--sample_mask_prob',  type=int, default=0.5, help='Sample Masking probability')
+    parser.add_argument('--slot_mask_prob', default=0.4, help='Masking probability per slot')
+
+
+
     return parser
 
 

@@ -244,6 +244,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.epsilon = epsilon
         self.cross_attn = args.cross_attn
         self.both_mboi = args.both_mboi
+
+
+        self.sample_mask_prob = args.sample_mask_prob  # Probability of masking for each sample
+        self.slot_mask_prob = args.slot_mask_prob
+
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
@@ -437,6 +442,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # Initialize cross attention
 
+        # Variable slots replacement
+        self.slots_token = nn.Parameter(torch.zeros(1, 1, args.d_model))
+
 
         self.initialize_weights()
 
@@ -461,6 +469,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         torch.nn.init.normal_(self.cls_token, std=.02)
         torch.nn.init.normal_(self.mask_token, std=.02)
         torch.nn.init.normal_(self.decoder_pos_embed_learned, std=.02)
+        # init slots replacement
+        torch.nn.init.normal_(self.slots_token, std=.02)
 
         # initialize nn.Linear and nn.LayerNorm
         self.apply(self._init_weights)
@@ -614,6 +624,31 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # add pos embed
         x = x_after_pad + self.decoder_pos_embed_learned
+
+        # Slot Masking
+
+        batch_size, num_slots, _ = slots.size()
+
+        # Decide if slot masking will occur for each sample in the batch
+        sample_masking_decision = torch.rand(batch_size, 1) < self.sample_mask_prob
+
+        # Decide which slots to mask for each sample
+        slot_masking_decision = torch.rand(batch_size, num_slots) < self.slot_mask_prob
+
+        # Combine decisions to determine which specific slots to mask
+        final_masking_decision = sample_masking_decision * slot_masking_decision
+
+        # Expand slots_token to match the dimensions needed for replacement
+        expanded_slots_token = self.slots_token.expand(batch_size, num_slots, -1)
+
+        # Use where to replace selected slots with slots_token
+        slots = torch.where(final_masking_decision.unsqueeze(-1), expanded_slots_token, slots)
+
+
+
+
+
+
 
         x = torch.cat((slots, x), dim=1)
 
