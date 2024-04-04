@@ -163,16 +163,18 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
         slots, attn, _, _ = model.slot_attention(latent)
 
-        attn=attn.clone().detach()
+        slots=model.slot_proj2(slots)
+
+        # attn=attn.clone().detach()
         # Latent another transformation?
         # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
         # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
-        slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
+        # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-        slots_pool=model.slot_proj2(slots_pool)
-        collected_outputs.append(slots_pool)
+        # slots_pool=model.slot_proj2(slots_pool)
+        collected_outputs.append(slots)
     
 
 
