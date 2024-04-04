@@ -30,11 +30,11 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
         with torch.cuda.amp.autocast():
             if args.use_decs:
                 # breakpoint()
-                loss, _, _,_,_,_ = model(samples)
-                loss_mage, loss_mage_spot = loss
+                loss_comb, _, _,_,_,_ = model(samples)
+                loss_mage, loss_mage_spot = loss_comb
                 # breakpoint()
-                loss=(0.2*loss_mage)+loss_mage_spot
-                # loss=loss_mage
+                # loss=(0.2*loss_mage)+loss_mage_spot
+                loss=loss_mage
             else:
                 loss, _, _,_,_,_ = model(samples)
 
