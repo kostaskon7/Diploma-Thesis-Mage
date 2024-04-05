@@ -309,7 +309,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                 # Convert to numpy and save - Generated Image
                 gen_img_np = np.clip(inv_gen_img.cpu().numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
                 gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
-                cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(b_id + 100*step).zfill(5))), gen_img_np)
+                cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(b_id + 100*step).zfill(4))), gen_img_np)
 
         if(per_iter):
             batch_size=32
