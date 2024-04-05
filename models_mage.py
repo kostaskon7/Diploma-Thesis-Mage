@@ -459,7 +459,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # add pos embed
         x = x_after_pad + self.decoder_pos_embed_learned
-        breakpoint()
+        
         x = torch.cat((slots, x), dim=1)
 
         # apply Transformer blocks
