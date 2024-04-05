@@ -459,6 +459,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # add pos embed
         x = x_after_pad + self.decoder_pos_embed_learned
+        print("EEEEEEEEEEEEEEE")
         print(slots.shape)
         print(x.shape)
         x = torch.cat((slots, x), dim=1)
