@@ -62,7 +62,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
 
     # Load the model
-    kmeans = load('kmeans_model2048_classic.joblib')
+    kmeans = load('kmeans_model4096_classic.joblib')
 
  
 
@@ -485,14 +485,14 @@ for batch, data in iterator:
 
             gen_img = np.clip(gen_images_batch[b_id].numpy().transpose([1, 2, 0]) * 255, 0, 255)
             gen_img = gen_img.astype(np.uint8)[:, :, ::-1]
-            cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(b_id).zfill(5))), gen_img)
+            cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(batch*args.batch_size + b_id).zfill(5))), gen_img)
 
 
 
             inv_orig_img = orig_images_batch[b_id]
             orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
             orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
-            cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(b_id).zfill(5))), orig_img_np)
+            cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(batch*args.batch_size + b_id).zfill(5))), orig_img_np)
     if batch >0:
         break
 
