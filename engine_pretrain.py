@@ -21,8 +21,8 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
 
-    for data_iter_step, batch_data in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
-        samples = batch_data.to(device, non_blocking=True)  # Use only the first tensor (images)
+    for data_iter_step, (samples, _) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+
         # LR Scheduler Adjustment (if necessary)
         if data_iter_step % accum_iter == 0:
             lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
