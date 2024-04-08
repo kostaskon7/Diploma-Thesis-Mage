@@ -386,14 +386,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
                 linear(args.slot_size, args.d_model, bias=False),
                 nn.LayerNorm(args.d_model),
             )
-            self.slot_proj2 = nn.Sequential(
-                linear(args.slot_size, args.d_model, bias=False),
-                nn.LayerNorm(args.d_model),
-            )
             # self.slot_proj2 = nn.Sequential(
-            #     linear(args.d_model, args.d_model, bias=False),
+            #     linear(args.slot_size, args.d_model, bias=False),
             #     nn.LayerNorm(args.d_model),
             # )
+            self.slot_proj2 = nn.Sequential(
+                linear(args.d_model, args.d_model, bias=False),
+                nn.LayerNorm(args.d_model),
+            )
             self.dec_input_dim = args.d_model
         
         args.max_tokens=img_size
