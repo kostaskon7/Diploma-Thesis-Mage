@@ -17,6 +17,8 @@ from spot.utils_spot import inv_normalize, cosine_scheduler, visualize, bool_fla
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
 from kmeans_pytorch import kmeans, kmeans_predict
+from joblib import load
+import torch
 
 
 
@@ -53,9 +55,17 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     image=image.cuda()
 
     # Assuming you've saved the cluster centers as 'cluster_centers.pth'
-    cluster_centers = torch.load('cluster_centers.pth')
-    # Ensure the cluster centers are on the correct device
-    cluster_centers = cluster_centers.cuda()
+    # cluster_centers = torch.load('cluster_centers.pth')
+    # # # Ensure the cluster centers are on the correct device
+    # cluster_centers = cluster_centers.cuda()
+
+
+
+    # Load the model
+    kmeans = load('kmeans_model4096_hard.joblib')
+
+ 
+
 
 
 ############################ Create Slot vis
@@ -119,14 +129,50 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 #########################
 
     # latent, gt_indices, _, _ = model.forward_encoder(image)
-    latent = model.forward_encoder(image)
+    # latent = model.forward_encoder(image)
 
-    #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-    slots, attn, init_slots, attn_logits = model.slot_attention(latent[:,1:,:])
+    # #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
+    # slots, attn, init_slots, attn_logits = model.slot_attention(latent[:,1:,:])
+    
     
 
-    slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
-    slots=model.slot_proj2(slots)
+    # slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
+
+    latent= model.forward_encoder(image)
+    #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
+    latent=latent[:,1:,:]
+
+    slots, attn, _, _ = model.slot_attention(latent)
+
+    attn=attn.clone().detach()
+    # Latent another transformation?
+    attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+
+    # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+
+    slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+
+
+    # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
+
+    slots_pool=model.slot_proj2(slots_pool)
+
+    # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
+    slots_tensor = slots_pool  # Replace with your actual tensor
+    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+
+    # Predict cluster assignments
+    cluster_assignments = kmeans.predict(slots_2d)
+
+    # Replace slots with cluster centers
+    centers = kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+
+    # Reshape back to the original slots shape
+    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    slots = torch.tensor(slots).cuda()
+
+
+    # slots=model.slot_proj2(slots)
 
     initial_token_indices = mask_token_id * torch.ones(bsz, unknown_number_in_the_beginning)
 
@@ -152,16 +198,37 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             x = blk(x)
         x = model.norm(x)
 
-        # slots, attn, init_slots, attn_logits = model.slot_attention(x)
+        
+
+        # if step==0:
+        #     print('First iteration')
+        #     slots, attn, init_slots, attn_logits = model.slot_attention(x)
+        #     # slots_pool = torch.matmul(attn.transpose(-1, -2), x)
+        #     slots = model.slot_proj2(slots)
+
+        #     # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
+        #     slots_tensor = slots  # Replace with your actual tensor
+        #     slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+
+        #     # Predict cluster assignments
+        #     cluster_assignments = kmeans.predict(slots_2d)
+
+        #     # Replace slots with cluster centers
+        #     centers = kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+
+        #     # Reshape back to the original slots shape
+        #     slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+        #     slots = torch.tensor(slots).cuda()
+
 
         
         # Find top k slots
-        if step==0:
-            n_top_slots = 6
-            slots_summed_values = slots.sum(dim=2)
-            _, top_slot_indices = slots_summed_values.topk(n_top_slots, dim=1)
-            slots = torch.gather(slots, 1, top_slot_indices.unsqueeze(-1).expand(-1, -1, slots.size(2)))
-            # slots=slots[:,2,:].unsqueeze(1)
+        # if step==0:
+        #     n_top_slots = 6
+        #     slots_summed_values = slots.sum(dim=2)
+        #     _, top_slot_indices = slots_summed_values.topk(n_top_slots, dim=1)
+        #     slots = torch.gather(slots, 1, top_slot_indices.unsqueeze(-1).expand(-1, -1, slots.size(2)))
+        #     # slots=slots[:,2,:].unsqueeze(1)
 
         # if step==0:
         #     slots_reshaped = slots.reshape(-1, 256)
@@ -177,7 +244,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         #     # Reshape back to the original slots tensor shape
         #     slots_replaced = slots_replaced.view_as(slots)
+        #     slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
+
         # logits,_ = model.forward_decoder(x, slots_replaced, token_drop_mask, token_all_mask)
+
         logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
 
@@ -185,8 +255,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # decoder
         # logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
-        # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
-        logits = logits[:, n_top_slots+1:, :codebook_size]
+        logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
+        # logits = logits[:, n_top_slots+1:, :codebook_size]
 
         # get token prediction
         sample_dist = torch.distributions.categorical.Categorical(logits=logits)
@@ -223,7 +293,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
   
 
         if(with_mask_vis):
-            batch_size=32
+            batch_size=args.batch_size
 
             # Assuming token_indices is of shape [32, 256] with 2024 indicating masks
             batch_size, hw = token_indices.shape  # hw is 256 in your case
@@ -269,10 +339,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                 # Convert to numpy and save - Generated Image
                 gen_img_np = np.clip(inv_gen_img.cpu().numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
                 gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
-                cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(b_id + 100*step).zfill(5))), gen_img_np)
+                cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(b_id + 100*step).zfill(4))), gen_img_np)
 
         if(per_iter):
-            batch_size=32
+            batch_size=args.batch_size
 
             # #Save images every iteration
             # probabilities = torch.nn.functional.softmax(logits, dim=-1)
@@ -415,7 +485,7 @@ else:
     sampler_train = None
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
-        batch_size=32,
+        batch_size=args.batch_size,
         num_workers=4,
         pin_memory=True,
         drop_last=True,
@@ -445,14 +515,15 @@ for batch, data in iterator:
 
             gen_img = np.clip(gen_images_batch[b_id].numpy().transpose([1, 2, 0]) * 255, 0, 255)
             gen_img = gen_img.astype(np.uint8)[:, :, ::-1]
-            cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(b_id).zfill(5))), gen_img)
+            cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(batch*args.batch_size + b_id).zfill(5))), gen_img)
 
 
 
             inv_orig_img = orig_images_batch[b_id]
             orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
             orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
-            cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(b_id).zfill(5))), orig_img_np)
-    break
+            cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(batch*args.batch_size + b_id).zfill(5))), orig_img_np)
+    if batch >0:
+        break
 
 log_writer.close()
