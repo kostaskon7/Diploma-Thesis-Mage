@@ -774,10 +774,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
     def forward(self, imgs):
         # with torch.no_grad():
-        with torch.no_grad():
-            latent= self.forward_encoder(imgs)
+        # with torch.no_grad():
+        latent= self.forward_encoder(imgs)
             
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+        latent_mask=latent_mask.clone().detach()
         
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
@@ -798,7 +799,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # Latent another transformation?
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
 
-        attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+        # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
 
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
@@ -807,9 +808,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots_pool=self.slot_proj2(slots_pool)
 
-        decoder_pos_embed_learned_pool=torch.matmul(attn_onehot.transpose(-1, -2), self.decoder_pos_embed_learned[:,1:,:])
+        # decoder_pos_embed_learned_pool=torch.matmul(attn_onehot.transpose(-1, -2), self.decoder_pos_embed_learned[:,1:,:])
 
-        slots_pool = slots_pool + decoder_pos_embed_learned_pool
+        # slots_pool = slots_pool + decoder_pos_embed_learned_pool
 
         # print(latent.shape)
         # logits,_ = self.forward_decoder(latent_mask, slots_proj,token_drop_mask, token_all_mask)
