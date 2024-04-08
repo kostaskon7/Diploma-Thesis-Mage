@@ -21,7 +21,7 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
 
-    for data_iter_step, samples in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+    for data_iter_step, (samples, _) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
 
         # LR Scheduler Adjustment (if necessary)
         if data_iter_step % accum_iter == 0:
