@@ -174,7 +174,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-        slots_pool=model.slot_proj2(slots_pool)
+        slots=model.slot_proj2(slots)
 
 
         collected_outputs.append(slots)
