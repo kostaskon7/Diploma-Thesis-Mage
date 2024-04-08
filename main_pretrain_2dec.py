@@ -544,7 +544,7 @@ def main(args):
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict()
             }
-            if epoch > args.epochs -5:
+            if (epoch % 10 == 0) or (epoch > args.epochs -5):
                 torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
 
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
