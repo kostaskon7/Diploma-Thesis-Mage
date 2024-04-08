@@ -62,7 +62,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
 
     # Load the model
-    kmeans = load('kmeans_model16384_classic.joblib')
+    kmeans = load('kmeans_model12288_classic.joblib')
 
  
 
