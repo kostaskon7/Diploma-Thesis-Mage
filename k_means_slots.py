@@ -163,13 +163,13 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
         slots, attn, _, _ = model.slot_attention(latent)
 
-        attn=attn.clone().detach()
+        # attn=attn.clone().detach()
         # Latent another transformation?
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
 
         # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
 
-        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+        # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
@@ -228,33 +228,43 @@ data_2d = all_slots_tensor.reshape(-1, 768)
 data_2d_np = data_2d.cpu().numpy()
 
 # Step 4: Apply MiniBatchKMeans
-n_clusters = 1024  # Example: Define the number of clusters
+# n_clusters = 1024  # Example: Define the number of clusters
+# kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
+# kmeans.fit(data_2d_np)
+
+# dump(kmeans, 'kmeans_model1024_hard.joblib')
+
+# n_clusters = 2048  # Example: Define the number of clusters
+# kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
+# kmeans.fit(data_2d_np)
+
+# dump(kmeans, 'kmeans_model2048_hard.joblib')
+
+
+# n_clusters = 4096  # Example: Define the number of clusters
+# kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
+# kmeans.fit(data_2d_np)
+
+# dump(kmeans, 'kmeans_model4096_hard.joblib')
+
+
+# n_clusters = 8192  # Example: Define the number of clusters
+# kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
+# kmeans.fit(data_2d_np)
+
+# dump(kmeans, 'kmeans_model8192_hard.joblib')
+
+n_clusters = 12288  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
-dump(kmeans, 'kmeans_model1024_hard.joblib')
+dump(kmeans, 'kmeans_model12288_classic.joblib')
 
-n_clusters = 2048  # Example: Define the number of clusters
+n_clusters = 16384  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
-dump(kmeans, 'kmeans_model2048_hard.joblib')
-
-
-n_clusters = 4096  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
-
-dump(kmeans, 'kmeans_model4096_hard.joblib')
-
-
-n_clusters = 8192  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
-
-dump(kmeans, 'kmeans_model8192_hard.joblib')
-
-
+dump(kmeans, 'kmeans_model16384_classic.joblib')
 
 # kmeans = load('kmeans_model.joblib')
 
