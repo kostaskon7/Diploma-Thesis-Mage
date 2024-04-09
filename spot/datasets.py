@@ -14,6 +14,8 @@ import torchvision.transforms.functional as TF
 from pycocotools import mask
 from pycocotools.coco import COCO
 
+from skimage import measure
+
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
@@ -302,3 +304,61 @@ class MOVi(Dataset):
                 mask_instance[:, :] += instance * i
 
             return img, mask_instance, mask_class, ignore_mask
+        
+
+class PartImageNetDataset(Dataset):
+    CAT_LIST = [i for i in range(1, 159)]  # Example: 158 classes, adjust as needed
+
+    def __init__(self, root, split='train', image_size=256, mask_size=256):
+        """
+        Initialize the PartImageNet dataset.
+
+        :param root: Root directory of the PartImageNet dataset.
+        :param split: Dataset split ('train', 'val', or 'test').
+        :param image_size: Desired size of the output images.
+        :param mask_size: Desired size of the output masks.
+        """
+        self.root_dir = root
+        self.split = split
+        self.image_size = image_size
+        self.mask_size = mask_size
+        self.images_dir = os.path.join(root, 'images', split)
+        self.annotations_dir = os.path.join(root, 'annotations', split)
+        self.image_ids = [f.split('.')[0] for f in os.listdir(self.images_dir) if os.path.isfile(os.path.join(self.images_dir, f))]
+
+    def __len__(self):
+        return len(self.image_ids)
+
+    def __getitem__(self, idx):
+        img_id = self.image_ids[idx]
+        img_path = os.path.join(self.images_dir, f"{img_id}.JPEG")
+        mask_path = os.path.join(self.annotations_dir, f"{img_id}.png")
+
+        # Load image
+        image = Image.open(img_path).convert('RGB')
+        # Resize image
+        image = transforms.Resize((self.image_size, self.image_size), Image.BILINEAR)(image)
+        # Convert to tensor
+        image = transforms.ToTensor()(image)
+
+        # Load mask and resize
+        mask = Image.open(mask_path).convert('L')  # Convert to grayscale
+        mask = transforms.Resize((self.mask_size, self.mask_size), Image.NEAREST)(mask)
+        mask_array = np.array(mask)
+
+        # Label different objects in the mask
+        labeled_mask, num_features = measure.label(mask_array, background=0, return_num=True)
+        # Generate shades of gray for each label
+        shades_of_gray = np.linspace(255, 0, num_features + 1, dtype=np.uint8)[1:]  # Exclude background
+        labeled_mask_overlay = np.zeros_like(mask_array, dtype=np.uint8)
+        for label, shade in zip(range(1, num_features + 1), shades_of_gray):
+            labeled_mask_overlay[labeled_mask == label] = shade
+
+        # Convert the labeled mask back into an Image and then to a tensor
+        true_mask_i = transforms.ToTensor()(Image.fromarray(labeled_mask_overlay))
+
+        # Placeholder for true_mask_c and mask_ignore, create as needed
+        true_mask_c = transforms.ToTensor()(mask)
+        mask_ignore = torch.zeros_like(true_mask_c)  # Placeholder for the ignore mask
+
+        return image, true_mask_i, true_mask_c, mask_ignore
