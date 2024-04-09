@@ -797,7 +797,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #TBD2
         attn=attn.clone().detach()
         # Latent another transformation?
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
 
         # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
 
