@@ -170,7 +170,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
     slots = torch.tensor(slots).cuda()
 
-    slots=slots[:,:1,:]
+    
 
     # slots=model.slot_proj2(slots)
 
@@ -255,7 +255,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # decoder
         # logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
-        logits = logits[:, 1:, :codebook_size]
+        logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
         # logits = logits[:, n_top_slots+1:, :codebook_size]
 
         # get token prediction
