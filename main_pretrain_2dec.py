@@ -23,7 +23,7 @@ from util.misc import NativeScalerWithGradNormCount as NativeScaler
 import models_mage_2dec
 
 from engine_pretrain import train_one_epoch
-from spot.datasets import COCO2017
+from spot.datasets import COCO2017, PartImageNetDataset
 
 from spot.ocl_metrics import UnsupervisedMaskIoUMetric, ARIMetric
 from spot.utils_spot import inv_normalize, cosine_scheduler, visualize, bool_flag, load_pretrained_encoder
@@ -215,7 +215,7 @@ def main(args):
         args.val_data_path = args.data_path
 
 
-    val_dataset = COCO2017(root=args.val_data_path, split='val', image_size=256, mask_size=256)
+    val_dataset = PartImageNetDataset(root=args.val_data_path, split='val', image_size=256, mask_size=256)
     val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
     # define the model
