@@ -774,10 +774,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
     def forward(self, imgs):
         # with torch.no_grad():
-        # with torch.no_grad():
-        latent= self.forward_encoder(imgs)
-            
-        latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+        with torch.no_grad():
+            latent= self.forward_encoder(imgs)
+                
+            latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
         # latent_mask=latent_mask.clone().detach()
         
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
