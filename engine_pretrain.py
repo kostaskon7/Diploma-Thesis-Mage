@@ -27,7 +27,8 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
         if data_iter_step % accum_iter == 0:
             lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
 
-        samples.cuda().half()
+        samples = samples.to(device="cuda", dtype=torch.half)
+
         with torch.cuda.amp.autocast():
             if args.use_decs:
                 # breakpoint()
