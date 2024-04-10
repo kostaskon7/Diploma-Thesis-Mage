@@ -343,7 +343,12 @@ def main(args):
                 true_mask_i = true_mask_i.cuda()
                 true_mask_c = true_mask_c.cuda()
                 mask_ignore = mask_ignore.cuda() 
-                
+
+
+                true_mask_i = true_mask_i.squeeze(1)
+                true_mask_c = true_mask_c.squeeze(1)
+                mask_ignore = mask_ignore.squeeze(1)
+
                 batch_size = image.shape[0]
                 counter += batch_size
     
