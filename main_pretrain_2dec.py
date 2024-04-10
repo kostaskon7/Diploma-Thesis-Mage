@@ -413,6 +413,9 @@ def main(args):
                 # print(true_mask_c.shape)
 
                 # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
+
+                breakpoint()
+
                 true_mask_i_reshaped = torch.nn.functional.one_hot(true_mask_i).to(torch.float32).permute(0,3,1,2).cuda()
                 true_mask_c_reshaped = torch.nn.functional.one_hot(true_mask_c).to(torch.float32).permute(0,3,1,2).cuda()
                 pred_dec_mask_reshaped = torch.nn.functional.one_hot(pred_dec_mask).to(torch.float32).permute(0,3,1,2).cuda()
