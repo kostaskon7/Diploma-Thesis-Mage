@@ -306,12 +306,12 @@ def main(args):
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_loader.sampler.set_epoch(epoch)
-        train_stats = train_one_epoch(
-            model, train_loader,
-            optimizer, device, epoch, loss_scaler,
-            log_writer=log_writer,
-            args=args
-        )
+        # train_stats = train_one_epoch(
+        #     model, train_loader,
+        #     optimizer, device, epoch, loss_scaler,
+        #     log_writer=log_writer,
+        #     args=args
+        # )
         # if args.output_dir and (epoch % 40 == 0 or epoch + 1 == args.epochs):
         #     misc.save_model(
         #         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
@@ -412,7 +412,7 @@ def main(args):
                 # print(pred_default_mask.shape)
                 # print(true_mask_i.shape)
                 # print(true_mask_c.shape)
-
+                breakpoint()
                 # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
                 true_mask_i_reshaped = torch.nn.functional.one_hot(true_mask_i).to(torch.float32).permute(0,3,1,2).cuda()
                 true_mask_c_reshaped = torch.nn.functional.one_hot(true_mask_c).to(torch.float32).permute(0,3,1,2).cuda()
