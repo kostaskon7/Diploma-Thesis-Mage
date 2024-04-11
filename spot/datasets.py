@@ -347,9 +347,12 @@ class PartImageNetDataset(Dataset):
         mask_array = np.array(mask)
 
         # Label different objects in the mask
-        labeled_mask, num_features = measure.label(mask_array, background=0, return_num=True)
+        # labeled_mask, num_features = measure.label(mask_array, background=0, return_num=True)
+        labeled_mask, num_features = measure.label(mask_array,  return_num=True)
+
         # Generate shades of gray for each label
-        shades_of_gray = np.linspace(255, 0, num_features + 1, dtype=np.uint8)[1:]  # Exclude background
+        # shades_of_gray = np.linspace(255, 0, num_features + 1, dtype=np.uint8)[1:]  # Exclude background
+        shades_of_gray = np.linspace(255, 0, num_features + 1, dtype=np.uint8)[:]  # NOT Exclude background
         labeled_mask_overlay = np.zeros_like(mask_array, dtype=np.uint8)
         for label, shade in zip(range(1, num_features + 1), shades_of_gray):
             labeled_mask_overlay[labeled_mask == label] = shade
