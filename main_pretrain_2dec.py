@@ -347,7 +347,12 @@ def main(args):
 
                 true_mask_i = true_mask_i.squeeze(1)
                 true_mask_c = true_mask_c.squeeze(1)
-                mask_ignore = mask_ignore.squeeze(1)
+                mask_ignore = None
+
+
+                true_mask_i = true_mask_i.to(torch.int64)
+                true_mask_c = true_mask_i.to(torch.int64)
+
 
                 batch_size = image.shape[0]
                 counter += batch_size
@@ -419,7 +424,6 @@ def main(args):
 
                 # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
 
-                breakpoint()
 
                 true_mask_i_reshaped = torch.nn.functional.one_hot(true_mask_i).to(torch.float32).permute(0,3,1,2).cuda()
                 true_mask_c_reshaped = torch.nn.functional.one_hot(true_mask_c).to(torch.float32).permute(0,3,1,2).cuda()
