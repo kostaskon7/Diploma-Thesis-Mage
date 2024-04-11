@@ -914,6 +914,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         if self.use_decs:
             loss=(loss_mage,loss_spot)
         else :
+            loss=loss_mage
             dec_slots_attns = attn_dec
 
         if self.both_mboi:
