@@ -244,6 +244,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.epsilon = epsilon
         self.cross_attn = args.cross_attn
         self.both_mboi = args.both_mboi
+        self.use_decs = args.use_decs
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
@@ -893,27 +894,31 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #TBD2
         # logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
-
-        dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
-        #[Batch,decoder264,2025]
-
         H_enc, W_enc = int(math.sqrt(latent.shape[1])), int(math.sqrt(latent.shape[1]))
 
         bsz, _ = gt_indices.size()
+        if self.use_decs:
+            dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
+            loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
+
+
 
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
         # loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
-        loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
+        
 
         torch.cuda.empty_cache()
 
 
-
-        loss=(loss_mage,loss_spot)
+        if self.use_decs:
+            loss=(loss_mage,loss_spot)
+        else :
+            dec_slots_attns = attn_dec
 
         if self.both_mboi:
             dec_slots_attns=(dec_slots_attns,attn_dec)
+
 
         return loss, imgs, token_all_mask,attn,dec_slots_attns,logits
 
