@@ -412,6 +412,11 @@ parser.add_argument('--slot_vis', default=None,type=int,
                 help='slot_vis on decoder')
 parser.add_argument('--both_mboi', default=None,type=int,
                 help='both_mboi logs decoder')
+parser.add_argument('--sample_mask_prob', default=0.5,type=int,
+                help='sample_mask_prob')
+parser.add_argument('--slot_mask_prob', default=0.4,type=int,
+                help='slot_mask_prob')
+
 
 
 
