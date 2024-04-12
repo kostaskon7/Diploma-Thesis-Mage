@@ -270,7 +270,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
   
 
         if(with_mask_vis):
-            batch_size=32
+            batch_size=bsz
 
             # Assuming token_indices is of shape [32, 256] with 2024 indicating masks
             batch_size, hw = token_indices.shape  # hw is 256 in your case
@@ -319,7 +319,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                 cv2.imwrite(os.path.join(save_folder, '{}.png'.format(str(b_id + 100*step).zfill(5))), gen_img_np)
 
         if(per_iter):
-            batch_size=32
+            batch_size=bsz
 
             # #Save images every iteration
             # probabilities = torch.nn.functional.softmax(logits, dim=-1)
@@ -467,7 +467,7 @@ else:
     sampler_train = None
     data_loader_train = torch.utils.data.DataLoader(
         dataset_train, sampler=sampler_train,
-        batch_size=32,
+        batch_size=args.batch_size,
         num_workers=4,
         pin_memory=True,
         drop_last=True,
