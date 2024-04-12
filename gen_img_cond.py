@@ -54,15 +54,12 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     image=image.cuda()
 
-    # Assuming you've saved the cluster centers as 'cluster_centers.pth'
-    cluster_centers = torch.load('cluster_centers.pth')
-    # # Ensure the cluster centers are on the correct device
-    cluster_centers = cluster_centers.cuda()
+
 
 
 
     # Load the model
-    kmeans = load('kmeans_model4096.joblib')
+    # kmeans = load('kmeans_model4096.joblib')
 
  
 
