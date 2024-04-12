@@ -144,31 +144,31 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     slots, attn, _, _ = model.slot_attention(latent)
 
-    # attn=attn.clone().detach()
+    attn=attn.clone().detach()
     # Latent another transformation?
-    # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+    attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
 
 
-    # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+    slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
     # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-    slots_pool=model.slot_proj2(slots)
+    # slots_pool=model.slot_proj2(slots)
 
-    # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
-    slots_tensor = slots_pool  # Replace with your actual tensor
-    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+    # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
+    # slots_tensor = slots_pool  # Replace with your actual tensor
+    # slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-    # Predict cluster assignments
-    cluster_assignments = kmeans.predict(slots_2d)
+    # # Predict cluster assignments
+    # cluster_assignments = kmeans.predict(slots_2d)
 
-    # Replace slots with cluster centers
-    centers = kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+    # # Replace slots with cluster centers
+    # centers = kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
 
-    # Reshape back to the original slots shape
-    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-    slots = torch.tensor(slots).cuda()
+    # # Reshape back to the original slots shape
+    # slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    # slots = torch.tensor(slots).cuda()
 
     
 
