@@ -150,7 +150,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
-    # slots=model.slot_proj2(slots)
+    slots=model.slot_proj2(slots)
 
     initial_token_indices = mask_token_id * torch.ones(bsz, unknown_number_in_the_beginning)
 
