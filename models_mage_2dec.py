@@ -852,7 +852,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots, attn, _, attn_logits = self.slot_attention(latent)
         attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
-        # logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
 
         # updates = torch.matmul(attn.transpose(-1, -2), v)                           # Shape: [batch_size, num_heads, num_slots, slot_size // num_heads].
 
@@ -880,7 +880,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-        slots_pool=self.slot_proj2(slots_pool)
+        # slots_pool=self.slot_proj2(slots_pool)
         # Decoder position embeddings
         # decoder_pos_embed_learned_pool=torch.matmul(attn_onehot.transpose(-1, -2), self.decoder_pos_embed_learned[:,1:,:])
 
@@ -893,7 +893,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #TBD
         # logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
         #TBD2
-        logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+        # logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
         dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
