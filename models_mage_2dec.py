@@ -852,6 +852,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         slots, attn, _, attn_logits = self.slot_attention(latent)
         attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
+        attn_transpose = attn.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
+        
         # logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
 
         # updates = torch.matmul(attn.transpose(-1, -2), v)                           # Shape: [batch_size, num_heads, num_slots, slot_size // num_heads].
@@ -912,7 +914,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         breakpoint()
 
         attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
-        attn_interpolate = F.interpolate(attn, size=mask_crf.shape[-1], mode='bilinear')
+        attn_interpolate = F.interpolate(attn_transpose, size=mask_crf.shape[-1], mode='bilinear')
         attn_onehot = torch.nn.functional.one_hot(attn_interpolate.argmax(1), num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
         mask_crf_onehot = torch.nn.functional.one_hot(mask_crf, num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
 
