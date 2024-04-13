@@ -911,7 +911,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
 
 
-        breakpoint()
 
         attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
         attn_interpolate = F.interpolate(attn_transpose, size=mask_crf.shape[-1], mode='bilinear')
@@ -922,7 +921,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         
         attn_logits = torch.stack([x[permutation_indices[n]] for n, x in enumerate(attn_logits)], dim=0)
 
-        breakpoint()
 
         ce_loss = self.criterion_masks(attn_logits, mask_crf_onehot)
 
