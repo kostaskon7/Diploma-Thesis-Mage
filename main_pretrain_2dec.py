@@ -365,7 +365,7 @@ def main(args):
                 batch_size = image.shape[0]
                 counter += batch_size
     
-                val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
+                val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image,None)
 
                 if args.both_mboi:
                     dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
