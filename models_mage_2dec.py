@@ -922,6 +922,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         
         attn_logits = torch.stack([x[permutation_indices[n]] for n, x in enumerate(attn_logits)], dim=0)
 
+        breakpoint()
+
         ce_loss = self.criterion(attn_logits, mask_crf)
 
 
