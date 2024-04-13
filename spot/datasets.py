@@ -156,7 +156,7 @@ class COCO2017(Dataset):
     def __getitem__(self, index):
         img, mask_instance, mask_class, mask_ignore, mask_crf = self._make_img_gt_point_pair(index)
 
-        if self.split == "train" and (self.return_gt_in_train is False):
+        if self.split == "train" and (self.return_gt_in_train is False) and (self.return_crf_in_train is False):
             
             img = self.train_transform(img)
             
