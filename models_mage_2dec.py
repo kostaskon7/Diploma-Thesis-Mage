@@ -911,7 +911,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
 
 
-        if model.training:
+        if self.training:
             attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
             attn_interpolate = F.interpolate(attn_transpose, size=mask_crf.shape[-1], mode='bilinear')
             attn_onehot = torch.nn.functional.one_hot(attn_interpolate.argmax(1), num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
