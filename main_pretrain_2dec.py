@@ -148,6 +148,9 @@ def get_args_parser():
     parser.add_argument('--init_method', default='shared_gaussian', help='embedding or shared_gaussian')
 
 
+    parser.add_argument('--ce_weight', type=float, default=5e-3, help='weight of the cross-entropy distilation loss')
+    parser.add_argument('--final_ce_weight', type=float, default=None, help='final weight of the cross-entropy distilation loss')
+
     return parser
 
 
