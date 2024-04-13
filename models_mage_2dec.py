@@ -424,6 +424,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
 
+        self.criterion_masks = nn.CrossEntropyLoss(ignore_index=-100)
+
 
 
 
@@ -834,19 +836,22 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print("Telos")
         return loss
 
-    def forward(self, imgs):
+    def forward(self, imgs,mask_crf):
         
         # with torch.no_grad():
         latent,_,_,_= self.forward_encoder_copy(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
         latent_mask=latent_mask.clone().detach()
         
+        bsz, _ = gt_indices.size()
+        H_enc, W_enc = int(math.sqrt(latent.shape[1])), int(math.sqrt(latent.shape[1]))
 
             # latent= self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
 
-        slots, attn, _, _ = self.slot_attention(latent)
+        slots, attn, _, attn_logits = self.slot_attention(latent)
+        attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
         # logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
 
         # updates = torch.matmul(attn.transpose(-1, -2), v)                           # Shape: [batch_size, num_heads, num_slots, slot_size // num_heads].
@@ -894,20 +899,35 @@ class MaskedGenerativeEncoderViT(nn.Module):
         dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
 
-        H_enc, W_enc = int(math.sqrt(latent.shape[1])), int(math.sqrt(latent.shape[1]))
+        
 
-        bsz, _ = gt_indices.size()
+        
 
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
         # loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
         loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
 
+
+
+        attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
+        attn_interpolate = F.interpolate(attn, size=mask_crf.shape[-1], mode='bilinear')
+        attn_onehot = torch.nn.functional.one_hot(attn_interpolate.argmax(1), num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
+        mask_crf_onehot = torch.nn.functional.one_hot(mask_crf, num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
+
+        permutation_indices, _ = att_matching(attn_onehot, mask_crf_onehot)
+        
+        attn_logits = torch.stack([x[permutation_indices[n]] for n, x in enumerate(attn_logits)], dim=0)
+
+        ce_loss = self.criterion(attn_logits, mask_crf)
+
+
+
         torch.cuda.empty_cache()
 
 
 
-        loss=(loss_mage,loss_spot)
+        loss=(loss_mage,loss_spot,ce_loss)
 
         if self.both_mboi:
             dec_slots_attns=(dec_slots_attns,attn_dec)

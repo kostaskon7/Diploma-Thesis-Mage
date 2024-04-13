@@ -211,7 +211,7 @@ def main(args):
     val_sampler = None
 
 
-    train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
+    train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256,normalization = False, return_extra_in_train = None, crf_dir = 'crf')
 
     
     train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)

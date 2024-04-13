@@ -6,6 +6,7 @@ import torch
 
 import util.misc as misc
 import util.lr_sched as lr_sched
+from utils_spot import cosine_scheduler
 
 
 def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: torch.optim.Optimizer, device: torch.device, epoch: int, loss_scaler, log_writer=None, args=None):
@@ -18,23 +19,47 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
     loss_mage=0
     loss_mage_spot=0
     optimizer.zero_grad()
+    train_epoch_size = len(data_loader)
+
+    if args.final_ce_weight == None:
+        args.final_ce_weight = args.ce_weight
+
+    ce_weight_schedule = cosine_scheduler( base_value = args.ce_weight,
+                            final_value = args.final_ce_weight,
+                            epochs = args.epochs, 
+                            niter_per_ep = train_epoch_size,
+                            warmup_epochs=0,
+                            start_warmup_value=0)
+
+
+
     if log_writer is not None:
         print('log_dir: {}'.format(log_writer.log_dir))
 
-    for data_iter_step, batch_data in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+    for data_iter_step, (batch_data,mask_crf) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
         samples = batch_data.to(device, non_blocking=True)  # Use only the first tensor (images)
+        mask_crf = mask_crf.to(device, non_blocking=True)
         # LR Scheduler Adjustment (if necessary)
         if data_iter_step % accum_iter == 0:
             lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
 
+
+        global_step = epoch * train_epoch_size + data_iter_step
+        ce_weight = ce_weight_schedule[global_step]
+
         with torch.cuda.amp.autocast():
             if args.use_decs:
                 # breakpoint()
-                loss_comb, _, _,_,_,_ = model(samples)
-                loss_mage, loss_mage_spot = loss_comb
+                loss_comb, _, _,_,_,_ = model(samples,mask_crf)
+
+                loss_mage, loss_mage_spot,ce_loss = loss_comb
+                
+                loss = loss_mage + ce_weight*ce_loss
+
+                
                 # breakpoint()
                 # loss=loss_mage+(0.5*loss_mage_spot)
-                loss=loss_mage
+                # loss=loss_mage
             else:
                 loss, _, _,_,_,_ = model(samples)
 
