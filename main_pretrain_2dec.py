@@ -151,6 +151,8 @@ def get_args_parser():
     parser.add_argument('--ce_weight', type=float, default=5e-3, help='weight of the cross-entropy distilation loss')
     parser.add_argument('--final_ce_weight', type=float, default=None, help='final weight of the cross-entropy distilation loss')
 
+    parser.add_argument('--crf_dir', type=str, default=None, help='Directory of crf files')
+
     return parser
 
 
@@ -214,7 +216,7 @@ def main(args):
     val_sampler = None
 
 
-    train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256,normalization = False, return_extra_in_train = None, crf_dir = 'crf')
+    train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256,normalization = False, return_extra_in_train = None, return_extra_in_train = 'crf',crf_dir = args.crf_dir)
 
     
     train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)

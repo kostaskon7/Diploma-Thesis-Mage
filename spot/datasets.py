@@ -105,7 +105,7 @@ class COCO2017(Dataset):
     
     assert(NUM_CLASSES) == len(set(CAT_LIST))
 
-    def __init__(self, root, split='train', year='2017', image_size=224, mask_size=224, return_gt_in_train=False):
+    def __init__(self, root, split='train', year='2017', image_size=224, mask_size=224, normalization = True, return_extra_in_train = None, crf_dir = ''):
         super().__init__()
         ann_file = os.path.join(root, 'annotations/instances_{}{}.json'.format(split, year))
         self.img_dir = os.path.join(root, '{}{}'.format(split, year))
@@ -115,24 +115,38 @@ class COCO2017(Dataset):
         self.split = split
         self.coco = COCO(ann_file)
         self.coco_mask = mask
-        self.return_gt_in_train = return_gt_in_train
+        
+        self.return_crf_in_train = False
+        self.return_gt_in_train = False
+        
+        if return_extra_in_train == 'gt':
+            self.return_gt_in_train = True
+        elif return_extra_in_train == 'crf':
+            self.return_crf_in_train = True
+            
+        self.crf_dir = crf_dir
 
         self.ids = list(self.coco.imgs.keys())
         
-        self.train_transform = transforms.Compose([
+        train_transformations = [
                             transforms.Resize(size=image_size, interpolation=transforms.InterpolationMode.BILINEAR),
                             transforms.CenterCrop(image_size),
                             transforms.RandomHorizontalFlip(p=0.5),
                             transforms.ToTensor(),
-                        ])
-                        #     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
-                        # ])
+                        ]
         
-        self.val_transform_image = transforms.Compose([transforms.Resize(size = image_size, interpolation=transforms.InterpolationMode.BILINEAR),
+        val_transformations = [transforms.Resize(size = image_size, interpolation=transforms.InterpolationMode.BILINEAR),
                                transforms.CenterCrop(size = image_size),
-                               transforms.ToTensor()])
-                            #    transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-                            #    ])
+                               transforms.ToTensor(),
+                               ]
+        
+        if normalization == True:
+            train_transformations.append(transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)))
+            val_transformations.append(transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)))
+        
+        self.train_transform = transforms.Compose(train_transformations)
+        
+        self.val_transform_image = transforms.Compose(val_transformations)
 
         self.val_transform_mask = transforms.Compose([transforms.Resize(size = mask_size, interpolation=transforms.InterpolationMode.NEAREST),
                                transforms.CenterCrop(size = mask_size),
@@ -140,7 +154,7 @@ class COCO2017(Dataset):
         self.image_size = image_size
 
     def __getitem__(self, index):
-        img, mask_instance, mask_class, mask_ignore = self._make_img_gt_point_pair(index)
+        img, mask_instance, mask_class, mask_ignore, mask_crf = self._make_img_gt_point_pair(index)
 
         if self.split == "train" and (self.return_gt_in_train is False):
             
@@ -163,7 +177,18 @@ class COCO2017(Dataset):
             mask_instance = mask_instance.squeeze().long()
             mask_ignore = mask_ignore.squeeze().long()
 
-            return img, mask_instance, mask_class, mask_ignore        
+            return img, mask_instance, mask_class, mask_ignore  
+        elif self.split == "train" and (self.return_crf_in_train is True):
+            img = self.val_transform_image(img)
+            mask_crf = self.val_transform_mask(mask_crf)
+
+            if random.random() < 0.5:
+                img = TF.hflip(img)
+                mask_crf = TF.hflip(mask_crf)
+            
+            mask_crf = mask_crf.squeeze().long()
+
+            return img, mask_crf 
         elif self.split =='val':
 
             img = self.val_transform_image(img)
@@ -186,7 +211,11 @@ class COCO2017(Dataset):
         mask_class = Image.fromarray(_targets[0])
         mask_instance = Image.fromarray(_targets[1])
         mask_ignore = Image.fromarray(_targets[2])
-        return _img, mask_instance, mask_class, mask_ignore
+        mask_crf = None
+        if self.return_crf_in_train:
+            mask_crf = Image.open(os.path.join(self.crf_dir, path.split('.')[0]+'_pred.png'))
+            
+        return _img, mask_instance, mask_class, mask_ignore, mask_crf
 
     def _gen_seg_n_insta_masks(self, target, h, w):
         seg_mask = np.zeros((h, w), dtype=np.uint8)
