@@ -370,7 +370,7 @@ def main(args):
                 if args.both_mboi:
                     dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
                 
-                val_loss_mage, val_loss_spot = val_loss
+                val_loss_mage,ce_loss,  val_loss_spot = val_loss
                 # codebook_emb_dim=256
                 # logits = logits[:, 8:, :model.codebook_size]
                 # # logits = logits[:, 1:, :model.codebook_size]
