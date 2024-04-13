@@ -19,7 +19,7 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
     loss_mage=0
     loss_mage_spot=0
     optimizer.zero_grad()
-    
+    train_epoch_size = len(data_loader)
 
 
 
