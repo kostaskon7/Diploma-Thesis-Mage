@@ -35,7 +35,7 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
         if data_iter_step % accum_iter == 0:
             lr_sched.adjust_learning_rate(optimizer, data_iter_step / len(data_loader) + epoch, args)
 
-
+        breakpoint()
         global_step = epoch * train_epoch_size + data_iter_step
         ce_weight = ce_weight_schedule[global_step]
 
