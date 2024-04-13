@@ -306,6 +306,18 @@ def main(args):
     fg_iou_slot_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).to(device)
     ari_slot_metric = ARIMetric(foreground = True, ignore_overlaps = True).to(device)
 
+    train_epoch_size = len(train_dataset)
+
+    if args.final_ce_weight == None:
+        args.final_ce_weight = args.ce_weight
+
+    ce_weight_schedule = cosine_scheduler( base_value = args.ce_weight,
+                        final_value = args.final_ce_weight,
+                        epochs = args.epochs, 
+                        niter_per_ep = train_epoch_size,
+                        warmup_epochs=0,
+                        start_warmup_value=0)
+
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
@@ -315,7 +327,7 @@ def main(args):
             model, train_loader,
             optimizer, device, epoch, loss_scaler,
             log_writer=log_writer,
-            args=args
+            args=args,ce_weight_schedule=ce_weight_schedule
         )
         # if args.output_dir and (epoch % 40 == 0 or epoch + 1 == args.epochs):
         #     misc.save_model(

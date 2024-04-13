@@ -9,7 +9,7 @@ import util.lr_sched as lr_sched
 from utils_spot import cosine_scheduler
 
 
-def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: torch.optim.Optimizer, device: torch.device, epoch: int, loss_scaler, log_writer=None, args=None):
+def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: torch.optim.Optimizer, device: torch.device, epoch: int, loss_scaler, ce_weight_schedule,log_writer=None, args=None):
     model.train(True)
     metric_logger = misc.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', misc.SmoothedValue(window_size=1, fmt='{value:.6f}'))
@@ -19,17 +19,9 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
     loss_mage=0
     loss_mage_spot=0
     optimizer.zero_grad()
-    train_epoch_size = len(data_loader)
+    
 
-    if args.final_ce_weight == None:
-        args.final_ce_weight = args.ce_weight
 
-    ce_weight_schedule = cosine_scheduler( base_value = args.ce_weight,
-                            final_value = args.final_ce_weight,
-                            epochs = args.epochs, 
-                            niter_per_ep = train_epoch_size,
-                            warmup_epochs=0,
-                            start_warmup_value=0)
 
 
 
