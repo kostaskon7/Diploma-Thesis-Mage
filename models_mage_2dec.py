@@ -909,7 +909,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
 
 
-        mask_crf = mask_crf.unsqueeze(1)
+        breakpoint()
 
         attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
         attn_interpolate = F.interpolate(attn, size=mask_crf.shape[-1], mode='bilinear')
