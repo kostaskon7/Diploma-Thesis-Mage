@@ -45,7 +45,7 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
 
                 loss_mage, loss_mage_spot,ce_loss = loss_comb
                 
-                loss = loss_mage + ce_weight*ce_loss
+                loss = 0.2*loss_mage + ce_weight*ce_loss
 
                 
                 # breakpoint()
@@ -75,8 +75,9 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
             epoch_1000x = int((data_iter_step / len(data_loader) + epoch) * 1000)
             log_writer.add_scalar('train_loss', loss_value_reduce, epoch_1000x)
             log_writer.add_scalar('lr', lr, epoch_1000x)
+            log_writer.add_scalar('ce weight', ce_weight, epoch_1000x)
             if args.use_decs:
-                log_writer.add_scalar('loss_spot', loss_mage_spot, epoch_1000x)
+                log_writer.add_scalar('ce loss', ce_loss, epoch_1000x)
                 log_writer.add_scalar('loss_mage', loss_mage, epoch_1000x)
 
     metric_logger.synchronize_between_processes()
