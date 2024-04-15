@@ -854,8 +854,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         
         # Hard Mask pooling
-        attn=attn.clone().detach()
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
+        attn_detached=attn.clone().detach()
+        attn_onehot = torch.nn.functional.one_hot(attn_detached.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
+        attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         slots_pool=self.slot_proj2(slots_pool)
 
