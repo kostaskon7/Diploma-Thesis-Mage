@@ -854,47 +854,20 @@ class MaskedGenerativeEncoderViT(nn.Module):
         attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
         attn_transpose = attn.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
         
-        # logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
 
-        # updates = torch.matmul(attn.transpose(-1, -2), v)                           # Shape: [batch_size, num_heads, num_slots, slot_size // num_heads].
-
-        # slots_proj=slots
-        # slots_proj=self.slot_proj2(slots)
-
-        #TBD
-        # slots_nograd=slots.clone().detach()
-
-        # slots_proj=self.slot_proj2(slots_nograd)
-
-        # [32, 257, 768]
-        # [32, 257, 7]
-        #TBD2
         attn=attn.clone().detach()
         # Latent another transformation?
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
         # Average Sum, Dimension 2 sums to 1
-        # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
 
         
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
 
-        # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
         slots_pool=self.slot_proj2(slots_pool)
-        # Decoder position embeddings
-        # decoder_pos_embed_learned_pool=torch.matmul(attn_onehot.transpose(-1, -2), self.decoder_pos_embed_learned[:,1:,:])
 
-        # slots_pool = slots_pool + decoder_pos_embed_learned_pool
-        
-
-        # print(latent.shape)
-        # logits,_ = self.forward_decoder(latent_mask, slots_proj,token_drop_mask, token_all_mask)
-        # logits,attn_dec = self.forward_decoder(latent,latent ,token_drop_mask, token_all_mask)
-        #TBD
-        # logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
-        #TBD2
         logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
@@ -914,10 +887,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         if self.training:
             attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
             attn_interpolate = F.interpolate(attn_transpose, size=mask_crf.shape[-1], mode='bilinear')
-            attn_onehot = torch.nn.functional.one_hot(attn_interpolate.argmax(1), num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
+            attn_onehot_crf = torch.nn.functional.one_hot(attn_interpolate.argmax(1), num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
             mask_crf_onehot = torch.nn.functional.one_hot(mask_crf, num_classes=self.slot_attention.num_slots).permute(0,3,1,2).to(dtype=torch.float16)
 
-            permutation_indices, _ = att_matching(attn_onehot, mask_crf_onehot)
+            permutation_indices, _ = att_matching(attn_onehot_crf, mask_crf_onehot)
             
             attn_logits = torch.stack([x[permutation_indices[n]] for n, x in enumerate(attn_logits)], dim=0)
 
