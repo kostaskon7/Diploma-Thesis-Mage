@@ -851,8 +851,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         latent=latent[:,1:,:]
 
         slots, attn, _, attn_logits = self.slot_attention(latent)
-        attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
-        attn_transpose = attn.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
+
         
 
         attn=attn.clone().detach()
@@ -885,6 +884,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         if self.training:
+            attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
+            attn_transpose = attn.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
+
+
             attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
             attn_interpolate = F.interpolate(attn_transpose, size=mask_crf.shape[-1], mode='bilinear')
             attn_onehot_crf = torch.nn.functional.one_hot(attn_interpolate.argmax(1), num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
