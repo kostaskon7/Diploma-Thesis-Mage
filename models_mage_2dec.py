@@ -869,18 +869,18 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # [32, 257, 768]
         # [32, 257, 7]
         #TBD2
-        # attn=attn.clone().detach()
+        attn=attn.clone().detach()
         # Latent another transformation?
-        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
         # Average Sum, Dimension 2 sums to 1
         # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
 
         
-        # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
 
-        slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
+        # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
         slots_pool=self.slot_proj2(slots_pool)
         # Decoder position embeddings
