@@ -853,20 +853,13 @@ class MaskedGenerativeEncoderViT(nn.Module):
         slots, attn, _, attn_logits = self.slot_attention(latent)
 
         
-
+        # Hard Mask pooling
         attn=attn.clone().detach()
-        # Latent another transformation?
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
-        # Average Sum, Dimension 2 sums to 1
-
-        
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
-
-
-
-
         slots_pool=self.slot_proj2(slots_pool)
 
+        # Decoders
         logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
@@ -882,7 +875,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
         loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
 
-
+        # Crf
         if self.training:
             attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
             attn_transpose = attn.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
