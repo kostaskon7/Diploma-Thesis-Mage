@@ -851,7 +851,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         latent=latent[:,1:,:]
 
         slots, attn, _, attn_logits = self.slot_attention(latent)
-
+        attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
+        attn_transpose = attn.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
         
         # Hard Mask pooling
         attn=attn.clone().detach()
@@ -879,8 +880,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # Crf
         if self.training:
-            attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
-            attn_transpose = attn.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
+
 
 
             attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
