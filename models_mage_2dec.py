@@ -859,7 +859,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         attn_detach=attn.clone().detach()
         attn_onehot = torch.nn.functional.one_hot(attn_detach.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
         # To add normalization
-        # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+        attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         slots_pool=self.slot_proj2(slots_pool)
 
