@@ -211,17 +211,8 @@ def att_matching(attention_1, attention_2):
     pIoU_inv[is_padding] = 1e3
     pIoU_inv_ = pIoU_inv.detach().cpu().numpy()
 
-    # Check for NaNs and Infs in pIoU and pIoU_inv
-    if torch.isnan(pIoU).any() or torch.isinf(pIoU).any():
-        print("pIoU contains NaNs or Infs")
-    if np.isnan(pIoU_inv).any() or np.isinf(pIoU_inv).any():
-        print("pIoU_inv contains NaNs or Infs")
-
     # hungarian matching
-    try:
-        indices = np.array([linear_sum_assignment(p)[1] for p in pIoU_inv_])
-    except:
-        breakpoint()
+    indices = np.array([linear_sum_assignment(p)[1] for p in pIoU_inv_])
     #attention_2_permuted = torch.stack([x[indices[n]] for n, x in enumerate(attention_2)],dim=0)
 
     pIoU = pIoU.detach().cpu().numpy()
