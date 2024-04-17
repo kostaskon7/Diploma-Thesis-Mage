@@ -212,11 +212,6 @@ def att_matching(attention_1, attention_2):
     pIoU_inv_ = pIoU_inv.detach().cpu().numpy()
 
     # hungarian matching
-    # treat as if no padding in mask_2
-    pIoU = pairwise_IoU_efficient(pred_mask_1_disc.float(), mask_2.float())
-    pIoU_inv = 1 - pIoU
-    pIoU_inv[is_padding] = 1e3
-    pIoU_inv_ = pIoU_inv.detach().cpu().numpy()
 
     # Check for NaNs and Infs in pIoU and pIoU_inv
     if torch.isnan(pIoU.cpu()).any() or torch.isinf(pIoU.cpu()).any():
