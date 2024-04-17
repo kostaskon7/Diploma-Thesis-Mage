@@ -219,9 +219,9 @@ def att_matching(attention_1, attention_2):
     pIoU_inv_ = pIoU_inv.detach().cpu().numpy()
 
     # Check for NaNs and Infs in pIoU and pIoU_inv
-    if torch.isnan(pIoU).any() or torch.isinf(pIoU).any():
+    if torch.isnan(pIoU.cpu()).any() or torch.isinf(pIoU.cpu()).any():
         print("pIoU contains NaNs or Infs")
-    if np.isnan(pIoU_inv).any() or np.isinf(pIoU_inv).any():
+    if np.isnan(pIoU_inv.cpu()).any() or np.isinf(pIoU_inv.cpu()).any():
         print("pIoU_inv contains NaNs or Infs")
 
     # hungarian matching
