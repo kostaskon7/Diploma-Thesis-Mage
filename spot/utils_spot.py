@@ -218,7 +218,10 @@ def att_matching(attention_1, attention_2):
         print("pIoU_inv contains NaNs or Infs")
 
     # hungarian matching
-    indices = np.array([linear_sum_assignment(p)[1] for p in pIoU_inv_])
+    try:
+        indices = np.array([linear_sum_assignment(p)[1] for p in pIoU_inv_])
+    except:
+        breakpoint()
     #attention_2_permuted = torch.stack([x[indices[n]] for n, x in enumerate(attention_2)],dim=0)
 
     pIoU = pIoU.detach().cpu().numpy()
