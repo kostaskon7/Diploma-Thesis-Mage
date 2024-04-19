@@ -931,7 +931,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         torch.cuda.empty_cache()
 
 
-        breakpoint()
         loss=(loss_mage,loss_spot,ce_loss)
 
         if self.both_mboi:
