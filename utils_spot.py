@@ -204,12 +204,12 @@ def att_matching(attention_1, attention_2):
     pred_mask_1_disc = rearrange(
         F.one_hot(pred_mask_1_id, mask_1.size(1)).to(torch.float32), "b c n -> b n c"
     )
-    with torch.cuda.amp.autocast(enabled=False):
+    
         # treat as if no padding in mask_2
-        pIoU = pairwise_IoU_efficient(pred_mask_1_disc.float(), mask_2.float())
-        pIoU_inv = 1 - pIoU
-        pIoU_inv[is_padding] = 1e3
-        pIoU_inv_ = pIoU_inv.detach().cpu().numpy()
+    pIoU = pairwise_IoU_efficient(pred_mask_1_disc.float(), mask_2.float())
+    pIoU_inv = 1 - pIoU
+    pIoU_inv[is_padding] = 1e3
+    pIoU_inv_ = pIoU_inv.detach().cpu().numpy()
 
 
 
