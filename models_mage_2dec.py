@@ -923,9 +923,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
                 ce_loss = self.criterion_masks(attn_logits, mask_crf_onehot)
+
+                if torch.isnan(ce_loss).any() or torch.isnan(loss_spot).any() or torch.isnan(loss_mage).any():
+                    breakpoint()
             else:
                 ce_loss=0
-
 
 
         torch.cuda.empty_cache()
