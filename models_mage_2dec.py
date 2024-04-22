@@ -849,8 +849,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
             # latent= self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
-
-        slots, attn, _, attn_logits = self.slot_attention(latent)
+        with torch.cuda.amp.autocast(enabled=False):
+            slots, attn, _, attn_logits = self.slot_attention(latent)
 
         
 
@@ -880,25 +880,25 @@ class MaskedGenerativeEncoderViT(nn.Module):
         loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
 
         # Crf
+        with torch.cuda.amp.autocast(enabled=False):
+            if self.training:
 
-        if self.training:
+                attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
+                attn_transpose = attn.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)   
 
-            attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
-            attn_transpose = attn.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)   
+                attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
+                attn_interpolate = F.interpolate(attn_transpose, size=mask_crf.shape[-1], mode='bilinear')
+                attn_onehot_crf = torch.nn.functional.one_hot(attn_interpolate.argmax(1), num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
+                mask_crf_onehot = torch.nn.functional.one_hot(mask_crf, num_classes=self.slot_attention.num_slots).permute(0,3,1,2).to(dtype=torch.float16)
 
-            attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
-            attn_interpolate = F.interpolate(attn_transpose, size=mask_crf.shape[-1], mode='bilinear')
-            attn_onehot_crf = torch.nn.functional.one_hot(attn_interpolate.argmax(1), num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
-            mask_crf_onehot = torch.nn.functional.one_hot(mask_crf, num_classes=self.slot_attention.num_slots).permute(0,3,1,2).to(dtype=torch.float16)
-
-            permutation_indices, _ = att_matching(attn_onehot_crf, mask_crf_onehot)
-            
-            attn_logits = torch.stack([x[permutation_indices[n]] for n, x in enumerate(attn_logits)], dim=0)
+                permutation_indices, _ = att_matching(attn_onehot_crf, mask_crf_onehot)
+                
+                attn_logits = torch.stack([x[permutation_indices[n]] for n, x in enumerate(attn_logits)], dim=0)
 
 
-            ce_loss = self.criterion_masks(attn_logits, mask_crf_onehot)
-        else:
-            ce_loss=0
+                ce_loss = self.criterion_masks(attn_logits, mask_crf_onehot)
+            else:
+                ce_loss=0
 
 
         torch.cuda.empty_cache()
