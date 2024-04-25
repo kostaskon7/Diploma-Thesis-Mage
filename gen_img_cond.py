@@ -153,7 +153,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots=model.slot_proj2(slots)
 
 
-    breakpoint()
+    # breakpoint()
     # Add classifier free guidance
 # Expand self.slots_token to match the batch size
     if class_free:
@@ -162,7 +162,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # Replace the specified slot
         slots_uncond = slots.clone()
         slots_uncond[:, replace_idx:replace_idx+1, :] = expanded_slots_token
-    breakpoint()
+    # breakpoint()
 
 
 
@@ -241,17 +241,17 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
-        breakpoint()
+        # breakpoint()
         if class_free:
             logits_uncond,_ = model.forward_decoder(x, slots_uncond, token_drop_mask, token_all_mask)
 
             logits =  (1+t)*logits - t*logits_uncond    
-        breakpoint()
+        # breakpoint()
 
         # decoder
         # logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
-        breakpoint()
+        # breakpoint()
         # logits = logits[:, n_top_slots+1:, :codebook_size]
 
         # get token prediction
