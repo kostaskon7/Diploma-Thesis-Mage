@@ -38,7 +38,7 @@ def mask_by_random_topk(mask_len, probs, temperature=1.0):
     return masking
 
 
-def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=False,with_mask_vis=True,data_used='coco',slot_vis=True):
+def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=False,with_mask_vis=True,data_used='coco',slot_vis=True,replace_idx=0,t=1,class_free=None):
     torch.manual_seed(seed)
     np.random.seed(seed)
     codebook_emb_dim = 256
@@ -152,6 +152,20 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     slots=model.slot_proj2(slots)
 
+
+    breakpoint()
+    # Add classifier free guidance
+# Expand self.slots_token to match the batch size
+    if class_free:
+        expanded_slots_token = model.slots_token.expand(args.batch_size, 1, -1)
+    
+        # Replace the specified slot
+        slots_uncond = slots.clone()
+        slots_uncond[:, replace_idx:replace_idx+1, :] = expanded_slots_token
+    breakpoint()
+
+
+
     initial_token_indices = mask_token_id * torch.ones(bsz, unknown_number_in_the_beginning)
 
     token_indices = initial_token_indices.cuda()
@@ -227,12 +241,17 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
+        breakpoint()
+        if class_free:
+            logits_uncond,_ = model.forward_decoder(x, slots_uncond, token_drop_mask, token_all_mask)
 
-
+            logits =  (1+t)*logits - t*logits_uncond    
+        breakpoint()
 
         # decoder
         # logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
+        breakpoint()
         # logits = logits[:, n_top_slots+1:, :codebook_size]
 
         # get token prediction
@@ -413,6 +432,13 @@ parser.add_argument('--sample_mask_prob', default=0.5,type=int,
                 help='sample_mask_prob')
 parser.add_argument('--slot_mask_prob', default=0.4,type=int,
                 help='slot_mask_prob')
+parser.add_argument('--t', default=1,type=int,
+                help='classifier free guidance t')
+parser.add_argument('--class_free', default=None,type=int,
+                help='Use classifier free guidance')
+parser.add_argument('--replace_idx', default=0,type=int,
+                help='Index to replace classifier free guidance slot')
+
 
 
 
@@ -487,7 +513,7 @@ for batch, data in iterator:
         image, _ = data
 
     with torch.no_grad():
-        gen_images_batch = gen_image(model=model,image=image, bsz=args.batch_size, seed=batch, choice_temperature=args.temp, num_iter=args.num_iter, data_used=args.dataset,slot_vis=args.slot_vis)
+        gen_images_batch = gen_image(model=model,image=image, bsz=args.batch_size, seed=batch, choice_temperature=args.temp, num_iter=args.num_iter, data_used=args.dataset,slot_vis=args.slot_vis,t=args.t,class_free=args.class_free)
         gen_images_batch = gen_images_batch.detach().cpu()
         gen_img_list.append(gen_images_batch)
 
