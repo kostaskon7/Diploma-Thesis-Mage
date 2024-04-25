@@ -513,7 +513,7 @@ for batch, data in iterator:
         image, _ = data
 
     with torch.no_grad():
-        gen_images_batch = gen_image(model=model,image=image, bsz=args.batch_size, seed=batch, choice_temperature=args.temp, num_iter=args.num_iter, data_used=args.dataset,slot_vis=args.slot_vis,t=args.t,class_free=args.class_free)
+        gen_images_batch = gen_image(model=model,image=image, bsz=args.batch_size, seed=batch, choice_temperature=args.temp, num_iter=args.num_iter, data_used=args.dataset,slot_vis=args.slot_vis,t=args.t,class_free=args.class_free,replace_idx=args.replace_idx)
         gen_images_batch = gen_images_batch.detach().cpu()
         gen_img_list.append(gen_images_batch)
 
