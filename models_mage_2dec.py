@@ -871,7 +871,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
         with torch.cuda.amp.autocast(enabled=False):
-            slots, attn, _, attn_logits = self.masked_trans(latent,(H_enc, W_enc))
+            slots, attn, attn_logits = self.masked_trans(latent,(H_enc, W_enc))
 
         
 
