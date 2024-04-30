@@ -82,7 +82,6 @@ class MaskTransformer(nn.Module):
         H, W = im_size
         GS = H // self.patch_size
 
-        breakpoint()
 
         B, N_kv, D_inp = x.size()
 
@@ -106,18 +105,16 @@ class MaskTransformer(nn.Module):
 
         masks = masks.permute(0, 2, 3, 1)
 
-        breakpoint()
 
-        # attn = F.softmax(
-        #     masks.transpose(1, 2).reshape(B, N_kv, 1 * self.n_cls)
-        # , dim=-1).view(B, N_kv, 1, self.n_cls).transpose(1, 2)   
         attn = F.softmax(
-            masks.transpose(1, 2).reshape(B, N_kv, self.n_heads * self.n_cls)
-        , dim=-1).view(B, N_kv, self.n_heads, self.n_cls).transpose(1, 2)               # Shape: [batch_size, num_heads, num_inputs, num_slots].
+            masks.transpose(1, 2).reshape(B, N_kv, 1 * self.n_cls)
+        , dim=-1).view(B, N_kv, 1, self.n_cls).transpose(1, 2)   
+        # attn = F.softmax(
+        #     masks.transpose(1, 2).reshape(B, N_kv, self.n_heads * self.n_cls)
+        # , dim=-1).view(B, N_kv, self.n_heads, self.n_cls).transpose(1, 2)               # Shape: [batch_size, num_heads, num_inputs, num_slots].
         attn_vis = attn.sum(1)    
 
 
-        breakpoint()
 
         return cls_seg_feat,attn_vis, masks
 
