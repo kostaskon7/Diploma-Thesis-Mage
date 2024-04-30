@@ -852,6 +852,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         with torch.cuda.amp.autocast(enabled=False):
             slots, attn, _, attn_logits = self.slot_attention(latent)
 
+        print(slots.shape)
+        print(attn.shape)
+        print(attn_logits.shape)
+        breakpoint()
         
 
 
