@@ -99,9 +99,16 @@ class MaskTransformer(nn.Module):
         masks = self.mask_norm(masks)
         masks = rearrange(masks, "b (h w) n -> b n h w", h=int(GS))
 
+
+        # attn = F.softmax(
+        #     attn_logits.transpose(1, 2).reshape(B, N_kv, self.num_heads * N_q)
+        # , dim=-1).view(B, N_kv, self.num_heads, N_q).transpose(1, 2)                # Shape: [batch_size, num_heads, num_inputs, num_slots].
+        # attn_vis = attn.sum(1)    
+
+
         breakpoint()
 
-        return masks
+        return cls_seg_feat, masks
 
     def get_attention_map(self, x, layer_id):
         if layer_id >= self.n_layers or layer_id < 0:
