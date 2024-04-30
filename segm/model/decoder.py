@@ -108,8 +108,11 @@ class MaskTransformer(nn.Module):
         breakpoint()
 
         attn = F.softmax(
-            masks.transpose(1, 2).reshape(B, N_kv, self.num_heads * self.n_cls)
-        , dim=-1).view(B, N_kv, self.num_heads, self.n_cls).transpose(1, 2)                # Shape: [batch_size, num_heads, num_inputs, num_slots].
+            masks.transpose(1, 2).reshape(B, N_kv, 1 * self.n_cls)
+        , dim=-1).view(B, N_kv, 1, self.n_cls).transpose(1, 2)   
+        # attn = F.softmax(
+        #     masks.transpose(1, 2).reshape(B, N_kv, self.num_heads * self.n_cls)
+        # , dim=-1).view(B, N_kv, self.num_heads, self.n_cls).transpose(1, 2)               # Shape: [batch_size, num_heads, num_inputs, num_slots].
         attn_vis = attn.sum(1)    
 
 
