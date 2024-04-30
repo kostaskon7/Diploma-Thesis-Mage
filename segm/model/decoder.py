@@ -83,6 +83,8 @@ class MaskTransformer(nn.Module):
 
         breakpoint()
 
+        B, N_kv, D_inp = x.size()
+
         x = self.proj_dec(x)
         cls_emb = self.cls_emb.expand(x.size(0), -1, -1)
         x = torch.cat((x, cls_emb), 1)
@@ -101,16 +103,19 @@ class MaskTransformer(nn.Module):
         masks = self.mask_norm(masks)
         masks = rearrange(masks, "b (h w) n -> b n h w", h=int(GS))
 
+        masks = masks.permute(0, 2, 3, 1)
 
-        # attn = F.softmax(
-        #     attn_logits.transpose(1, 2).reshape(B, N_kv, self.num_heads * N_q)
-        # , dim=-1).view(B, N_kv, self.num_heads, N_q).transpose(1, 2)                # Shape: [batch_size, num_heads, num_inputs, num_slots].
-        # attn_vis = attn.sum(1)    
+        breakpoint()
+
+        attn = F.softmax(
+            masks.transpose(1, 2).reshape(B, N_kv, self.num_heads * self.n_cls)
+        , dim=-1).view(B, N_kv, self.num_heads, self.n_cls).transpose(1, 2)                # Shape: [batch_size, num_heads, num_inputs, num_slots].
+        attn_vis = attn.sum(1)    
 
 
         breakpoint()
 
-        return cls_seg_feat, masks
+        return cls_seg_feat,attn_vis, masks
 
     def get_attention_map(self, x, layer_id):
         if layer_id >= self.n_layers or layer_id < 0:
