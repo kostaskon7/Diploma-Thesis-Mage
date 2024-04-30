@@ -81,6 +81,8 @@ class MaskTransformer(nn.Module):
         H, W = im_size
         GS = H // self.patch_size
 
+        breakpoint()
+
         x = self.proj_dec(x)
         cls_emb = self.cls_emb.expand(x.size(0), -1, -1)
         x = torch.cat((x, cls_emb), 1)
