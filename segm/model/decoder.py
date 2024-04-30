@@ -51,6 +51,7 @@ class MaskTransformer(nn.Module):
         self.d_encoder = d_encoder
         self.patch_size = patch_size
         self.n_layers = n_layers
+        self.n_heads = n_heads
         self.n_cls = n_cls
         self.d_model = d_model
         self.d_ff = d_ff
@@ -107,12 +108,12 @@ class MaskTransformer(nn.Module):
 
         breakpoint()
 
-        attn = F.softmax(
-            masks.transpose(1, 2).reshape(B, N_kv, 1 * self.n_cls)
-        , dim=-1).view(B, N_kv, 1, self.n_cls).transpose(1, 2)   
         # attn = F.softmax(
-        #     masks.transpose(1, 2).reshape(B, N_kv, self.num_heads * self.n_cls)
-        # , dim=-1).view(B, N_kv, self.num_heads, self.n_cls).transpose(1, 2)               # Shape: [batch_size, num_heads, num_inputs, num_slots].
+        #     masks.transpose(1, 2).reshape(B, N_kv, 1 * self.n_cls)
+        # , dim=-1).view(B, N_kv, 1, self.n_cls).transpose(1, 2)   
+        attn = F.softmax(
+            masks.transpose(1, 2).reshape(B, N_kv, self.n_heads * self.n_cls)
+        , dim=-1).view(B, N_kv, self.n_heads, self.n_cls).transpose(1, 2)               # Shape: [batch_size, num_heads, num_inputs, num_slots].
         attn_vis = attn.sum(1)    
 
 
