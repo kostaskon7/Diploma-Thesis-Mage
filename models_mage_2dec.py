@@ -17,6 +17,8 @@ from utils_spot import *
 from spot.transformer import TransformerDecoder
 from spot.mlp import MlpDecoder
 
+from segm.model.decoder import MaskTransformer
+
 
 
 
@@ -228,6 +230,12 @@ class MlmLayer(nn.Module):
         logits = torch.matmul(mlm_hidden, word_embeddings)
         logits = logits + self.bias
         return logits
+    
+
+
+
+
+
 
 
 class MaskedGenerativeEncoderViT(nn.Module):
@@ -438,6 +446,19 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.criterion = LabelSmoothingCrossEntropy(smoothing=0.1)
 
         # Initialize cross attention
+
+        # ---------------------------------------------------------------------
+        #Init masked transformer
+
+        self.masked_trans = MaskTransformer(n_cls=args.num_slots,
+        patch_size=patch_size,
+        d_encoder=embed_dim,
+        n_layers=2,
+        n_heads=args.num_heads,
+        d_model=args.slot_size,
+        d_ff=4*args.slot_size,
+        drop_path_rate=0,
+        dropout=0)
 
 
         self.initialize_weights()
@@ -850,7 +871,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
         with torch.cuda.amp.autocast(enabled=False):
-            slots, attn, _, attn_logits = self.slot_attention(latent)
+            slots, attn, _, attn_logits = self.masked_trans(latent,(H_enc, W_enc))
 
         
 
