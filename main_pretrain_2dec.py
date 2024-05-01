@@ -153,6 +153,8 @@ def get_args_parser():
 
     parser.add_argument('--crf_dir', type=str, default=None, help='Directory of crf files')
 
+    parser.add_argument('--val_mask_size', type=int, default=320, help='Validation mask size')
+
     return parser
 
 
@@ -221,7 +223,7 @@ def main(args):
     
     train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
-    val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256,normalization = False)
+    val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=args.val_mask_size,normalization = False)
     val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
     # define the model
@@ -323,12 +325,12 @@ def main(args):
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_loader.sampler.set_epoch(epoch)
-        train_stats = train_one_epoch(
-            model, train_loader,
-            optimizer, device, epoch, loss_scaler,
-            log_writer=log_writer,
-            args=args,ce_weight_schedule=ce_weight_schedule
-        )
+        # train_stats = train_one_epoch(
+        #     model, train_loader,
+        #     optimizer, device, epoch, loss_scaler,
+        #     log_writer=log_writer,
+        #     args=args,ce_weight_schedule=ce_weight_schedule
+        # )
         # if args.output_dir and (epoch % 40 == 0 or epoch + 1 == args.epochs):
         #     misc.save_model(
         #         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
