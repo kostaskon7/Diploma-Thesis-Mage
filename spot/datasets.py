@@ -189,14 +189,22 @@ class COCO2017(Dataset):
             mask_crf = mask_crf.squeeze().long()
 
             return img, mask_crf 
-        elif self.split =='val':
+        elif self.split =='val' and (self.return_crf_in_train is True):
 
             img = self.val_transform_image(img)
             mask_class = self.val_transform_mask(mask_class).squeeze().long()
             mask_instance = self.val_transform_mask(mask_instance).squeeze().long()
             mask_ignore = self.val_transform_mask(mask_ignore).squeeze().long().unsqueeze(0)
+
+            mask_crf = self.val_transform_mask(mask_crf)
+
+            if random.random() < 0.5:
+                img = TF.hflip(img)
+                mask_crf = TF.hflip(mask_crf)
             
-            return img, mask_instance, mask_class, mask_ignore
+            mask_crf = mask_crf.squeeze().long()
+            
+            return img, mask_instance, mask_class, mask_ignore,mask_crf
         else:
             raise
 

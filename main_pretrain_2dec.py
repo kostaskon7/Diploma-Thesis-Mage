@@ -152,6 +152,10 @@ def get_args_parser():
     parser.add_argument('--final_ce_weight', type=float, default=None, help='final weight of the cross-entropy distilation loss')
 
     parser.add_argument('--crf_dir', type=str, default=None, help='Directory of crf files')
+    parser.add_argument('--val_crf_dir', type=str, default=None, help='Directory of validation crf files')
+
+
+    
 
     parser.add_argument('--val_mask_size', type=int, default=320, help='Validation mask size')
 
@@ -223,7 +227,7 @@ def main(args):
     
     train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
-    val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=args.val_mask_size,normalization = False)
+    val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=args.val_mask_size,normalization = False, return_extra_in_train = 'crf', crf_dir = args.val_crf_dir)
     val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
     # define the model
@@ -358,7 +362,7 @@ def main(args):
 
             counter = 0
     
-            for batch, (image, true_mask_i, true_mask_c, mask_ignore) in enumerate(tqdm(val_loader)):
+            for batch, (image, true_mask_i, true_mask_c, mask_ignore, mask_crf_val) in enumerate(tqdm(val_loader)):
                 image = image.cuda()
                 true_mask_i = true_mask_i.cuda()
                 true_mask_c = true_mask_c.cuda()
@@ -435,6 +439,7 @@ def main(args):
                 # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
                 true_mask_i_reshaped = torch.nn.functional.one_hot(true_mask_i).to(torch.float32).permute(0,3,1,2).cuda()
                 true_mask_c_reshaped = torch.nn.functional.one_hot(true_mask_c).to(torch.float32).permute(0,3,1,2).cuda()
+                mask_crf_val_reshaped = torch.nn.functional.one_hot(mask_crf_val).to(torch.float32).permute(0,3,1,2).cuda()
                 pred_dec_mask_reshaped = torch.nn.functional.one_hot(pred_dec_mask).to(torch.float32).permute(0,3,1,2).cuda()
                 pred_default_mask_reshaped = torch.nn.functional.one_hot(pred_default_mask).to(torch.float32).permute(0,3,1,2).cuda()
 
@@ -449,18 +454,18 @@ def main(args):
 
 
     
-
+                # It was pred_default_mask_reshaped instead of mask_crf_val_reshaped
 
                 
-                MBO_i_metric.update(pred_dec_mask_reshaped, true_mask_i_reshaped, mask_ignore)
-                MBO_c_metric.update(pred_dec_mask_reshaped, true_mask_c_reshaped, mask_ignore)
-                fg_iou_metric.update(pred_dec_mask_reshaped, true_mask_i_reshaped, mask_ignore)
-                ari_metric.update(pred_dec_mask_reshaped, true_mask_i_reshaped, mask_ignore)
+                MBO_i_metric.update(mask_crf_val_reshaped, true_mask_i_reshaped, mask_ignore)
+                MBO_c_metric.update(mask_crf_val_reshaped, true_mask_c_reshaped, mask_ignore)
+                fg_iou_metric.update(mask_crf_val_reshaped, true_mask_i_reshaped, mask_ignore)
+                ari_metric.update(mask_crf_val_reshaped, true_mask_i_reshaped, mask_ignore)
             
-                MBO_i_slot_metric.update(pred_default_mask_reshaped, true_mask_i_reshaped, mask_ignore)
-                MBO_c_slot_metric.update(pred_default_mask_reshaped, true_mask_c_reshaped, mask_ignore)
-                fg_iou_slot_metric.update(pred_default_mask_reshaped, true_mask_i_reshaped, mask_ignore)
-                ari_slot_metric.update(pred_default_mask_reshaped, true_mask_i_reshaped, mask_ignore)
+                MBO_i_slot_metric.update(mask_crf_val_reshaped, true_mask_i_reshaped, mask_ignore)
+                MBO_c_slot_metric.update(mask_crf_val_reshaped, true_mask_c_reshaped, mask_ignore)
+                fg_iou_slot_metric.update(mask_crf_val_reshaped, true_mask_i_reshaped, mask_ignore)
+                ari_slot_metric.update(mask_crf_val_reshaped, true_mask_i_reshaped, mask_ignore)
     
             ari = 100 * ari_metric.compute()
             ari_slot = 100 * ari_slot_metric.compute()
