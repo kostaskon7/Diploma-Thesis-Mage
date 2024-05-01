@@ -412,8 +412,8 @@ def main(args):
                 
 
 
-                default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
-                dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
+                default_attns = F.interpolate(default_slots_attns, size=args.val_mask_size, mode='bilinear')
+                dec_attns = F.interpolate(dec_slots_attns, size=args.val_mask_size, mode='bilinear')
                 
                 # dec_attns shape [B, num_slots, H, W]
                 default_attns = default_attns.unsqueeze(2)
@@ -440,7 +440,7 @@ def main(args):
 
                 if args.both_mboi:
                     mage_dec_slots_attns = mage_dec_slots_attns.transpose(-1, -2).reshape(batch_size, model.slot_attention.num_slots, 16, 16)
-                    mage_dec_attns = F.interpolate(mage_dec_slots_attns, size=256, mode='bilinear')
+                    mage_dec_attns = F.interpolate(mage_dec_slots_attns, size=args.val_mask_size, mode='bilinear')
                     mage_dec_attns = mage_dec_attns.unsqueeze(2)
                     pred_mage_dec_mask = mage_dec_attns.argmax(1).squeeze(1)
                     pred_mage_dec_mask_reshaped = torch.nn.functional.one_hot(pred_mage_dec_mask).to(torch.float32).permute(0,3,1,2).cuda()
