@@ -38,7 +38,7 @@ def mask_by_random_topk(mask_len, probs, temperature=1.0):
     return masking
 
 
-def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=False,with_mask_vis=True,data_used='coco',slot_vis=True):
+def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=False,with_mask_vis=False,data_used='coco',slot_vis=True):
     torch.manual_seed(seed)
     np.random.seed(seed)
     codebook_emb_dim = 256
