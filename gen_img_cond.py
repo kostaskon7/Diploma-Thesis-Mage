@@ -138,7 +138,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
 
-    latent,_=model.forward_encoder_copy(image)
+    latent,_,_,_=model.forward_encoder_copy(image)
     latent=latent[:,1:,:]
 
     slots, attn, init_slots, attn_logits = model.slot_attention(latent)
