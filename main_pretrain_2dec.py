@@ -526,7 +526,7 @@ def main(args):
                 #torch.save(model.state_dict(), os.path.join(args.output_dir, 'best_model.pt'))
                 
             if epoch%visualize_per_epoch==0 or epoch==args.epochs-1:
-                image = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
+                image = F.interpolate(image, size=args.val_mask_size, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
                 rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
                 rgb_dec_attns = image.unsqueeze(1) * dec_attns + 1. - dec_attns
     
@@ -537,7 +537,7 @@ def main(args):
 
             if best_mbo_i_mage< mbo_i_mage and epoch%visualize_per_epoch==0 and args.both_mboi:
                 best_mbo_i_mage = mbo_i_mage
-                image = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
+                image = F.interpolate(image, size=args.val_mask_size, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
                 rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
                 rgb_dec_attns = image.unsqueeze(1) * mage_dec_attns + 1. - mage_dec_attns
     
