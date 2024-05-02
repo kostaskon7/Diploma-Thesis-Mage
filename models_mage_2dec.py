@@ -456,7 +456,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         n_layers=args.n_layers_seg,
         n_heads=args.num_heads_seg,
         d_model=args.d_model_seg,
-        d_ff=4*args.d_model,
+        d_ff=4*args.d_model_seg,
         drop_path_rate=0,
         dropout=0)
 
