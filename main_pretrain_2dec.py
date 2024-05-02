@@ -377,39 +377,7 @@ def main(args):
                     dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
                 
                 val_loss_mage,ce_loss,  val_loss_spot = val_loss
-                # codebook_emb_dim=256
-                # logits = logits[:, 8:, :model.codebook_size]
-                # # logits = logits[:, 1:, :model.codebook_size]
 
-                # probabilities = torch.nn.functional.softmax(logits, dim=-1)
-                # reconstructed_indices = torch.argmax(probabilities, dim=-1)
-                # z_q = model.vqgan.quantize.get_codebook_entry(reconstructed_indices, shape=(batch_size, 16, 16, codebook_emb_dim))
-                # gen_images = model.vqgan.decode(z_q)
-
-
-                # gen_img_list = []
-                # gen_images_batch = gen_images.detach().cpu()
-                # gen_img_list.append(gen_images_batch)
-                # orig_images_batch=image.detach().cpu()
-
-                # # Save images
-                # for b_id in range(batch_size):
-                #     # Apply inverse normalization
-                #     # inv_gen_img = inv_normalize(gen_images_batch[b_id])
-                #     inv_gen_img=gen_images_batch[b_id]
-                #     # inv_orig_img = inv_normalize(orig_images_batch[b_id])
-                #     inv_orig_img = orig_images_batch[b_id]
-
-                #     # Convert to numpy and save - Generated Image
-                #     gen_img_np = np.clip(inv_gen_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-                #     gen_img_np = cv2.cvtColor(gen_img_np, cv2.COLOR_RGB2BGR)
-                #     cv2.imwrite(os.path.join(args.output_dir, '{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), gen_img_np)
-
-                #     # Convert to numpy and save - Original Image
-                #     orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
-                #     orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
-                #     cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(epoch * batch_size + b_id).zfill(5))), orig_img_np)
-                                    ################ Recon
 
                 default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, args.num_slots, 16, 16)
                 dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, args.num_slots, 16, 16)
@@ -422,26 +390,19 @@ def main(args):
                 # dec_attns shape [B, num_slots, H, W]
                 default_attns = default_attns.unsqueeze(2)
                 dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
+
+                breakpoint()
                 
     
-                pred_default_mask = default_attns.argmax(1).squeeze(1)
-                pred_dec_mask = dec_attns.argmax(1).squeeze(1)
+
                 
-                # print("Unsqueeze")
-                # print(default_attns.shape)
-                # print(true_mask_i.shape)
-                # print(true_mask_c.shape)
-                # print("Squeeze")
-                # print(pred_default_mask.shape)
-                # print(true_mask_i.shape)
-                # print(true_mask_c.shape)
+
 
                 # Compute ARI, MBO_i and MBO_c, fg_IoU scores for both slot attention and decoder
                 true_mask_i_reshaped = torch.nn.functional.one_hot(true_mask_i).to(torch.float32).permute(0,3,1,2).cuda()
                 true_mask_c_reshaped = torch.nn.functional.one_hot(true_mask_c).to(torch.float32).permute(0,3,1,2).cuda()
                 mask_crf_val_reshaped = torch.nn.functional.one_hot(mask_crf_val).to(torch.float32).permute(0,3,1,2).cuda()
-                pred_dec_mask_reshaped = torch.nn.functional.one_hot(pred_dec_mask).to(torch.float32).permute(0,3,1,2).cuda()
-                pred_default_mask_reshaped = torch.nn.functional.one_hot(pred_default_mask).to(torch.float32).permute(0,3,1,2).cuda()
+
 
                 if args.both_mboi:
                     mage_dec_slots_attns = mage_dec_slots_attns.transpose(-1, -2).reshape(batch_size, model.slot_attention.num_slots, 16, 16)
