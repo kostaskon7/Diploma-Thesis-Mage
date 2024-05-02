@@ -371,27 +371,26 @@ def main(args):
                 batch_size = image.shape[0]
                 counter += batch_size
     
-                val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image,None)
+                # val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image,None)
 
-                if args.both_mboi:
-                    dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
+                # if args.both_mboi:
+                #     dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
                 
-                val_loss_mage,ce_loss,  val_loss_spot = val_loss
+                # val_loss_mage,ce_loss,  val_loss_spot = val_loss
 
 
-                default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, args.num_slots, 16, 16)
-                dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, args.num_slots, 16, 16)
+                # default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(batch_size, args.num_slots, 16, 16)
+                # dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(batch_size, args.num_slots, 16, 16)
                 
 
 
-                default_attns = F.interpolate(default_slots_attns, size=args.val_mask_size, mode='bilinear')
-                dec_attns = F.interpolate(dec_slots_attns, size=args.val_mask_size, mode='bilinear')
+                # default_attns = F.interpolate(default_slots_attns, size=args.val_mask_size, mode='bilinear')
+                # dec_attns = F.interpolate(dec_slots_attns, size=args.val_mask_size, mode='bilinear')
                 
-                # dec_attns shape [B, num_slots, H, W]
-                default_attns = default_attns.unsqueeze(2)
-                dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
+                # # dec_attns shape [B, num_slots, H, W]
 
-                breakpoint()
+
+                # breakpoint()
                 
     
 
@@ -402,6 +401,9 @@ def main(args):
                 true_mask_i_reshaped = torch.nn.functional.one_hot(true_mask_i).to(torch.float32).permute(0,3,1,2).cuda()
                 true_mask_c_reshaped = torch.nn.functional.one_hot(true_mask_c).to(torch.float32).permute(0,3,1,2).cuda()
                 mask_crf_val_reshaped = torch.nn.functional.one_hot(mask_crf_val).to(torch.float32).permute(0,3,1,2).cuda()
+
+                default_attns = mask_crf_val_reshaped.unsqueeze(2)
+                dec_attns = mask_crf_val_reshaped.unsqueeze(2) # shape [B, num_slots, 1, H, W]
 
 
                 if args.both_mboi:
