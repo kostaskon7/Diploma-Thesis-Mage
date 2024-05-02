@@ -453,7 +453,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.masked_trans = MaskTransformer(n_cls=args.num_slots,
         patch_size=patch_size,
         d_encoder=embed_dim,
-        n_layers=2,
+        n_layers=args.n_layers_seg,
         n_heads=args.num_heads,
         d_model=args.d_model,
         d_ff=4*args.d_model,

@@ -153,6 +153,11 @@ def get_args_parser():
 
     parser.add_argument('--crf_dir', type=str, default=None, help='Directory of crf files')
 
+    # Masked Transformer
+    parser.add_argument('--num_heads_seg', type=int, default=6)
+    parser.add_argument('--d_model_seg', type=int, default=768)
+    parser.add_argument('--n_layers_seg', type=int, default=2)
+
     return parser
 
 
