@@ -198,9 +198,9 @@ class COCO2017(Dataset):
 
             mask_crf = self.val_transform_mask(mask_crf)
 
-            if random.random() < 0.5:
-                img = TF.hflip(img)
-                mask_crf = TF.hflip(mask_crf)
+            # if random.random() < 0.5:
+            #     img = TF.hflip(img)
+            #     mask_crf = TF.hflip(mask_crf)
             
             mask_crf = mask_crf.squeeze().long()
             
