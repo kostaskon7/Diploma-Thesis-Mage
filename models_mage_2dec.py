@@ -729,7 +729,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         final_masking_decision_float = final_masking_decision.unsqueeze(-1).float()
 
 
-        breakpoint()
 
         logits_mask = torch.matmul(attn_onehot.cpu(), final_masking_decision_float).squeeze(-1)  # [batch_size, num_features]
 
@@ -887,18 +886,15 @@ class MaskedGenerativeEncoderViT(nn.Module):
         flattened_gt_indices = gt_indices.flatten()
         flattened_mask = mask.flatten().bool()  # Ensuring mask is flattened and boolean
 
-        breakpoint()
         
         # Flatten the logits_mask to match the flattened logits
         flattened_logits_mask = slots_mask.flatten().bool()
 
-        breakpoint()
         
         # Combine the mask and slots_mask to determine the final active entries
         flattened_logits_mask=flattened_logits_mask.cuda()
         combined_mask = flattened_mask & flattened_logits_mask
 
-        breakpoint()
         
         # Select only the active logits and corresponding ground truth indices
         active_logits = logits[combined_mask]
@@ -913,7 +909,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         loss = self.criterion(active_logits, active_gt_indices)
 
         # Calculate the mean loss by summing the loss and dividing by the sum of the mask
-        breakpoint()
         total_active_mask = flattened_mask[combined_mask].float()  # Convert mask to float for calculation
         if total_active_mask.sum() > 0:
             mean_loss = loss.sum() / total_active_mask.sum()
@@ -961,7 +956,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         
 
         
-        breakpoint()
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask,slots_mask)
         # loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
