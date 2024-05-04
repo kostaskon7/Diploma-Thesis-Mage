@@ -463,6 +463,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         drop_path_rate=0,
         dropout=0)
 
+        self.slots_token = nn.Parameter(torch.zeros(1, 1, args.d_model))
+
 
         self.initialize_weights()
 
