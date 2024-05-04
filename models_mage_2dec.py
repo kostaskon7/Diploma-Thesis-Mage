@@ -913,6 +913,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         loss = self.criterion(active_logits, active_gt_indices)
 
         # Calculate the mean loss by summing the loss and dividing by the sum of the mask
+        breakpoint()
         total_active_mask = mask[combined_mask].float()  # Convert mask to float for calculation
         if total_active_mask.sum() > 0:
             mean_loss = loss.sum() / total_active_mask.sum()
