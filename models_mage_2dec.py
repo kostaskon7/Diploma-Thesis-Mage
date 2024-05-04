@@ -726,6 +726,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # Combine decisions to determine which specific slots to mask
         final_masking_decision = sample_masking_decision * slot_masking_decision
 
+        breakpoint()
 
         logits_mask = torch.matmul(attn_onehot, final_masking_decision.unsqueeze(-1)).squeeze(-1)  # [batch_size, num_features]
 
@@ -773,7 +774,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #[32,256,7]
 
         
-        return x,normalized_atts_slots, final_masking_decision
+        return x,normalized_atts_slots, logits_mask
     
     def forward_decoder_spot(self, slots, emb_target):
         # Prepate the input tokens for the decoder transformer:
