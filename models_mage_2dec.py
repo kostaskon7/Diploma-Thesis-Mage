@@ -694,7 +694,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         return x
 
-    def forward_decoder(self, x,slots, token_drop_mask, token_all_mask):
+    def forward_decoder(self, x,slots, token_drop_mask, token_all_mask,attn_onehot):
         # embed tokens
         x = self.decoder_embed(x)
 
@@ -725,6 +725,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # Combine decisions to determine which specific slots to mask
         final_masking_decision = sample_masking_decision * slot_masking_decision
+
+
+        logits_mask = torch.matmul(attn_onehot, final_masking_decision.unsqueeze(-1)).squeeze(-1)  # [batch_size, num_features]
+
 
         # Expand slots_token to match the dimensions needed for replacement
         expanded_slots_token = self.slots_token.expand(batch_size, num_slots, -1)
@@ -875,23 +879,28 @@ class MaskedGenerativeEncoderViT(nn.Module):
         logits = logits[:, self.slot_attention.num_slots+1:, :self.codebook_size]
         logits = logits.reshape(bsz*seq_len, -1)
         
-        # Flatten and expand slots_mask to align with logits and gt_indices
-        slots_mask = slots_mask[:, 1:].flatten()  # Adjust slicing if necessary
-
-        # Calculate loss only on non-masked slots
-        active_logits = logits[slots_mask]
-        active_gt_indices = gt_indices.flatten()[slots_mask]
+        flattened_gt_indices = gt_indices.flatten()
+    
+        # Flatten the logits_mask to match the flattened logits
+        flattened_logits_mask = slots_mask.flatten().bool()
         
+        # Select only the active logits and corresponding ground truth indices
+        active_logits = logits[flattened_logits_mask]
+        active_gt_indices = flattened_gt_indices[flattened_logits_mask]
+        
+        # Calculate loss only on active entries
         if active_logits.nelement() == 0 or active_gt_indices.nelement() == 0:
-            # Handle case where no active logits or indices are available
+            # If no active logits exist, return zero loss
             return torch.tensor(0.0).to(logits.device)
-        
+
+        # Calculate the criterion loss on the filtered logits and indices
         loss = self.criterion(active_logits, active_gt_indices)
 
-        # Adjust mask for active regions only and calculate mean loss
-        active_mask = mask[:, 1:].flatten()[slots_mask]
-        loss = (loss * active_mask).sum() / active_mask.sum()
+        loss = loss.reshape(bsz, seq_len)
+        loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
+
         return loss
+        
 
     def forward(self, imgs,mask_crf):
         
@@ -921,7 +930,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         slots_pool=self.slot_proj2(slots_pool)
 
         # Decoders
-        logits,attn_dec,slots_mask = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+        logits,attn_dec,slots_mask = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask,attn_onehot)
 
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
