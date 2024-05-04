@@ -882,8 +882,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         logits = logits[:, self.slot_attention.num_slots+1:, :self.codebook_size]
         logits = logits.reshape(bsz*seq_len, -1)
         
-        flattened_gt_indices = gt_indices[:,1:].flatten()
-        flattened_mask = mask.flatten().bool()  # Ensuring mask is flattened and boolean
+        flattened_gt_indices = gt_indices.flatten()
+        flattened_mask = mask[:,1:].flatten().bool()  # Ensuring mask is flattened and boolean
 
         breakpoint()
         
