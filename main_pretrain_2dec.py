@@ -158,6 +158,11 @@ def get_args_parser():
     parser.add_argument('--d_model_seg', type=int, default=768)
     parser.add_argument('--n_layers_seg', type=int, default=2)
 
+    
+    # Slot Masking probability
+    parser.add_argument('--sample_mask_prob',  type=int, default=0.5, help='Sample Masking probability')
+    parser.add_argument('--slot_mask_prob', default=0.4, help='Masking probability per slot')
+
     return parser
 
 
