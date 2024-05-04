@@ -726,12 +726,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # Combine decisions to determine which specific slots to mask
         final_masking_decision = sample_masking_decision * slot_masking_decision
 
-        final_masking_decision = final_masking_decision.unsqueeze(-1).float()
+        final_masking_decision_float = final_masking_decision.unsqueeze(-1).float()
 
 
         breakpoint()
 
-        logits_mask = torch.matmul(attn_onehot.cpu(), final_masking_decision).squeeze(-1)  # [batch_size, num_features]
+        logits_mask = torch.matmul(attn_onehot.cpu(), final_masking_decision_float).squeeze(-1)  # [batch_size, num_features]
 
 
         # Expand slots_token to match the dimensions needed for replacement
