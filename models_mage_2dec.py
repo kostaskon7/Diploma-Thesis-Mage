@@ -900,6 +900,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # Calculate the criterion loss on the filtered logits and indices
         loss = self.criterion(active_logits, active_gt_indices)
 
+        breakpoint()
+
         loss = loss.reshape(bsz, seq_len)
         loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
 
