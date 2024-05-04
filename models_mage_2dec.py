@@ -252,6 +252,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.epsilon = epsilon
         self.cross_attn = args.cross_attn
         self.both_mboi = args.both_mboi
+
+        self.sample_mask_prob = args.sample_mask_prob  # Probability of masking for each sample
+        self.slot_mask_prob = args.slot_mask_prob
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
