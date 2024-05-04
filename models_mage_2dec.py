@@ -884,12 +884,18 @@ class MaskedGenerativeEncoderViT(nn.Module):
         
         flattened_gt_indices = gt_indices.flatten()
         flattened_mask = mask.flatten().bool()  # Ensuring mask is flattened and boolean
+
+        breakpoint()
         
         # Flatten the logits_mask to match the flattened logits
         flattened_logits_mask = slots_mask.flatten().bool()
+
+        breakpoint()
         
         # Combine the mask and slots_mask to determine the final active entries
         combined_mask = flattened_mask & flattened_logits_mask
+
+        breakpoint()
         
         # Select only the active logits and corresponding ground truth indices
         active_logits = logits[combined_mask]
