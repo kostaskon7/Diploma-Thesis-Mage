@@ -878,12 +878,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward_loss(self, gt_indices, logits, mask, slots_mask):
         bsz, seq_len = gt_indices.size()
 
+        mask=mask[:,1:]
+
         # Assuming slots_mask is the same length as logits, adjust indices accordingly
         logits = logits[:, self.slot_attention.num_slots+1:, :self.codebook_size]
         logits = logits.reshape(bsz*seq_len, -1)
         
         flattened_gt_indices = gt_indices.flatten()
-        flattened_mask = mask[:,1:].flatten().bool()  # Ensuring mask is flattened and boolean
+        flattened_mask = mask.flatten().bool()  # Ensuring mask is flattened and boolean
 
         breakpoint()
         
@@ -893,6 +895,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         breakpoint()
         
         # Combine the mask and slots_mask to determine the final active entries
+        flattened_logits_mask=flattened_logits_mask.cuda()
         combined_mask = flattened_mask & flattened_logits_mask
 
         breakpoint()
