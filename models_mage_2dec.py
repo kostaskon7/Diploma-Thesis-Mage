@@ -731,7 +731,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         breakpoint()
 
-        logits_mask = torch.matmul(attn_onehot.cpu(), final_masking_decision.unsqueeze(-1)).squeeze(-1)  # [batch_size, num_features]
+        logits_mask = torch.matmul(attn_onehot.cpu(), final_masking_decision).squeeze(-1)  # [batch_size, num_features]
 
 
         # Expand slots_token to match the dimensions needed for replacement
