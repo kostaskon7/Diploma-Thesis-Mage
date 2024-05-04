@@ -930,7 +930,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         
 
         
-
+        breakpoint()
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask,slots_mask)
         # loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
