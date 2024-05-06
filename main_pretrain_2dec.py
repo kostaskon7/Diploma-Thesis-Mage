@@ -160,8 +160,8 @@ def get_args_parser():
 
     
     # Slot Masking probability
-    parser.add_argument('--sample_mask_prob',  type=int, default=0.5, help='Sample Masking probability')
-    parser.add_argument('--slot_mask_prob', default=0.4, help='Masking probability per slot')
+    parser.add_argument('--sample_mask_prob',  type=float, default=0.5, help='Sample Masking probability')
+    parser.add_argument('--slot_mask_prob', type=float, default=0.4, help='Masking probability per slot')
 
     return parser
 
