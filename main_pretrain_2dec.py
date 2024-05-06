@@ -160,8 +160,8 @@ def get_args_parser():
 
     
     # Slot Masking probability
-    parser.add_argument('--sample_mask_prob', type = float, default=0.5, help='Sample Masking probability')
-    parser.add_argument('--slot_mask_prob', type = float,default=0.4, help='Masking probability per slot')
+    parser.add_argument('--sample_mask_prob',  type=float, default=0.5, help='Sample Masking probability')
+    parser.add_argument('--slot_mask_prob', type=float, default=0.4, help='Masking probability per slot')
 
     return parser
 
@@ -331,14 +331,14 @@ def main(args):
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
     for epoch in range(args.start_epoch, args.epochs):
-        # if args.distributed:
-        #     train_loader.sampler.set_epoch(epoch)
-        # train_stats = train_one_epoch(
-        #     model, train_loader,
-        #     optimizer, device, epoch, loss_scaler,
-        #     log_writer=log_writer,
-        #     args=args,ce_weight_schedule=ce_weight_schedule
-        # )
+        if args.distributed:
+            train_loader.sampler.set_epoch(epoch)
+        train_stats = train_one_epoch(
+            model, train_loader,
+            optimizer, device, epoch, loss_scaler,
+            log_writer=log_writer,
+            args=args,ce_weight_schedule=ce_weight_schedule
+        )
         # if args.output_dir and (epoch % 40 == 0 or epoch + 1 == args.epochs):
         #     misc.save_model(
         #         args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
