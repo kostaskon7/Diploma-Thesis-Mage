@@ -716,7 +716,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # Slot Masking
 
         batch_size, num_slots, _ = slots.size()
-
+        # use all slots on eval
         # Decide if slot masking will occur for each sample in the batch
         if self.eval:
             sample_masking_decision = torch.rand(batch_size, 1) < 0
