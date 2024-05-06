@@ -730,10 +730,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
             final_masking_decision_float = final_masking_decision.unsqueeze(-1).float()
             
         else:
-            sample_masking_decision = torch.rand(batch_size, 1) < 0
+            sample_masking_decision = torch.rand(batch_size, 1) < 1
 
             # Decide which slots to mask for each sample
-            slot_masking_decision = torch.rand(batch_size, num_slots) < 0
+            slot_masking_decision = torch.rand(batch_size, num_slots) < 1
 
             # Combine decisions to determine which specific slots to mask
             final_masking_decision = sample_masking_decision * slot_masking_decision
