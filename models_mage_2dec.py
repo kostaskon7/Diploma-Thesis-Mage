@@ -718,11 +718,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
         batch_size, num_slots, _ = slots.size()
 
         # Decide if slot masking will occur for each sample in the batch
-        if self.eval:
-            sample_masking_decision = torch.rand(batch_size, 1) < 0
+        if self.training:
+            sample_masking_decision = torch.rand(batch_size, 1) < self.sample_mask_prob
 
             # Decide which slots to mask for each sample
-            slot_masking_decision = torch.rand(batch_size, num_slots) < 0
+            slot_masking_decision = torch.rand(batch_size, num_slots) < self.slot_mask_prob
 
             # Combine decisions to determine which specific slots to mask
             final_masking_decision = sample_masking_decision * slot_masking_decision
@@ -730,10 +730,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
             final_masking_decision_float = final_masking_decision.unsqueeze(-1).float()
             
         else:
-            sample_masking_decision = torch.rand(batch_size, 1) < self.sample_mask_prob
+            sample_masking_decision = torch.rand(batch_size, 1) < 0
 
             # Decide which slots to mask for each sample
-            slot_masking_decision = torch.rand(batch_size, num_slots) < self.slot_mask_prob
+            slot_masking_decision = torch.rand(batch_size, num_slots) < 0
 
             # Combine decisions to determine which specific slots to mask
             final_masking_decision = sample_masking_decision * slot_masking_decision
