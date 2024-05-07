@@ -62,7 +62,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
 
     # Load the model
-    # kmeans = load('kmeans_model4096_classic.joblib')
+    kmeans_model = load(args.kmeans_path)
 
  
 
@@ -154,18 +154,18 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots = model.slot_proj2(slots)
 
     # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
-    # slots_tensor = slots  # Replace with your actual tensor
-    # slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+    slots_tensor = slots  # Replace with your actual tensor
+    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-    # # Predict cluster assignments
-    # cluster_assignments = kmeans.predict(slots_2d)
+    # Predict cluster assignments
+    cluster_assignments = kmeans_model.predict(slots_2d)
 
-    # # Replace slots with cluster centers
-    # centers = kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+    # Replace slots with cluster centers
+    centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
 
-    # # Reshape back to the original slots shape
-    # slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-    # slots = torch.tensor(slots).cuda()
+    # Reshape back to the original slots shape
+    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    slots = torch.tensor(slots).cuda()
 
 
     # slots=model.slot_proj2(slots)
@@ -428,6 +428,10 @@ parser.add_argument('--slot_vis', default=None,type=int,
                 help='slot_vis on decoder')
 parser.add_argument('--both_mboi', default=None,type=int,
                 help='both_mboi logs decoder')
+
+parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans joblib path')
+
+
 
 
 
