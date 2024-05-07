@@ -151,7 +151,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
-    slots = model.slot_proj2(slots)
+    # slots = model.slot_proj2(slots)
 
     # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
     slots_tensor = slots  # Replace with your actual tensor
@@ -167,6 +167,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
     slots = torch.tensor(slots).cuda()
 
+    slots = model.slot_proj2(slots)
 
     # slots=model.slot_proj2(slots)
 
