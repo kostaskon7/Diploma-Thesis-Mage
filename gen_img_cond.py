@@ -38,7 +38,7 @@ def mask_by_random_topk(mask_len, probs, temperature=1.0):
     return masking
 
 
-def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=False,with_mask_vis=True,data_used='coco',slot_vis=True):
+def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=False,with_mask_vis=False,data_used='coco',slot_vis=True):
     torch.manual_seed(seed)
     np.random.seed(seed)
     codebook_emb_dim = 256
@@ -62,7 +62,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
 
     # Load the model
-    kmeans = load('kmeans_model4096_classic.joblib')
+    # kmeans = load('kmeans_model4096_classic.joblib')
 
  
 
@@ -138,25 +138,34 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
 
-    latent=model.forward_encoder(image)
+    latent,_,_,_=model.forward_encoder_copy(image)
+    latent=latent[:,1:,:]
 
     slots, attn, init_slots, attn_logits = model.slot_attention(latent)
     # slots_pool = torch.matmul(attn.transpose(-1, -2), x)
+
+    attn=attn.clone().detach()
+    attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
+    # To add normalization
+    # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+    slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+
+
     slots = model.slot_proj2(slots)
 
-    # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
-    slots_tensor = slots  # Replace with your actual tensor
-    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+    # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
+    # slots_tensor = slots  # Replace with your actual tensor
+    # slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-    # Predict cluster assignments
-    cluster_assignments = kmeans.predict(slots_2d)
+    # # Predict cluster assignments
+    # cluster_assignments = kmeans.predict(slots_2d)
 
-    # Replace slots with cluster centers
-    centers = kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+    # # Replace slots with cluster centers
+    # centers = kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
 
-    # Reshape back to the original slots shape
-    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-    slots = torch.tensor(slots).cuda()
+    # # Reshape back to the original slots shape
+    # slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    # slots = torch.tensor(slots).cuda()
 
 
     # slots=model.slot_proj2(slots)
@@ -458,7 +467,7 @@ if not os.path.exists(save_folder):
 val_sampler = None
 
 if args.dataset == 'coco':
-  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
+  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256,normalization=False)
   val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
 
