@@ -254,7 +254,7 @@ kmeans.fit(data_2d_np)
 
 
 
-directory = '/data/kmeans/hard_100_no_tol/'
+directory = '/data/kmeans/hard_100_no_tol_max_iter_500/'
 file_name = 'kmeans_model1024_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
@@ -273,7 +273,6 @@ kmeans.fit(data_2d_np)
 
 
 
-directory = '/data/kmeans/hard_100_no_tol/'
 file_name = 'kmeans_model2048_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
@@ -291,7 +290,6 @@ kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessar
 kmeans.fit(data_2d_np)
 
 
-directory = '/data/kmeans/hard_100_no_tol/'
 file_name = 'kmeans_model4096_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
@@ -309,7 +307,6 @@ kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessar
 kmeans.fit(data_2d_np)
 
 
-directory = '/data/kmeans/hard_100_no_tol/'
 file_name = 'kmeans_model8192_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
@@ -326,7 +323,6 @@ kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessar
 kmeans.fit(data_2d_np)
 
 
-directory = '/data/kmeans/hard_100_no_tol/'
 file_name = 'kmeans_model16384_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
