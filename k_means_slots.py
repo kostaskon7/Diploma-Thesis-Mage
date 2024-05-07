@@ -20,6 +20,8 @@ from torch_kmeans import KMeans
 from kmeans_pytorch import kmeans
 from sklearn.cluster import MiniBatchKMeans
 from joblib import dump, load
+import os
+
 
 
 
@@ -163,17 +165,30 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
         slots, attn, _, _ = model.slot_attention(latent)
 
-        slots=model.slot_proj2(slots)
+        # slots=model.slot_proj2(slots)
 
+        # slots, attn, attn_logits = model.masked_trans(latent,(16, 16))
+
+        
+
+
+        # # Hard Mask pooling
         # attn=attn.clone().detach()
-        # Latent another transformation?
-        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
+        # # To add normalization
+        # # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
         # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+        # slots=model.slot_proj2(slots_pool)
+
+        attn=attn.clone().detach()
+        # Latent another transformation?
+        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-        # slots_pool=model.slot_proj2(slots_pool)
+        slots=model.slot_proj2(slots_pool)
         collected_outputs.append(slots)
     
 
@@ -227,30 +242,93 @@ data_2d_np = data_2d.cpu().numpy()
 # Step 4: Apply MiniBatchKMeans
 n_clusters = 1024  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
+kmeans.fit(data_2d_np,tol=0.0001)
 
-dump(kmeans, 'kmeans_model1024_classic.joblib')
+
+
+directory = '/data/kmeans/hard_100/'
+file_name = 'kmeans_model1024_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+
+dump(kmeans, file_name)
 
 n_clusters = 2048  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
+kmeans.fit(data_2d_np,tol=0.0001)
 
-dump(kmeans, 'kmeans_model2048_classic.joblib')
+
+
+directory = '/data/kmeans/hard_100/'
+file_name = 'kmeans_model2048_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans, full_path)
 
 
 n_clusters = 4096  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
+kmeans.fit(data_2d_np,tol=0.0001)
 
-dump(kmeans, 'kmeans_model4096_classic.joblib')
+
+directory = '/data/kmeans/hard_100/'
+file_name = 'kmeans_model4096_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans, full_path)
 
 
 n_clusters = 8192  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
+kmeans.fit(data_2d_np,tol=0.0001)
 
-dump(kmeans, 'kmeans_model8192_classic.joblib')
 
+directory = '/data/kmeans/hard_100/'
+file_name = 'kmeans_model8192_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans, full_path)
+
+n_clusters = 16384  # Example: Define the number of clusters
+kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
+kmeans.fit(data_2d_np,tol=0.0001)
+
+
+directory = '/data/kmeans/hard_100/'
+file_name = 'kmeans_model16384_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans, full_path)
 
 
 # kmeans = load('kmeans_model.joblib')
