@@ -744,7 +744,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         logits_mask = torch.matmul(attn_onehot.cpu(), final_masking_decision_float).squeeze(-1)  # [batch_size, num_features]
 
-        breakpoint()
 
 
         # Expand slots_token to match the dimensions needed for replacement
@@ -940,9 +939,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # print(loss.shape)
         loss = loss.reshape(bsz, seq_len)
-        breakpoint()
         # print(loss.shape)
-        loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
+        mask_comb=mask[:,1:]*(1-slots_mask.cuda())
+        # loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
+        loss = (loss * mask_comb[:, 1:]).sum() / mask_comb[:, 1:].sum()
         # print(loss)
         # print("Telos")
         return loss
