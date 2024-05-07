@@ -20,6 +20,8 @@ from torch_kmeans import KMeans
 from kmeans_pytorch import kmeans
 from sklearn.cluster import MiniBatchKMeans
 from joblib import dump, load
+import os
+
 
 
 
@@ -229,28 +231,91 @@ n_clusters = 1024  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
-dump(kmeans, 'kmeans_model1024_classic.joblib')
+
+
+directory = '/data/kmeans/hard_100/'
+file_name = 'kmeans_model1024_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+
+dump(kmeans, file_name)
 
 n_clusters = 2048  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
-dump(kmeans, 'kmeans_model2048_classic.joblib')
+
+
+directory = '/data/kmeans/hard_100/'
+file_name = 'kmeans_model2048_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans, full_path)
 
 
 n_clusters = 4096  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
-dump(kmeans, 'kmeans_model4096_classic.joblib')
+
+directory = '/data/kmeans/hard_100/'
+file_name = 'kmeans_model4096_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans, full_path)
 
 
 n_clusters = 8192  # Example: Define the number of clusters
 kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
-dump(kmeans, 'kmeans_model8192_classic.joblib')
 
+directory = '/data/kmeans/hard_100/'
+file_name = 'kmeans_model8192_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans, full_path)
+
+n_clusters = 16384  # Example: Define the number of clusters
+kmeans = MiniBatchKMeans(n_clusters=n_clusters)  # Adjust batch_size as necessary
+kmeans.fit(data_2d_np)
+
+
+directory = '/data/kmeans/hard_100/'
+file_name = 'kmeans_model16384_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans, full_path)
 
 
 # kmeans = load('kmeans_model.joblib')
