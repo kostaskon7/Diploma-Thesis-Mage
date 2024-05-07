@@ -167,7 +167,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
     image=image.cuda()
     with torch.no_grad():
         # val_loss, _, _, default_slots_attns, _, _ = model(image)
-        latent= model.forward_encoder(image)
+        latent= model.forward_encoder_copy(image)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
 
