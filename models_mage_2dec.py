@@ -942,7 +942,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print(loss.shape)
         mask_comb=mask[:,1:]*(1-slots_mask.cuda())
         # loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
-        loss = (loss * mask_comb[:, 1:]).sum() / mask_comb[:, 1:].sum()
+        loss = (loss * mask_comb).sum() / mask_comb.sum()
         # print(loss)
         # print("Telos")
         return loss
