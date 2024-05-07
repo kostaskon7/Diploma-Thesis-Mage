@@ -187,17 +187,17 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         # # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
         # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         # slots=model.slot_proj2(slots_pool)
-        breakpoint()
-        attn=attn.clone().detach()
-        # Latent another transformation?
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
-        slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+        # breakpoint()
+        # attn=attn.clone().detach()
+        # # Latent another transformation?
+        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
-        breakpoint()
+        # breakpoint()
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
         # slots=model.slot_proj2(slots)
-        collected_outputs.append(slots)
+        collected_outputs.append(attn)
     
 
 
