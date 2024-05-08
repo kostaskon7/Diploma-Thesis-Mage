@@ -155,7 +155,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
     slots_tensor = attn  # Replace with your actual tensor
-    slots_2d = slots_tensor.reshape(-1, 256).cpu().numpy()  # Reshape to 2D for prediction
+    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
     # Predict cluster assignments
     cluster_assignments = kmeans_model.predict(slots_2d)
@@ -164,18 +164,18 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
 
     # Reshape back to the original slots shape
-    # slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-    slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
+    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
 
     slots = torch.tensor(slots).cuda()
 
     # attn=slots.reshape(bsz,slots_tensor.shape[1],256)
-    attn=slots
+    # attn=slots
 
-    attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
-    # To add normalization
-    # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
-    slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+    # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
+    # # To add normalization
+    # # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+    # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
     slots = model.slot_proj2(slots)
