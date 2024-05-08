@@ -63,6 +63,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # Load the model
     kmeans_model = load(args.kmeans_path)
+    model.mask_ratio_min = args.mask_ratio_min
 
  
 
