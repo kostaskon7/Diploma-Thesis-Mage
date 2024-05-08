@@ -297,6 +297,8 @@ parser.add_argument('--both_mboi', default=None,type=int,
                 help='both_mboi logs decoder')
 
 parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans joblib path')
+parser.add_argument('--mask_ratio_min', type=float, default=0.5,
+                    help='Minimum mask ratio')
 
 
 
