@@ -198,7 +198,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         # breakpoint()
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-        slots=model.slot_proj2(slots)
+        # slots=model.slot_proj2(slots)
         collected_outputs.append(slots)
     
 
@@ -261,7 +261,7 @@ kmeans.fit(data_2d_np)
 
 
 
-directory = '/data/kmeans/hard_100_tol_1e-4-soft/'
+directory = '/data/kmeans/hard_100_tol_1e-4-soft-no-proj/'
 file_name = 'kmeans_model1024_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
