@@ -175,7 +175,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     max_indices = torch.argmax(attn, dim=-1)
 
     # Convert these indices to a one-hot encoding format
-    attn_hard = torch.nn.functional.one_hot(max_indices, num_classes=latent.shape[-2]).to(latent.dtype)
+    attn_hard = torch.nn.functional.one_hot(max_indices, num_classes=slots.shape[1]).to(latent.dtype)
 
     # Use the one-hot encoded indices to select features
     slots = torch.matmul(attn_hard.float().transpose(-1, -2), latent)
