@@ -231,7 +231,7 @@ kmeans.fit(data_2d_np)
 
 
 
-directory = '/data/kmeans/hard_100_tol_1e-4-soft-no-proj/'
+directory = '/data/kmeans/hard_100_tol_1e-4-norm/'
 file_name = 'kmeans_model1024_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
