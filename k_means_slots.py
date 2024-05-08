@@ -254,7 +254,7 @@ data_2d_np = data_2d.cpu().numpy()
 
 # Step 4: Apply MiniBatchKMeans
 n_clusters = 1024  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=500,tol=tolerance,max_iterations=max_iterations)  # Adjust batch_size as necessary
+kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=500,tol=tolerance,max_iter=max_iterations)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
 
@@ -273,7 +273,7 @@ if not os.path.exists(directory):
 dump(kmeans, file_name)
 
 n_clusters = 2048  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=500)  # Adjust batch_size as necessary
+kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=max_iterations)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
 
@@ -291,7 +291,7 @@ dump(kmeans, full_path)
 
 
 n_clusters = 4096  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=500)  # Adjust batch_size as necessary
+kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=max_iterations)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
 
@@ -308,7 +308,7 @@ dump(kmeans, full_path)
 
 
 n_clusters = 8192  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=500)  # Adjust batch_size as necessary
+kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=max_iterations)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
 
@@ -324,7 +324,7 @@ if not os.path.exists(directory):
 dump(kmeans, full_path)
 
 n_clusters = 16384  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=500)  # Adjust batch_size as necessary
+kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=max_iterations)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
 
