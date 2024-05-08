@@ -236,6 +236,9 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
 ## MINIBATCH SKLEARN
 
+tolerance = 1e-4
+max_iterations = 100000
+
 # Step 1: Concatenate all collected outputs
 all_slots_tensor = torch.cat(collected_outputs, dim=0)
 
@@ -251,7 +254,7 @@ data_2d_np = data_2d.cpu().numpy()
 
 # Step 4: Apply MiniBatchKMeans
 n_clusters = 1024  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=500)  # Adjust batch_size as necessary
+kmeans = MiniBatchKMeans(n_clusters=n_clusters, max_iter=500,tol=tolerance,max_iterations=max_iterations)  # Adjust batch_size as necessary
 kmeans.fit(data_2d_np)
 
 
