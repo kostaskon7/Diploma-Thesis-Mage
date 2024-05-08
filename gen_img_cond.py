@@ -154,7 +154,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # slots = model.slot_proj2(slots)
 
     # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
-    slots_tensor = attn  # Replace with your actual tensor
+    slots_tensor = slots  # Replace with your actual tensor
     slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
     # Predict cluster assignments
