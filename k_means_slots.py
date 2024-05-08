@@ -172,6 +172,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         latent=latent[:,1:,:]
 
         slots, attn, _, _ = model.slot_attention(latent)
+        breakpoint()
 
         # slots=model.slot_proj2(slots)
 
