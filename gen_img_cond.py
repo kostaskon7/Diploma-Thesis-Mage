@@ -169,7 +169,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     slots = torch.tensor(slots).cuda()
 
-    attn=slots.reshape(bsz,slots_tensor.shape[1],256)
+    # attn=slots.reshape(bsz,slots_tensor.shape[1],256)
+    attn=slots
 
     attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
     # To add normalization
