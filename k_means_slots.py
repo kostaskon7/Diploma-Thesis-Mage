@@ -188,15 +188,15 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         # slots=model.slot_proj2(slots_pool)
         # breakpoint()
-        # attn=attn.clone().detach()
-        # # Latent another transformation?
-        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
-        # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+        attn=attn.clone().detach()
+        # Latent another transformation?
+        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
         # breakpoint()
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-        # slots=model.slot_proj2(slots)
+        slots=model.slot_proj2(slots)
         collected_outputs.append(attn)
     
 
@@ -243,7 +243,7 @@ all_slots_tensor = torch.cat(collected_outputs, dim=0)
 # Since each original tensor is [batch_size, 7, 256], and you're concatenating along the batch dimension,
 # you can simply reshape it to (-1, 256) to flatten all but the last dimension.
 # data_2d = all_slots_tensor.reshape(-1, 768)
-data_2d = all_slots_tensor.reshape(-1, 256)
+data_2d = all_slots_tensor.reshape(-1, 768)
 
 
 # Step 3: Convert to NumPy array if you're using PyTorch
