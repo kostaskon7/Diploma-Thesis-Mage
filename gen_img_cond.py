@@ -169,16 +169,16 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
     # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
 
-    slots = torch.tensor(slots).cuda()
+    # slots = torch.tensor(slots).cuda()
 
-    # Find the indices of the maximum values (most important features) from the soft attention
-    max_indices = torch.argmax(attn, dim=-1)
+    # # Find the indices of the maximum values (most important features) from the soft attention
+    # max_indices = torch.argmax(attn, dim=-1)
 
-    # Convert these indices to a one-hot encoding format
-    attn_hard = torch.nn.functional.one_hot(max_indices, num_classes=slots.shape[1]).to(latent.dtype)
+    # # Convert these indices to a one-hot encoding format
+    # attn_hard = torch.nn.functional.one_hot(max_indices, num_classes=slots.shape[1]).to(latent.dtype)
 
-    # Use the one-hot encoded indices to select features
-    slots = torch.matmul(attn_hard.float().transpose(-1, -2), latent)
+    # # Use the one-hot encoded indices to select features
+    # slots = torch.matmul(attn_hard.float().transpose(-1, -2), latent)
 
     slots = model.slot_proj2(slots)
 
