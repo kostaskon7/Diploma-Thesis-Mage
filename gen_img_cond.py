@@ -144,14 +144,14 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots, attn, init_slots, attn_logits = model.slot_attention(latent)
     # slots_pool = torch.matmul(attn.transpose(-1, -2), x)
 
-    # attn=attn.clone().detach()
-    # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
-    # # To add normalization
-    # # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
-    # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+    attn=attn.clone().detach()
+    attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
+    # To add normalization
+    # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+    slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
-    # slots = model.slot_proj2(slots)
+    slots = model.slot_proj2(slots)
 
     # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
     slots_tensor = slots  # Replace with your actual tensor
