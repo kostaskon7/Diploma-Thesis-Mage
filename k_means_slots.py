@@ -191,7 +191,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         attn=attn.clone().detach()
         # Latent another transformation?
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
-        attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
+        # attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
         # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         slots = torch.matmul(attn.transpose(-1, -2), latent)
 
@@ -210,6 +210,8 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
 tolerance = 1e-4
 max_iterations = 100000
+
+breakpoint()
 
 # Step 1: Concatenate all collected outputs
 all_slots_tensor = torch.cat(collected_outputs, dim=0)
