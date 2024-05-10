@@ -173,21 +173,6 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
         slots, attn, _, _ = model.slot_attention(latent)
 
-        # slots=model.slot_proj2(slots)
-
-        # slots, attn, attn_logits = model.masked_trans(latent,(16, 16))
-
-        
-
-
-        # # Hard Mask pooling
-        # attn=attn.clone().detach()
-        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
-        # # To add normalization
-        # # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
-        # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
-        # slots=model.slot_proj2(slots_pool)
-        # breakpoint()
         attn=attn.clone().detach()
         # Latent another transformation?
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
