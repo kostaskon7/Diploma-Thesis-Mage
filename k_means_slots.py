@@ -127,7 +127,7 @@ if not os.path.exists(save_folder):
 val_sampler = None
 
 if args.dataset == 'coco':
-  val_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
+  val_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256,normalization=False)
   val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
 
