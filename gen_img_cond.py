@@ -180,7 +180,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # # Use the one-hot encoded indices to select features
     # slots = torch.matmul(attn_hard.float().transpose(-1, -2), latent)
 
-    slots = model.slot_proj2(slots)
+    # slots = model.slot_proj2(slots)
 
     # attn=slots.reshape(bsz,slots_tensor.shape[1],256)
     # attn=slots
