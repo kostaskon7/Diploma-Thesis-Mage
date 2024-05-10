@@ -211,7 +211,6 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 tolerance = 1e-4
 max_iterations = 100000
 
-breakpoint()
 
 # Step 1: Concatenate all collected outputs
 all_slots_tensor = torch.cat(collected_outputs, dim=0)
@@ -233,7 +232,7 @@ kmeans.fit(data_2d_np)
 
 
 
-directory = '/data/kmeans/hard_100_tol_1e-4-check-models/'
+directory = '/data/kmeans/hard_100_tol_1e-4-no-norm/'
 file_name = 'kmeans_model1024_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
