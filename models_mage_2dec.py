@@ -18,6 +18,9 @@ from spot.transformer import TransformerDecoder
 from spot.mlp import MlpDecoder
 
 from segm.model.decoder import MaskTransformer
+from sklearn.cluster import KMeans
+from joblib import load
+
 
 
 
@@ -255,6 +258,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         self.prob_threshold = args.prob_threshold  # Probability threshold to apply masking
         self.mask_prob = args.mask_prob            # Probability to mask individual slots
+
+        kmeans_model = load(args.kmeans_path)
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
