@@ -252,6 +252,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.epsilon = epsilon
         self.cross_attn = args.cross_attn
         self.both_mboi = args.both_mboi
+
+        self.prob_threshold = args.prob_threshold  # Probability threshold to apply masking
+        self.mask_prob = args.mask_prob            # Probability to mask individual slots
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
@@ -519,16 +522,20 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         num_masked_tokens = int(np.ceil(seq_len * mask_rate))
 
-        # it is possible that two elements of the noise is the same, so do a while loop to avoid it
-        while True:
-            noise = torch.rand(bsz, seq_len, device=x.device)  # noise in [0, 1]
-            sorted_noise, _ = torch.sort(noise, dim=1)  # ascend: small is remove, large is keep
-            cutoff_mask = sorted_noise[:, num_masked_tokens-1:num_masked_tokens]
-            token_all_mask = (noise <= cutoff_mask).float()
-            if token_all_mask.sum() == bsz*num_masked_tokens:
-                break
-            else:
-                print("Rerandom the noise!")
+        if self.apply_mask:
+            # Mask all tokens
+            token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()  # All tokens are dropped
+        else:
+            # it is possible that two elements of the noise is the same, so do a while loop to avoid it
+            while True:
+                noise = torch.rand(bsz, seq_len, device=x.device)  # noise in [0, 1]
+                sorted_noise, _ = torch.sort(noise, dim=1)  # ascend: small is remove, large is keep
+                cutoff_mask = sorted_noise[:, num_masked_tokens-1:num_masked_tokens]
+                token_all_mask = (noise <= cutoff_mask).float()
+                if token_all_mask.sum() == bsz*num_masked_tokens:
+                    break
+                else:
+                    print("Rerandom the noise!")
 
         token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
 
@@ -692,6 +699,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward_decoder(self, x,slots, token_drop_mask, token_all_mask):
         # embed tokens
         x = self.decoder_embed(x)
+        batch_size,_,num_features = slots.shape
 
         # append mask tokens to sequence
         if self.pad_with_cls_token:
@@ -717,6 +725,32 @@ class MaskedGenerativeEncoderViT(nn.Module):
             slots_for_dec=slots
         else:
             slots_for_dec=None
+
+
+
+        # For each sample in the batch, decide which slots to mask
+        if self.apply_mask:
+
+            slots_2d = slots.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+
+            # Predict cluster assignments
+            cluster_assignments = self.kmeans.predict(slots_2d)
+
+            # Replace slots with cluster centers
+            centers = self.kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+
+            # Reshape back to the original slots shape
+            slots = centers.reshape(slots.shape[0], slots.shape[1], slots.shape[1])  # Use the original num_slots
+            slots = torch.tensor(slots).cuda()
+
+            # Create one uniform mask for the entire batch
+            uniform_mask = torch.rand(self.slot_attention.num_slots) < self.mask_prob
+            uniform_mask = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, num_features)
+
+            # Apply the uniform mask token across all samples in the batch
+            slots[uniform_mask] = self.mask_token.expand_as(slots[uniform_mask])
+
+
 
 
         for i, blk in enumerate(self.decoder_blocks):
@@ -860,6 +894,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward(self, imgs,mask_crf):
         
         # with torch.no_grad():
+        # Decide if we should apply the mask for each item in the batch
+        self.apply_mask = torch.rand(1) < self.prob_threshold
+        
         latent,_,_,_= self.forward_encoder_copy(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
         # latent_mask=latent_mask.clone().detach()
