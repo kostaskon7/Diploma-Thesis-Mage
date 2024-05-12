@@ -145,10 +145,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # slots_pool = torch.matmul(attn.transpose(-1, -2), x)
 
     attn=attn.clone().detach()
-    attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
+    # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
     # To add normalization
     # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
-    slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+    slots = torch.matmul(attn.transpose(-1, -2), latent)
 
 
     slots = model.slot_proj2(slots)
