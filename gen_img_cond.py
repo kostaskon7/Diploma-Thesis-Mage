@@ -16,7 +16,7 @@ import torch.nn.functional as F
 from spot.utils_spot import inv_normalize, cosine_scheduler, visualize, bool_flag, load_pretrained_encoder
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
-from kmeans_pytorch import kmeans, kmeans_predict
+# from kmeans_pytorch import kmeans, kmeans_predict
 from joblib import load
 import torch
 

@@ -212,8 +212,8 @@ data_2d_np = data_2d.cpu().numpy()
 
 # Step 4: Apply MiniBatchKMeans
 n_clusters = 1024  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance,max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance,max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np)
 
 
 
@@ -228,11 +228,11 @@ if not os.path.exists(directory):
     os.makedirs(directory)
 
 
-dump(kmeans, file_name)
+dump(kmeans_model, file_name)
 
 n_clusters = 2048  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np)
 
 
 
@@ -245,12 +245,12 @@ full_path = os.path.join(directory, file_name)
 if not os.path.exists(directory):
     os.makedirs(directory)
 
-dump(kmeans, full_path)
+dump(kmeans_model, full_path)
 
 
 n_clusters = 4096  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np)
 
 
 file_name = 'kmeans_model4096_100ep_hard.joblib'
@@ -262,12 +262,12 @@ full_path = os.path.join(directory, file_name)
 if not os.path.exists(directory):
     os.makedirs(directory)
 
-dump(kmeans, full_path)
+dump(kmeans_model, full_path)
 
 
 n_clusters = 8192  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np)
 
 
 file_name = 'kmeans_model8192_100ep_hard.joblib'
@@ -279,11 +279,11 @@ full_path = os.path.join(directory, file_name)
 if not os.path.exists(directory):
     os.makedirs(directory)
 
-dump(kmeans, full_path)
+dump(kmeans_model, full_path)
 
 n_clusters = 16384  # Example: Define the number of clusters
-kmeans = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans.fit(data_2d_np)
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np)
 
 
 file_name = 'kmeans_model16384_100ep_hard.joblib'
@@ -295,7 +295,7 @@ full_path = os.path.join(directory, file_name)
 if not os.path.exists(directory):
     os.makedirs(directory)
 
-dump(kmeans, full_path)
+dump(kmeans_model, full_path)
 
 
 # kmeans = load('kmeans_model.joblib')
