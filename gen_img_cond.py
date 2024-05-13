@@ -165,11 +165,11 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     breakpoint()
 
-    # Reshape back to the original slots shape
-    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-    # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
+    # # Reshape back to the original slots shape
+    # slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    # # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
 
-    slots = torch.tensor(slots).cuda()
+    # slots = torch.tensor(slots).cuda()
 
     # # Find the indices of the maximum values (most important features) from the soft attention
     # max_indices = torch.argmax(attn, dim=-1)
