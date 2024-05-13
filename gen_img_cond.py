@@ -166,10 +166,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     breakpoint()
 
     # # Reshape back to the original slots shape
-    # slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
     # # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
 
-    # slots = torch.tensor(slots).cuda()
+    slots = torch.tensor(slots).cuda()
 
     # # Find the indices of the maximum values (most important features) from the soft attention
     # max_indices = torch.argmax(attn, dim=-1)
@@ -496,7 +496,7 @@ if not os.path.exists(save_folder):
 val_sampler = None
 
 if args.dataset == 'coco':
-  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256,normalization=False)
+  val_dataset = COCO2017(root=args.data_path, split='main', image_size=256, mask_size=256,normalization=False)
   val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
 
