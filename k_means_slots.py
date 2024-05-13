@@ -192,6 +192,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
 
 ## MINIBATCH SKLEARN
+breakpoint()
 
 tolerance = 1e-4
 max_iterations = 100000
@@ -217,7 +218,7 @@ kmeans_model.fit(data_2d_np)
 
 
 
-directory = '/data/kmeans/hard_100_tol_1e-4-remove-imports/'
+directory = '/data/kmeans/hard_100_tol_1e-4-debug/'
 file_name = 'kmeans_model1024_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
