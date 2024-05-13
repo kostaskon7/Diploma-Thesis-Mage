@@ -292,8 +292,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
             slot_size=args.slot_size,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
-            truncate='none', # or other options as per your requirement
-            init_method='shared_gaussian')  # or 'shared_gaussian'
+            truncate=args.truncate, # or other options as per your requirement
+            init_method=args.init_method)  # or 'shared_gaussian'
         
             # num_heads=6,       # specify the number of heads for attention
             # drop_path=0.0)        # specify dropout path rate
