@@ -163,6 +163,11 @@ def get_args_parser():
     parser.add_argument('--prob_threshold', type=int, default=0.5)
     parser.add_argument('--mask_prob', type=int, default=0.5)
 
+    # Kmeans Path
+    parser.add_argument('--kmeans_path', type=str, default=None, help='Directory of kmeans object file')
+
+    
+
     return parser
 
 

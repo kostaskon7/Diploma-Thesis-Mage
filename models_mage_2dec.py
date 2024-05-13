@@ -259,7 +259,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.prob_threshold = args.prob_threshold  # Probability threshold to apply masking
         self.mask_prob = args.mask_prob            # Probability to mask individual slots
 
-        kmeans_model = load(args.kmeans_path)
+        self.kmeans_model = load(args.kmeans_path)
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
@@ -739,10 +739,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
             slots_2d = slots.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
             # Predict cluster assignments
-            cluster_assignments = self.kmeans.predict(slots_2d)
+            cluster_assignments = self.kmeans_model.predict(slots_2d)
 
             # Replace slots with cluster centers
-            centers = self.kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+            centers = self.kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
 
             # Reshape back to the original slots shape
             slots = centers.reshape(slots.shape[0], slots.shape[1], slots.shape[1])  # Use the original num_slots
@@ -875,31 +875,19 @@ class MaskedGenerativeEncoderViT(nn.Module):
         return mean_dec_output, mean_dec_slots_attns
 
 
-
-    # [19:16:56.286655] 32
-    # [19:16:56.286734] 256
-    # [19:16:56.286754] torch.Size([32, 257])
-    # [19:16:56.286786] torch.Size([32, 264, 2025])
-    # [19:16:56.492483] torch.Size([8192])
-    # [19:16:56.492559] torch.Size([32, 256])
     def forward_loss(self, gt_indices, logits, mask):
         bsz, seq_len = gt_indices.size()
         # logits and mask are with seq_len+1 but gt_indices is with seq_len
         loss = self.criterion(logits[:, self.slot_attention.num_slots+1:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
-        # loss = self.criterion(logits[:, 1:, :self.codebook_size].reshape(bsz*seq_len, -1), gt_indices.reshape(bsz*seq_len))#DEN EIMAI SIGOUROS GIA TO +1 H +7
 
-        # print(loss.shape)
         loss = loss.reshape(bsz, seq_len)
-        # print(loss.shape)
         loss = (loss * mask[:, 1:]).sum() / mask[:, 1:].sum()  # mean loss on removed patches
-        # print(loss)
-        # print("Telos")
+
         return loss
 
     def forward(self, imgs,mask_crf):
         
-        # with torch.no_grad():
-        # Decide if we should apply the mask for each item in the batch
+
         self.apply_mask = torch.rand(1) < self.prob_threshold
         
         latent,_,_,_= self.forward_encoder_copy(imgs)
@@ -909,8 +897,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         bsz, _ = gt_indices.size()
         H_enc, W_enc = int(math.sqrt(latent.shape[1])), int(math.sqrt(latent.shape[1]))
 
-            # latent= self.forward_encoder(imgs)
-        #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
         with torch.cuda.amp.autocast(enabled=False):
             slots, attn, attn_logits = self.masked_trans(latent,(H_enc, W_enc))
@@ -939,8 +925,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
-        # loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
-        # loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
+
 
         # Crf
         with torch.cuda.amp.autocast(enabled=False):
