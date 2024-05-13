@@ -172,6 +172,8 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         latent=latent[:,1:,:]
 
         slots, attn, _, _ = model.slot_attention(latent)
+        breakpoint()
+
 
         attn=attn.clone().detach()
         # Latent another transformation?
@@ -186,6 +188,8 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
         slots=model.slot_proj2(slots)
         collected_outputs.append(slots)
+        break
+
     
 
 
