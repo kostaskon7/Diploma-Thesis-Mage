@@ -147,7 +147,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     attn=attn.clone().detach()
     attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
     # To add normalization
-    # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+    attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
     slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
@@ -166,10 +166,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     breakpoint()
 
     # Reshape back to the original slots shape
-    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    # slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
     # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
 
-    slots = torch.tensor(slots).cuda()
+    # slots = torch.tensor(slots).cuda()
 
     # # Find the indices of the maximum values (most important features) from the soft attention
     # max_indices = torch.argmax(attn, dim=-1)
