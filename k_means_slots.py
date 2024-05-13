@@ -215,76 +215,12 @@ data_2d = all_slots_tensor.reshape(-1, 768)
 # Step 3: Convert to NumPy array if you're using PyTorch
 data_2d_np = data_2d.cpu().numpy()
 
-# Step 4: Apply MiniBatchKMeans
-n_clusters = 1024  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance,max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
+
 
 
 
 directory = '/data/kmeans/hard_100_tol_1e-4-debug/'
-file_name = 'kmeans_model1024_100ep_hard.joblib'
 
-full_path = os.path.join(directory, file_name)
-
-
-# Ensure the directory exists
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-
-dump(kmeans_model, file_name)
-
-n_clusters = 2048  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
-
-
-
-file_name = 'kmeans_model2048_100ep_hard.joblib'
-
-full_path = os.path.join(directory, file_name)
-
-
-# Ensure the directory exists
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-dump(kmeans_model, full_path)
-
-
-n_clusters = 4096  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
-
-
-file_name = 'kmeans_model4096_100ep_hard.joblib'
-
-full_path = os.path.join(directory, file_name)
-
-
-# Ensure the directory exists
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-dump(kmeans_model, full_path)
-
-
-n_clusters = 8192  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
-
-
-file_name = 'kmeans_model8192_100ep_hard.joblib'
-
-full_path = os.path.join(directory, file_name)
-
-
-# Ensure the directory exists
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-dump(kmeans_model, full_path)
 
 n_clusters = 16384  # Example: Define the number of clusters
 kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
@@ -302,14 +238,37 @@ if not os.path.exists(directory):
 
 dump(kmeans_model, full_path)
 
+breakpoint()
 
-# kmeans = load('kmeans_model.joblib')
-
-
-
-
-
+n_clusters = 32768  # Example: Define the number of clusters
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np)
 
 
-# Save your model
-# torch.save(model, 'cluster_centers_1024.pth')
+file_name = 'kmeans_model32768_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans_model, full_path)
+
+n_clusters = 65536  # Example: Define the number of clusters
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np)
+
+
+file_name = 'kmeans_model65536_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans_model, full_path)
+
