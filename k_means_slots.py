@@ -230,7 +230,7 @@ directory = '/data/kmeans/hard_100_tol_1e-4-with scaler/'
 
 n_clusters = 16384  # Example: Define the number of clusters
 kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
+kmeans_model.fit(data_2d_np_normalized)
 
 
 file_name = 'kmeans_model16384_100ep_hard.joblib'
@@ -253,7 +253,7 @@ dump(scaler, full_path_scaler)
 
 n_clusters = 32768  # Example: Define the number of clusters
 kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
+kmeans_model.fit(data_2d_np_normalized)
 
 
 file_name = 'kmeans_model32768_100ep_hard.joblib'
@@ -269,7 +269,7 @@ dump(kmeans_model, full_path)
 
 n_clusters = 65536  # Example: Define the number of clusters
 kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
+kmeans_model.fit(data_2d_np_normalized)
 
 
 file_name = 'kmeans_model65536_100ep_hard.joblib'
