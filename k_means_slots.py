@@ -21,6 +21,8 @@ from kmeans_pytorch import kmeans
 from sklearn.cluster import MiniBatchKMeans
 from joblib import dump, load
 import os
+from sklearn.preprocessing import StandardScaler
+
 
 
 
@@ -198,8 +200,11 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 ## MINIBATCH SKLEARN
 # breakpoint()
 
-tolerance = 1e-4
+tolerance = 1e-3
 max_iterations = 100000
+
+scaler = StandardScaler()
+
 
 
 # Step 1: Concatenate all collected outputs
@@ -215,11 +220,12 @@ data_2d = all_slots_tensor.reshape(-1, 768)
 # Step 3: Convert to NumPy array if you're using PyTorch
 data_2d_np = data_2d.cpu().numpy()
 
+data_2d_np_normalized = scaler.fit_transform(data_2d_np)
 
 
 
 
-directory = '/data/kmeans/hard_100_tol_1e-4-debug/'
+directory = '/data/kmeans/hard_100_tol_1e-4-with scaler/'
 
 
 n_clusters = 16384  # Example: Define the number of clusters
@@ -231,6 +237,9 @@ file_name = 'kmeans_model16384_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
 
+full_path_scaler = os.path.join(directory, 'scaler.joblib')
+
+
 
 # Ensure the directory exists
 if not os.path.exists(directory):
@@ -238,7 +247,9 @@ if not os.path.exists(directory):
 
 dump(kmeans_model, full_path)
 
-breakpoint()
+dump(scaler, full_path_scaler)
+
+
 
 n_clusters = 32768  # Example: Define the number of clusters
 kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
