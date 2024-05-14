@@ -98,6 +98,10 @@ parser.add_argument('--ce_weight', type=float, default=5e-3, help='weight of the
 parser.add_argument('--final_ce_weight', type=float, default=None, help='final weight of the cross-entropy distilation loss')
 
 parser.add_argument('--crf_dir', type=str, default=None, help='Directory of crf files')
+parser.add_argument('--directory', type=str, default=None, help='Directory of crf files')
+
+parser.add_argument('--max_iterations',  type=int, default=300, help='Max iterations in kmeans')
+parser.add_argument('--tol',  type=int, default=1e-3, help='Max tolerance reached')
 
 
 
@@ -201,8 +205,8 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 ## MINIBATCH SKLEARN
 # breakpoint()
 
-tolerance = 1e-3
-max_iterations = 100000
+tolerance = args.tol
+max_iterations = args.max_iterations
 
 scaler = StandardScaler()
 
@@ -226,7 +230,7 @@ data_2d_np_normalized = scaler.fit_transform(data_2d_np)
 
 
 
-directory = '/data/kmeans/hard_100_tol_1e-4-with scaler/'
+directory = args.directory
 
 
 n_clusters = 16384  # Example: Define the number of clusters
@@ -250,6 +254,10 @@ dump(kmeans_model, full_path)
 
 dump(scaler, full_path_scaler)
 
+print(f"Number of iterations: {kmeans_model.n_iter_}")
+print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
+
+
 
 
 n_clusters = 32768  # Example: Define the number of clusters
@@ -268,6 +276,9 @@ if not os.path.exists(directory):
 
 dump(kmeans_model, full_path)
 
+print(f"Number of iterations: {kmeans_model.n_iter_}")
+print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
+
 n_clusters = 65536  # Example: Define the number of clusters
 kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
 kmeans_model.fit(data_2d_np_normalized)
@@ -284,3 +295,5 @@ if not os.path.exists(directory):
 
 dump(kmeans_model, full_path)
 
+print(f"Number of iterations: {kmeans_model.n_iter_}")
+print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
