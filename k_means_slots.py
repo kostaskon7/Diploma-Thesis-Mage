@@ -101,7 +101,7 @@ parser.add_argument('--crf_dir', type=str, default=None, help='Directory of crf 
 parser.add_argument('--directory', type=str, default=None, help='Directory of crf files')
 
 parser.add_argument('--max_iterations',  type=int, default=300, help='Max iterations in kmeans')
-parser.add_argument('--tol',  type=int, default=1e-3, help='Max tolerance reached')
+parser.add_argument('--tol',  type=float, default=1e-3, help='Max tolerance reached')
 
 
 
