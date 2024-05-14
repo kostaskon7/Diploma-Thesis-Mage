@@ -124,7 +124,8 @@ model = models_mage_2dec.__dict__[args.model](norm_pix_loss=False,
 model.to(0)
 
 checkpoint = torch.load(args.ckpt, map_location='cpu')
-model.load_state_dict(checkpoint['model'])
+msg=model.load_state_dict(checkpoint['model'],strict=False)
+print(msg)
 model.eval()
 
 num_steps = args.num_images // args.batch_size + 1
