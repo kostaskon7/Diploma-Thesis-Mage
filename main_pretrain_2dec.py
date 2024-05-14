@@ -14,8 +14,14 @@ import torchvision.datasets as datasets
 
 import timm
 
-assert timm.__version__ == "0.3.2"  # version check
+#assert timm.__version__ == "0.3.2"  # version check
 import timm.optim.optim_factory as optim_factory
+print(f"timm version: {timm.__version__}")
+try:
+    timm_add_weight_decay_fn = optim_factory.add_weight_decay
+except:
+    timm_add_weight_decay_fn = optim_factory.param_groups_weight_decay
+
 
 import util.misc as misc
 from util.misc import NativeScalerWithGradNormCount as NativeScaler
@@ -213,11 +219,17 @@ def main(args):
 
     train_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256)
 
-    
-    train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
+    if args.distributed:
+        train_sampler = torch.utils.data.DistributedSampler(train_dataset, num_replicas=misc.get_world_size(), rank=misc.get_rank(), shuffle=True)
+        log_writer = log_writer if misc.get_rank() == 0 else None
+    else:
+        train_sampler = torch.utils.data.RandomSampler(train_sampler)
+    print("train_sampler = %s" % str(train_sampler))
+
+    train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, drop_last=True, batch_size=args.batch_size, pin_memory=True, num_workers=args.num_workers)#,collate_fn=custom_collate_fn)
 
     val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
-    val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
+    val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True, num_workers=args.num_workers)#,collate_fn=custom_collate_fn)
 
     # define the model
     vqgan_ckpt_path = args.vqgan_ckpt_path
@@ -247,7 +259,7 @@ def main(args):
         model_without_ddp = model.module
     
     # following timm: set wd as 0 for bias and norm layers
-    param_groups = optim_factory.add_weight_decay(model_without_ddp, args.weight_decay)
+    param_groups = timm_add_weight_decay_fn(model_without_ddp, args.weight_decay)
     optimizer = torch.optim.AdamW(param_groups, lr=args.lr, betas=(0.9, 0.95))
     print(optimizer)
     loss_scaler = NativeScaler()
