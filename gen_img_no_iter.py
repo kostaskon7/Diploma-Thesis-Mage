@@ -239,7 +239,6 @@ parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans job
 parser.add_argument('--mask_ratio_min', type=float, default=0.5,
                     help='Minimum mask ratio')
 
-parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans joblib path')
 parser.add_argument('--scaler',  type=str, default='none', help='scaler joblib path')
 
 
