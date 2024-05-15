@@ -180,12 +180,12 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     distances = torch.empty((num_slots, num_data), dtype=torch.float16, device=slots.device)
 
     # distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
-    for i in range(0, num_slots, batch_size):
-        end_i = min(i + batch_size, num_slots)
+    for i in range(0, num_slots, bsz):
+        end_i = min(i + bsz, num_slots)
         slots_batch = slots[i:end_i].unsqueeze(1)  # Shape: (batch_size, 1, 768)
 
-        for j in range(0, num_data, batch_size):
-            end_j = min(j + batch_size, num_data)
+        for j in range(0, num_data, bsz):
+            end_j = min(j + bsz, num_data)
             data_2d_batch = kmeans_model[j:end_j].unsqueeze(0)  # Shape: (1, batch_size, 768)
 
             # Compute the squared Euclidean distance for the current batches
@@ -207,7 +207,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         centers = scaler.inverse_transform(centers)
 
     breakpoint()
-
+    centers = slots
     # # Reshape back to the original slots shape
     slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
     # # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
@@ -540,7 +540,7 @@ if not os.path.exists(save_folder):
 val_sampler = None
 
 if args.dataset == 'coco':
-  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256,normalization=False)
+  val_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256,normalization=False)
   val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
 
