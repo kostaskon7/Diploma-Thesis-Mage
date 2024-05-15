@@ -221,6 +221,7 @@ all_slots_tensor = torch.cat(collected_outputs, dim=0)
 # data_2d = all_slots_tensor.reshape(-1, 768)
 data_2d = all_slots_tensor.reshape(-1, 768)
 
+breakpoint()
 
 # Step 3: Convert to NumPy array if you're using PyTorch
 data_2d_np = data_2d.cpu().numpy()
