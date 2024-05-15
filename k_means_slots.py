@@ -199,7 +199,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
     
 
-
+breakpoint()
 
 
 ## MINIBATCH SKLEARN
