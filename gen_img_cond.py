@@ -156,63 +156,63 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots = model.slot_proj2(slots)
 
     # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
-    slots_tensor = slots  # Replace with your actual tensor
-    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+    # slots_tensor = slots  # Replace with your actual tensor
+    # slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-    # # Predict cluster assignments
-    # cluster_assignments = kmeans_model.predict(slots_2d)
+    # # # Predict cluster assignments
+    # # cluster_assignments = kmeans_model.predict(slots_2d)
 
-    # # Replace slots with cluster centers
-    # centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+    # # # Replace slots with cluster centers
+    # # centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
 
-    # Calculate the Euclidean distance between each slot and each element in data_2d
-    # This can be done efficiently using broadcasting
-    slots=slots.reshape(-1,768)
-    # slots_expanded = slots.unsqueeze(1).half().cpu()  # Shape: (x, 1, 768)
-    # data_2d_expanded = kmeans_model.unsqueeze(0).half().cpu()  # Shape: (1, 828009, 768)
+    # # Calculate the Euclidean distance between each slot and each element in data_2d
+    # # This can be done efficiently using broadcasting
+    # slots=slots.reshape(-1,768)
+    # # slots_expanded = slots.unsqueeze(1).half().cpu()  # Shape: (x, 1, 768)
+    # # data_2d_expanded = kmeans_model.unsqueeze(0).half().cpu()  # Shape: (1, 828009, 768)
 
-    # Calculate the squared Euclidean distance
-    breakpoint()
+    # # Calculate the squared Euclidean distance
+    # breakpoint()
 
-    # Initialize an empty tensor to hold the distances
-    num_slots = slots.shape[0]
-    num_data = kmeans_model.shape[0]
-    distances = torch.empty((num_slots, num_data), dtype=torch.float16, device=slots.device)
+    # # Initialize an empty tensor to hold the distances
+    # num_slots = slots.shape[0]
+    # num_data = kmeans_model.shape[0]
+    # distances = torch.empty((num_slots, num_data), dtype=torch.float16, device=slots.device)
 
-    # distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
-    for i in range(0, num_slots, bsz):
-        end_i = min(i + bsz, num_slots)
-        slots_batch = slots[i:end_i].unsqueeze(1)  # Shape: (batch_size, 1, 768)
+    # # distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
+    # for i in range(0, num_slots, bsz):
+    #     end_i = min(i + bsz, num_slots)
+    #     slots_batch = slots[i:end_i].unsqueeze(1)  # Shape: (batch_size, 1, 768)
 
-        for j in range(0, num_data, bsz):
-            end_j = min(j + bsz, num_data)
-            data_2d_batch = kmeans_model[j:end_j].unsqueeze(0)  # Shape: (1, batch_size, 768)
+    #     for j in range(0, num_data, bsz):
+    #         end_j = min(j + bsz, num_data)
+    #         data_2d_batch = kmeans_model[j:end_j].unsqueeze(0)  # Shape: (1, batch_size, 768)
 
-            # Compute the squared Euclidean distance for the current batches
-            distances[i:end_i, j:end_j] = torch.sum((slots_batch - data_2d_batch) ** 2, dim=2)
+    #         # Compute the squared Euclidean distance for the current batches
+    #         distances[i:end_i, j:end_j] = torch.sum((slots_batch - data_2d_batch) ** 2, dim=2)
 
-    # Find the index of the closest element in data_2d for each slot
-    closest_indices = torch.argmin(distances, dim=1)  # Shape: (x,)
+    # # Find the index of the closest element in data_2d for each slot
+    # closest_indices = torch.argmin(distances, dim=1)  # Shape: (x,)
 
-    # Gather the closest centroids from data_2d
-    closest_centroids = kmeans_model[closest_indices]  # Shape: (x, 768)
+    # # Gather the closest centroids from data_2d
+    # closest_centroids = kmeans_model[closest_indices]  # Shape: (x, 768)
 
-    # Replace the slots with the closest centroids
-    slots = closest_centroids
+    # # Replace the slots with the closest centroids
+    # slots = closest_centroids
 
-    slots=slots.cuda()
+    # slots=slots.cuda()
 
-    if args.scaler != 'none':
-        # Step 5: De-normalize the centroids
-        centers = scaler.inverse_transform(centers)
+    # if args.scaler != 'none':
+    #     # Step 5: De-normalize the centroids
+    #     centers = scaler.inverse_transform(centers)
 
-    breakpoint()
-    centers = slots
-    # # Reshape back to the original slots shape
-    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-    # # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
+    # breakpoint()
+    # centers = slots
+    # # # Reshape back to the original slots shape
+    # slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    # # # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
 
-    slots = torch.tensor(slots).cuda()
+    # slots = torch.tensor(slots).cuda()
 
     # # Find the indices of the maximum values (most important features) from the soft attention
     # max_indices = torch.argmax(attn, dim=-1)
