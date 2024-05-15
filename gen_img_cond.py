@@ -155,15 +155,15 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     slots = model.slot_proj2(slots)
 
-    # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
-    # slots_tensor = slots  # Replace with your actual tensor
-    # slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+    # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
+    slots_tensor = slots  # Replace with your actual tensor
+    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-    # # # Predict cluster assignments
-    # # cluster_assignments = kmeans_model.predict(slots_2d)
+    # # Predict cluster assignments
+    cluster_assignments = kmeans_model.predict(slots_2d)
 
-    # # # Replace slots with cluster centers
-    # # centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+    # Replace slots with cluster centers
+    centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
 
     # # Calculate the Euclidean distance between each slot and each element in data_2d
     # # This can be done efficiently using broadcasting
@@ -200,19 +200,19 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # # Replace the slots with the closest centroids
     # slots = closest_centroids
 
-    # slots=slots.cuda()
+    slots=slots.cuda()
 
-    # if args.scaler != 'none':
-    #     # Step 5: De-normalize the centroids
-    #     centers = scaler.inverse_transform(centers)
+    if args.scaler != 'none':
+        # Step 5: De-normalize the centroids
+        centers = scaler.inverse_transform(centers)
 
     # breakpoint()
-    # centers = slots
-    # # # Reshape back to the original slots shape
-    # slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    centers = slots
+    # # Reshape back to the original slots shape
+    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
     # # # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
 
-    # slots = torch.tensor(slots).cuda()
+    slots = torch.tensor(slots).cuda()
 
     # # Find the indices of the maximum values (most important features) from the soft attention
     # max_indices = torch.argmax(attn, dim=-1)
@@ -542,7 +542,7 @@ if not os.path.exists(save_folder):
 val_sampler = None
 
 if args.dataset == 'coco':
-  val_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256,normalization=False)
+  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256,normalization=False)
   val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
 
@@ -571,8 +571,8 @@ else:
 counter=0
 for batch, data in iterator:
     if args.dataset == 'coco':
-        # image, true_mask_i, true_mask_c, mask_ignore = data
-        image = data
+        image, true_mask_i, true_mask_c, mask_ignore = data
+        # image = data
 
     else:
         image, _ = data
