@@ -168,12 +168,28 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # Calculate the Euclidean distance between each slot and each element in data_2d
     # This can be done efficiently using broadcasting
     slots=slots.reshape(-1,768)
-    slots_expanded = slots.unsqueeze(1).cpu()  # Shape: (x, 1, 768)
-    data_2d_expanded = kmeans_model.unsqueeze(0).cpu()  # Shape: (1, 828009, 768)
+    # slots_expanded = slots.unsqueeze(1).half().cpu()  # Shape: (x, 1, 768)
+    # data_2d_expanded = kmeans_model.unsqueeze(0).half().cpu()  # Shape: (1, 828009, 768)
 
     # Calculate the squared Euclidean distance
     breakpoint()
-    distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
+
+    # Initialize an empty tensor to hold the distances
+    num_slots = slots.shape[0]
+    num_data = kmeans_model.shape[0]
+    distances = torch.empty((num_slots, num_data), dtype=torch.float16, device=slots.device)
+
+    # distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
+    for i in range(0, num_slots, batch_size):
+        end_i = min(i + batch_size, num_slots)
+        slots_batch = slots[i:end_i].unsqueeze(1)  # Shape: (batch_size, 1, 768)
+
+        for j in range(0, num_data, batch_size):
+            end_j = min(j + batch_size, num_data)
+            data_2d_batch = kmeans_model[j:end_j].unsqueeze(0)  # Shape: (1, batch_size, 768)
+
+            # Compute the squared Euclidean distance for the current batches
+            distances[i:end_i, j:end_j] = torch.sum((slots_batch - data_2d_batch) ** 2, dim=2)
 
     # Find the index of the closest element in data_2d for each slot
     closest_indices = torch.argmin(distances, dim=1)  # Shape: (x,)
