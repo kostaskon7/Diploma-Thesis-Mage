@@ -540,7 +540,7 @@ if not os.path.exists(save_folder):
 val_sampler = None
 
 if args.dataset == 'coco':
-  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256,normalization=False)
+  val_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256,normalization=False)
   val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
 
@@ -569,8 +569,8 @@ else:
 counter=0
 for batch, data in iterator:
     if args.dataset == 'coco':
-        image, true_mask_i, true_mask_c, mask_ignore = data
-        # image = data
+        # image, true_mask_i, true_mask_c, mask_ignore = data
+        image = data
 
     else:
         image, _ = data
