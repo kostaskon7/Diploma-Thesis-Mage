@@ -233,12 +233,12 @@ data_2d_np_normalized = scaler.fit_transform(data_2d_np)
 directory = args.directory
 
 
-n_clusters = 8192  # Example: Define the number of clusters
+n_clusters = 16384  # Example: Define the number of clusters
 kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations,max_no_improvement=None)  # Adjust batch_size as necessary
 kmeans_model.fit(data_2d_np_normalized)
 
 
-file_name = 'kmeans_model8192_100ep_hard.joblib'
+file_name = 'kmeans_model16384_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
 
