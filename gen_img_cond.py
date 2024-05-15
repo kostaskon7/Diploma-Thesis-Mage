@@ -171,6 +171,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     data_2d_expanded = kmeans_model.unsqueeze(0)  # Shape: (1, 828009, 768)
 
     # Calculate the squared Euclidean distance
+    breakpoint()
     distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
 
     # Find the index of the closest element in data_2d for each slot
