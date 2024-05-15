@@ -63,7 +63,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # Load the model
     kmeans_model = load(args.kmeans_path)
-    scaler = load(args.scaler)
+    if args.scaler != 'none':
+        scaler = load(args.scaler)
 
  
 
@@ -164,8 +165,9 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # Replace slots with cluster centers
     centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
 
-    # Step 5: De-normalize the centroids
-    centers = scaler.inverse_transform(centers)
+    if args.scaler != 'none':
+        # Step 5: De-normalize the centroids
+        centers = scaler.inverse_transform(centers)
 
     breakpoint()
 
