@@ -167,8 +167,9 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # Calculate the Euclidean distance between each slot and each element in data_2d
     # This can be done efficiently using broadcasting
-    slots_expanded = slots.unsqueeze(1)  # Shape: (x, 1, 768)
-    data_2d_expanded = kmeans_model.unsqueeze(0)  # Shape: (1, 828009, 768)
+    slots=slots.reshape(-1,768)
+    slots_expanded = slots.unsqueeze(1).cpu()  # Shape: (x, 1, 768)
+    data_2d_expanded = kmeans_model.unsqueeze(0).cpu()  # Shape: (1, 828009, 768)
 
     # Calculate the squared Euclidean distance
     breakpoint()
@@ -182,6 +183,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # Replace the slots with the closest centroids
     slots = closest_centroids
+
+    slots=slots.cuda()
 
     if args.scaler != 'none':
         # Step 5: De-normalize the centroids
