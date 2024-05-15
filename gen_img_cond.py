@@ -326,6 +326,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         sample_dist = torch.distributions.categorical.Categorical(logits=logits)
         sampled_ids = sample_dist.sample()
 
+        breakpoint()
+
         # get ids for next step
         unknown_map = (cur_ids == mask_token_id)
         sampled_ids = torch.where(unknown_map, sampled_ids, cur_ids)
