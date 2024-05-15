@@ -159,11 +159,28 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots_tensor = slots  # Replace with your actual tensor
     slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-    # Predict cluster assignments
-    cluster_assignments = kmeans_model.predict(slots_2d)
+    # # Predict cluster assignments
+    # cluster_assignments = kmeans_model.predict(slots_2d)
 
-    # Replace slots with cluster centers
-    centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+    # # Replace slots with cluster centers
+    # centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+
+    # Calculate the Euclidean distance between each slot and each element in data_2d
+    # This can be done efficiently using broadcasting
+    slots_expanded = slots.unsqueeze(1)  # Shape: (x, 1, 768)
+    data_2d_expanded = kmeans_model.unsqueeze(0)  # Shape: (1, 828009, 768)
+
+    # Calculate the squared Euclidean distance
+    distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
+
+    # Find the index of the closest element in data_2d for each slot
+    closest_indices = torch.argmin(distances, dim=1)  # Shape: (x,)
+
+    # Gather the closest centroids from data_2d
+    closest_centroids = kmeans_model[closest_indices]  # Shape: (x, 768)
+
+    # Replace the slots with the closest centroids
+    slots = closest_centroids
 
     if args.scaler != 'none':
         # Step 5: De-normalize the centroids
