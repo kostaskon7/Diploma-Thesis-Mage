@@ -292,11 +292,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
             slot_size=args.slot_size,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
-            truncate='none', # or other options as per your requirement
-            init_method='shared_gaussian')  # or 'shared_gaussian'
-        
-            # num_heads=6,       # specify the number of heads for attention
-            # drop_path=0.0)        # specify dropout path rate
+            truncate=args.truncate, # or other options as per your requirement
+            init_method=args.init_method)  # or 'shared_gaussian'
         
 
         # --------------------------------------------------------------------------
@@ -386,14 +383,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
                 linear(args.slot_size, args.d_model, bias=False),
                 nn.LayerNorm(args.d_model),
             )
-            # self.slot_proj2 = nn.Sequential(
-            #     linear(args.slot_size, args.d_model, bias=False),
-            #     nn.LayerNorm(args.d_model),
-            # )
             self.slot_proj2 = nn.Sequential(
-                linear(args.d_model, args.d_model, bias=False),
+                linear(args.slot_size, args.d_model, bias=False),
                 nn.LayerNorm(args.d_model),
             )
+            # self.slot_proj2 = nn.Sequential(
+            #     linear(args.d_model, args.d_model, bias=False),
+            #     nn.LayerNorm(args.d_model),
+            # )
             self.dec_input_dim = args.d_model
         
         args.max_tokens=img_size
@@ -851,6 +848,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         latent=latent[:,1:,:]
         with torch.cuda.amp.autocast(enabled=False):
             slots, attn, _, attn_logits = self.slot_attention(latent)
+
+        slots=self.slot_proj2(slots)
 
         # Decoders
         logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
