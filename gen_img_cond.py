@@ -170,7 +170,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # # Calculate the squared Euclidean distance
         breakpoint()
-        slots_2d = slots.reshape(-1, 768)
+        slots = slots.reshape(-1, 768)
 
         # Initialize an empty tensor to hold the distances
         num_slots = slots.shape[0]
