@@ -105,6 +105,37 @@ parser.add_argument('--tol',  type=float, default=1e-3, help='Max tolerance reac
 
 
 
+def kmeans_plusplus(X, n_clusters, random_state=None):
+    if random_state:
+        torch.manual_seed(random_state)
+        np.random.seed(random_state)
+
+    n_samples, _ = X.shape
+    centers = torch.empty((n_clusters, X.shape[1]), device=X.device, dtype=X.dtype)
+
+    # Randomly choose the first center
+    first_center_idx = np.random.choice(n_samples)
+    centers[0] = X[first_center_idx]
+
+    # Initialize a list to store the minimum distances for each point to any center
+    closest_dist_sq = torch.full((n_samples,), float('inf'), device=X.device, dtype=X.dtype)
+
+    for i in range(1, n_clusters):
+        # Compute the distance from each point to the nearest center
+        dist_to_new_center = torch.sum((X - centers[i - 1]) ** 2, dim=1)
+        closest_dist_sq = torch.min(closest_dist_sq, dist_to_new_center)
+
+        # Choose the next center with a probability proportional to the squared distance
+        probs = closest_dist_sq / torch.sum(closest_dist_sq)
+        cumulative_probs = torch.cumsum(probs, dim=0)
+        r = torch.rand(1, device=X.device, dtype=X.dtype)
+        next_center_idx = torch.searchsorted(cumulative_probs, r).item()
+        centers[i] = X[next_center_idx]
+
+    return centers
+
+
+
                     
 
 args = parser.parse_args()
@@ -220,8 +251,13 @@ all_slots_tensor = torch.cat(collected_outputs, dim=0)
 # you can simply reshape it to (-1, 256) to flatten all but the last dimension.
 # data_2d = all_slots_tensor.reshape(-1, 768)
 data_2d = all_slots_tensor.reshape(-1, 768)
+num_samples = 10000
+
 
 breakpoint()
+
+
+
 
 # Step 3: Convert to NumPy array if you're using PyTorch
 data_2d_np = data_2d.cpu().numpy()
