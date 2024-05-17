@@ -157,50 +157,47 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
     slots_tensor = slots  # Replace with your actual tensor
-    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+    if args.usemodel:
+        slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-    # # Predict cluster assignments
-    cluster_assignments = kmeans_model.predict(slots_2d)
+        # Predict cluster assignments
+        cluster_assignments = kmeans_model.predict(slots_2d)
 
-    # Replace slots with cluster centers
-    centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+        # Replace slots with cluster centers
+        slots = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+    
+    else:
 
-    # # Calculate the Euclidean distance between each slot and each element in data_2d
-    # # This can be done efficiently using broadcasting
-    # slots=slots.reshape(-1,768)
-    # # slots_expanded = slots.unsqueeze(1).half().cpu()  # Shape: (x, 1, 768)
-    # # data_2d_expanded = kmeans_model.unsqueeze(0).half().cpu()  # Shape: (1, 828009, 768)
+        # # Calculate the squared Euclidean distance
+        breakpoint()
 
-    # # Calculate the squared Euclidean distance
-    # breakpoint()
+        # Initialize an empty tensor to hold the distances
+        num_slots = slots.shape[0]
+        num_data = kmeans_model.shape[0]
+        distances = torch.empty((num_slots, num_data), dtype=torch.float16, device=slots.device)
 
-    # # Initialize an empty tensor to hold the distances
-    # num_slots = slots.shape[0]
-    # num_data = kmeans_model.shape[0]
-    # distances = torch.empty((num_slots, num_data), dtype=torch.float16, device=slots.device)
+        # distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
+        for i in range(0, num_slots, bsz):
+            end_i = min(i + bsz, num_slots)
+            slots_batch = slots[i:end_i].unsqueeze(1)  # Shape: (batch_size, 1, 768)
 
-    # # distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
-    # for i in range(0, num_slots, bsz):
-    #     end_i = min(i + bsz, num_slots)
-    #     slots_batch = slots[i:end_i].unsqueeze(1)  # Shape: (batch_size, 1, 768)
+            for j in range(0, num_data, bsz):
+                end_j = min(j + bsz, num_data)
+                data_2d_batch = kmeans_model[j:end_j].unsqueeze(0)  # Shape: (1, batch_size, 768)
 
-    #     for j in range(0, num_data, bsz):
-    #         end_j = min(j + bsz, num_data)
-    #         data_2d_batch = kmeans_model[j:end_j].unsqueeze(0)  # Shape: (1, batch_size, 768)
+                # Compute the squared Euclidean distance for the current batches
+                distances[i:end_i, j:end_j] = torch.sum((slots_batch - data_2d_batch) ** 2, dim=2)
 
-    #         # Compute the squared Euclidean distance for the current batches
-    #         distances[i:end_i, j:end_j] = torch.sum((slots_batch - data_2d_batch) ** 2, dim=2)
+        # Find the index of the closest element in data_2d for each slot
+        closest_indices = torch.argmin(distances, dim=1)  # Shape: (x,)
 
-    # # Find the index of the closest element in data_2d for each slot
-    # closest_indices = torch.argmin(distances, dim=1)  # Shape: (x,)
+        # Gather the closest centroids from data_2d
+        closest_centroids = kmeans_model[closest_indices]  # Shape: (x, 768)
 
-    # # Gather the closest centroids from data_2d
-    # closest_centroids = kmeans_model[closest_indices]  # Shape: (x, 768)
+        # Replace the slots with the closest centroids
+        slots = closest_centroids
 
-    # # Replace the slots with the closest centroids
-    # slots = closest_centroids
-
-    # slots=slots.cuda()
+    slots=slots.cuda()
 
     if args.scaler != 'none':
         # Step 5: De-normalize the centroids
@@ -498,6 +495,8 @@ parser.add_argument('--both_mboi', default=None,type=int,
 
 parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans joblib path')
 parser.add_argument('--scaler',  type=str, default='none', help='scaler joblib path')
+parser.add_argument('--usemodel',  type=int, default=None, help='Use kmeansmodel or sample')
+
 
 
 
@@ -539,7 +538,7 @@ if not os.path.exists(save_folder):
 val_sampler = None
 
 if args.dataset == 'coco':
-  val_dataset = COCO2017(root=args.data_path, split='train', image_size=256, mask_size=256,normalization=False)
+  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256,normalization=False)
   val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
 
@@ -568,8 +567,8 @@ else:
 counter=0
 for batch, data in iterator:
     if args.dataset == 'coco':
-        # image, true_mask_i, true_mask_c, mask_ignore = data
-        image = data
+        image, true_mask_i, true_mask_c, mask_ignore = data
+        # image = data
 
     else:
         image, _ = data
