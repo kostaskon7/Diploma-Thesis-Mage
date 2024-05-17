@@ -112,10 +112,12 @@ def kmeans_plusplus(X, n_clusters, random_state=None):
 
     n_samples, _ = X.shape
     centers = torch.empty((n_clusters, X.shape[1]), device=X.device, dtype=X.dtype)
+    indices = torch.empty((n_clusters,), dtype=torch.long, device=X.device)  # To store the indices
 
     # Randomly choose the first center
     first_center_idx = np.random.choice(n_samples)
     centers[0] = X[first_center_idx]
+    indices[0] = first_center_idx
 
     # Initialize a list to store the minimum distances for each point to any center
     closest_dist_sq = torch.full((n_samples,), float('inf'), device=X.device, dtype=X.dtype)
@@ -131,8 +133,9 @@ def kmeans_plusplus(X, n_clusters, random_state=None):
         r = torch.rand(1, device=X.device, dtype=X.dtype)
         next_center_idx = torch.searchsorted(cumulative_probs, r).item()
         centers[i] = X[next_center_idx]
+        indices[i] = next_center_idx
 
-    return centers
+    return centers, indices
 
 
 
