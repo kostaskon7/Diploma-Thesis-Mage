@@ -259,6 +259,12 @@ num_samples = 10000
 
 breakpoint()
 
+# num_samples = 10000
+
+# # Perform k-means++ initialization
+# sampled_centers, sampled_indices = kmeans_plusplus(data_2d, n_clusters=num_samples, random_state=0)
+
+
 
 
 
