@@ -857,6 +857,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
             interpolated = F.interpolate(mask_crf_onehot, size=(16, 16), mode='nearest')
             mask_crf_slots = interpolated.view(interpolated.shape[0], interpolated.shape[1], -1)
 
+            mask_crf_slots = self.slot_proj2(mask_crf_slots)
+
  
 
 
