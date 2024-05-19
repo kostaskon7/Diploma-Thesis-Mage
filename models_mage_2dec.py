@@ -854,7 +854,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         
-
+        breakpoint()
 
         # Hard Mask pooling
         attn=attn.clone().detach()
@@ -871,7 +871,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
 
-        
+        breakpoint()
 
         
 
