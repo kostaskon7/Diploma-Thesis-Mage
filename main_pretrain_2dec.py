@@ -152,6 +152,8 @@ def get_args_parser():
     parser.add_argument('--final_ce_weight', type=float, default=None, help='final weight of the cross-entropy distilation loss')
 
     parser.add_argument('--crf_dir', type=str, default=None, help='Directory of crf files')
+    parser.add_argument('--val_crf_dir', type=str, default=None, help='Directory of crf files')
+
 
     parser.add_argument('--val_mask_size', type=int, default=320, help='Validation mask size')
 
@@ -223,7 +225,7 @@ def main(args):
     
     train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
-    val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=args.val_mask_size,normalization = False)
+    val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=args.val_mask_size,normalization = False,return_extra_in_train = 'crf',crf_dir = args.val_crf_dir)
     val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
     # define the model
@@ -372,6 +374,7 @@ def main(args):
                 if args.both_mboi:
                     dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
                 
+                default_slots_attns = mage_dec_slots_attns
                 val_loss_mage,ce_loss,  val_loss_spot = val_loss
                 # codebook_emb_dim=256
                 # logits = logits[:, 8:, :model.codebook_size]

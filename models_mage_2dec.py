@@ -849,58 +849,29 @@ class MaskedGenerativeEncoderViT(nn.Module):
             # latent= self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
-        with torch.cuda.amp.autocast(enabled=False):
-            slots, attn, _, attn_logits = self.slot_attention(latent)
 
 
         
-        breakpoint()
+        with torch.cuda.amp.autocast(enabled=False):
+            mask_crf_onehot = torch.nn.functional.one_hot(mask_crf, num_classes=self.slot_attention.num_slots).permute(0,3,1,2).to(dtype=torch.float16)
+            interpolated = F.interpolate(mask_crf_onehot, size=(16, 16), mode='nearest')
+            mask_crf_slots = interpolated.view(interpolated.shape[0], interpolated.shape[1], -1)
 
-        # Hard Mask pooling
-        attn=attn.clone().detach()
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
-        # To add normalization
-        # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
-        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
-        slots_pool=self.slot_proj2(slots_pool)
+ 
+
 
         # Decoders
-        logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
-
-
-        # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
-        #[Batch,decoder264,2025]
-
-        breakpoint()
+        logits,attn_dec = self.forward_decoder(latent_mask,mask_crf_slots ,token_drop_mask, token_all_mask)
 
         
 
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
-        # loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
-        # loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
-
-        # Crf
-        with torch.cuda.amp.autocast(enabled=False):
-            if self.training:
-
-                attn_logits = attn_logits.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)
-                attn_transpose = attn.transpose(-1, -2).reshape(bsz, self.slot_attention.num_slots, H_enc, W_enc)   
-
-                attn_logits = F.interpolate(attn_logits, size=mask_crf.shape[-1], mode='bilinear')
-                attn_interpolate = F.interpolate(attn_transpose, size=mask_crf.shape[-1], mode='bilinear')
-                attn_onehot_crf = torch.nn.functional.one_hot(attn_interpolate.argmax(1), num_classes=self.slot_attention.num_slots).permute(0,3,1,2)
-                mask_crf_onehot = torch.nn.functional.one_hot(mask_crf, num_classes=self.slot_attention.num_slots).permute(0,3,1,2).to(dtype=torch.float16)
-
-                permutation_indices, _ = att_matching(attn_onehot_crf, mask_crf_onehot)
-                
-                attn_logits = torch.stack([x[permutation_indices[n]] for n, x in enumerate(attn_logits)], dim=0)
 
 
-                ce_loss = self.criterion_masks(attn_logits, mask_crf_onehot)
-            else:
-                ce_loss=0
-            loss_spot=0
+
+        ce_loss=0
+        loss_spot=0
 
 
         torch.cuda.empty_cache()
@@ -912,7 +883,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         if self.both_mboi:
             dec_slots_attns=(attn_dec,attn_dec)
 
-        return loss, imgs, token_all_mask,attn,dec_slots_attns,logits
+        # return loss, imgs, token_all_mask,attn,dec_slots_attns,logits
+        return loss, imgs, token_all_mask,_,dec_slots_attns,logits
+
 
 
     def freeze_encoder(self):
