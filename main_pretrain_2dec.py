@@ -360,7 +360,7 @@ def main(args):
 
             counter = 0
     
-            for batch, (image, true_mask_i, true_mask_c, mask_ignore) in enumerate(tqdm(val_loader)):
+            for batch, (image, true_mask_i, true_mask_c, mask_ignore,mask_crf) in enumerate(tqdm(val_loader)):
                 image = image.cuda()
                 true_mask_i = true_mask_i.cuda()
                 true_mask_c = true_mask_c.cuda()
@@ -369,7 +369,7 @@ def main(args):
                 batch_size = image.shape[0]
                 counter += batch_size
     
-                val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image,None)
+                val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image,mask_crf)
 
                 if args.both_mboi:
                     dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
