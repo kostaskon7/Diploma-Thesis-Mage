@@ -867,7 +867,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
             mask_crf_slots = self.slot_proj2(mask_crf_slots)
  
-        breakpoint()
 
         # Decoders
         logits,attn_dec = self.forward_decoder(latent_mask,mask_crf_slots ,token_drop_mask, token_all_mask)
