@@ -191,7 +191,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 tolerance = args.tol
 max_iterations = args.max_iterations
 
-breakpoint()
 
 collected_outputs = load(args.all_slots)
 
@@ -309,6 +308,7 @@ dump(kmeans_model, full_path)
 
 print(f"Number of iterations: {kmeans_model.n_iter_}")
 print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
+print(f"inertia_ used for stopping criterion: {kmeans_model.inertia_}")
 
 
 n_clusters = 65536  # Example: Define the number of clusters
@@ -329,5 +329,6 @@ dump(kmeans_model, full_path)
 
 print(f"Number of iterations: {kmeans_model.n_iter_}")
 print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
+print(f"inertia_ used for stopping criterion: {kmeans_model.inertia_}")
 
 
