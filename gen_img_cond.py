@@ -205,7 +205,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     if args.scaler != 'none':
         # Step 5: De-normalize the centroids
-        centers = scaler.inverse_transform(centers)
+        slots = scaler.inverse_transform(slots)
 
     # breakpoint()
     # # Reshape back to the original slots shape
