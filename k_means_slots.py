@@ -216,12 +216,12 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         # breakpoint()
 
 
-        attn=attn.clone().detach()
-        # Latent another transformation?
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
-        attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
+        # attn=attn.clone().detach()
+        # # Latent another transformation?
+        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
+        # attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
+        # # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
-        slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
         # breakpoint()
@@ -233,7 +233,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
     
 
-breakpoint()
+# breakpoint()
 
 
 ## MINIBATCH SKLEARN
@@ -254,10 +254,10 @@ all_slots_tensor = torch.cat(collected_outputs, dim=0)
 # you can simply reshape it to (-1, 256) to flatten all but the last dimension.
 # data_2d = all_slots_tensor.reshape(-1, 768)
 data_2d = all_slots_tensor.reshape(-1, 768)
-num_samples = 10000
+# num_samples = 10000
 
 
-breakpoint()
+# breakpoint()
 
 # num_samples = 10000
 
@@ -279,12 +279,12 @@ data_2d_np_normalized = scaler.fit_transform(data_2d_np)
 directory = args.directory
 
 
-n_clusters = 16384  # Example: Define the number of clusters
+n_clusters = 8192  # Example: Define the number of clusters
 kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations,max_no_improvement=None)  # Adjust batch_size as necessary
 kmeans_model.fit(data_2d_np_normalized)
 
 
-file_name = 'kmeans_model16384_100ep_hard.joblib'
+file_name = 'kmeans_model8192_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
 
@@ -299,6 +299,43 @@ if not os.path.exists(directory):
 dump(kmeans_model, full_path)
 
 dump(scaler, full_path_scaler)
+
+print(f"Number of iterations: {kmeans_model.n_iter_}")
+print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
+print(f"inertia_ used for stopping criterion: {kmeans_model.inertia_}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+n_clusters = 16384  # Example: Define the number of clusters
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations,max_no_improvement=None)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np_normalized)
+
+
+file_name = 'kmeans_model16384_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans_model, full_path)
+
 
 print(f"Number of iterations: {kmeans_model.n_iter_}")
 print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
@@ -327,21 +364,4 @@ dump(kmeans_model, full_path)
 print(f"Number of iterations: {kmeans_model.n_iter_}")
 print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
 
-n_clusters = 65536  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np_normalized)
 
-
-file_name = 'kmeans_model65536_100ep_hard.joblib'
-
-full_path = os.path.join(directory, file_name)
-
-
-# Ensure the directory exists
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-dump(kmeans_model, full_path)
-
-print(f"Number of iterations: {kmeans_model.n_iter_}")
-print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
