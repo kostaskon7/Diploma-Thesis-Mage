@@ -165,6 +165,9 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # Replace slots with cluster centers
         slots = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+        if args.scaler != 'none':
+        # Step 5: De-normalize the centroids
+            slots = scaler.inverse_transform(slots)
 
         slots = torch.from_numpy(slots).float()
 
@@ -203,9 +206,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     slots=slots.cuda()
 
-    if args.scaler != 'none':
-        # Step 5: De-normalize the centroids
-        slots = scaler.inverse_transform(slots)
+
 
     # breakpoint()
     # # Reshape back to the original slots shape
