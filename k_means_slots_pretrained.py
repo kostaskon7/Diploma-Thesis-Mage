@@ -193,33 +193,10 @@ max_iterations = args.max_iterations
 
 breakpoint()
 
-collected_outputs = load(args.all_slots)
-
-
-# Step 1: Concatenate all collected outputs
-all_slots_tensor = torch.cat(collected_outputs, dim=0)
-
-# Step 2: Reshape the tensor to 2D [number_of_samples, 256]
-# Since each original tensor is [batch_size, 7, 256], and you're concatenating along the batch dimension,
-# you can simply reshape it to (-1, 256) to flatten all but the last dimension.
-# data_2d = all_slots_tensor.reshape(-1, 768)
-data_2d = all_slots_tensor.reshape(-1, 768)
-# num_samples = 10000
-
-
-# breakpoint()
-
-# num_samples = 10000
-
-# # Perform k-means++ initialization
-# sampled_centers, sampled_indices = kmeans_plusplus(data_2d, n_clusters=num_samples, random_state=0)
+data_2d_np = load(args.all_slots)
 
 
 
-
-
-# Step 3: Convert to NumPy array if you're using PyTorch
-data_2d_np = data_2d.cpu().numpy()
 
 
 
@@ -265,7 +242,7 @@ print(f"inertia_ used for stopping criterion: {kmeans_model.inertia_}")
 
 
 n_clusters = 16384  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations,max_no_improvement=None)  # Adjust batch_size as necessary
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
 kmeans_model.fit(data_2d_np)
 
 
@@ -292,7 +269,7 @@ print(f"inertia_ used for stopping criterion: {kmeans_model.inertia_}")
 
 
 n_clusters = 32768  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance)  # Adjust batch_size as necessary
 kmeans_model.fit(data_2d_np)
 
 
