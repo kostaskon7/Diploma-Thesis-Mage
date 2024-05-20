@@ -265,7 +265,7 @@ print(f"inertia_ used for stopping criterion: {kmeans_model.inertia_}")
 
 
 n_clusters = 16384  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations,max_no_improvement=None)  # Adjust batch_size as necessary
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
 kmeans_model.fit(data_2d_np)
 
 
@@ -297,6 +297,26 @@ kmeans_model.fit(data_2d_np)
 
 
 file_name = 'kmeans_model32768_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans_model, full_path)
+
+print(f"Number of iterations: {kmeans_model.n_iter_}")
+print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
+
+
+n_clusters = 65536  # Example: Define the number of clusters
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np)
+
+
+file_name = 'kmeans_model65536_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
 
