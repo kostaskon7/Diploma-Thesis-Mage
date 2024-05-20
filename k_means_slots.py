@@ -242,6 +242,8 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 tolerance = args.tol
 max_iterations = args.max_iterations
 
+breakpoint()
+
 
 
 
