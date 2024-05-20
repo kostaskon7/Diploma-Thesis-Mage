@@ -853,13 +853,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         
         with torch.cuda.amp.autocast(enabled=False):
-            # mask_crf_onehot = torch.nn.functional.one_hot(mask_crf, num_classes=self.slot_attention.num_slots).permute(0,3,1,2).to(dtype=torch.float16)
-            # mask_crf_onehot = torch.nn.functional.one_hot(mask_crf, num_classes=self.slot_attention.num_slots).permute(0,3,1,2).to(dtype=torch.float)
-
-            # interpolated = F.interpolate(mask_crf_onehot, size=(16, 16), mode='nearest')
-            # mask_crf_slots = interpolated.view(interpolated.shape[0], interpolated.shape[1], -1)
-
-            # mask_crf_slots = self.slot_proj2(mask_crf_slots)
 
             interpolated = F.interpolate(mask_crf.unsqueeze(1).float(), size=(16, 16), mode='nearest').squeeze(1).long()
             mask_crf_onehot = F.one_hot(interpolated, num_classes=self.slot_attention.num_slots).permute(0, 3, 1, 2).to(dtype=torch.float)
