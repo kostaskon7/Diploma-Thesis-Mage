@@ -853,20 +853,20 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         
         with torch.cuda.amp.autocast(enabled=False):
-            breakpoint()
 
-            interpolated = F.interpolate(mask_crf.unsqueeze(1).float(), size=(16, 16), mode='nearest').squeeze(1).long()
-            mask_crf_onehot = F.one_hot(interpolated, num_classes=self.slot_attention.num_slots).permute(0, 3, 1, 2).to(dtype=torch.float)
+            interpolated = F.interpolate(mask_crf.unsqueeze(1).float(), size=(H_enc, W_enc), mode='nearest').squeeze(1).long()
+            mask_crf_onehot = F.one_hot(interpolated, num_classes=self.slot_attention.num_slots).to(dtype=torch.float)
+
+            mask_crf_slots = mask_crf_onehot.reshape(bsz,H_enc*W_enc,self.slot_attention.num_slots)
             
-            # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+            slots_pool = torch.matmul(mask_crf_slots.transpose(-1, -2), latent)
 
-            mask_crf_slots = mask_crf_onehot.view(mask_crf_onehot.shape[0], mask_crf_onehot.shape[1], -1)
 
-            mask_crf_slots = self.slot_proj2(mask_crf_slots)
+            slots_pool = self.slot_proj2(slots_pool)
  
 
         # Decoders
-        logits,attn_dec = self.forward_decoder(latent_mask,mask_crf_slots ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
         
 
