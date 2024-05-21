@@ -229,7 +229,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
         slots=model.slot_proj2(slots)
         collected_outputs.append(slots)
-        # break
+        break
 
     
 
