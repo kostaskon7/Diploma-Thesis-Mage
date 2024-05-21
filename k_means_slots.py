@@ -192,7 +192,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
 
 ## MINIBATCH SKLEARN
-breakpoint(0)
+breakpoint()
 tolerance = 1e-4
 max_iterations = 100000
 
