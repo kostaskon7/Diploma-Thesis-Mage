@@ -889,7 +889,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             dec_slots_attns=(attn_dec,attn_dec)
 
         # return loss, imgs, token_all_mask,attn,dec_slots_attns,logits
-        return loss, imgs, token_all_mask,_,dec_slots_attns,logits
+        return loss, imgs, token_all_mask,mask_crf_slots,dec_slots_attns,logits
 
 
 
