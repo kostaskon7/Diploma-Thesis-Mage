@@ -63,6 +63,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # Load the model
     kmeans_model = load(args.kmeans_path)
+    if args.scaler != 'none':
+        scaler = load(args.scaler)
 
  
 
@@ -147,27 +149,64 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     attn=attn.clone().detach()
     attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
     # To add normalization
-    # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+    attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
     slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
     slots = model.slot_proj2(slots)
 
-    # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
+    # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
     slots_tensor = slots  # Replace with your actual tensor
-    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+    if args.usemodel:
+        slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-    # Predict cluster assignments
-    cluster_assignments = kmeans_model.predict(slots_2d)
+        # Predict cluster assignments
+        cluster_assignments = kmeans_model.predict(slots_2d)
 
-    # Replace slots with cluster centers
-    centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+        # Replace slots with cluster centers
+        slots = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+    
+    else:
 
-    breakpoint()
+        # # Calculate the squared Euclidean distance
+        breakpoint()
+        slots = slots.reshape(-1, 768)
 
-    # Reshape back to the original slots shape
-    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-    # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
+        # Initialize an empty tensor to hold the distances
+        num_slots = slots.shape[0]
+        num_data = kmeans_model.shape[0]
+        distances = torch.empty((num_slots, num_data), dtype=torch.float16, device=slots.device)
+
+        # distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
+        for i in range(0, num_slots, bsz):
+            end_i = min(i + bsz, num_slots)
+            slots_batch = slots[i:end_i].unsqueeze(1)  # Shape: (batch_size, 1, 768)
+
+            for j in range(0, num_data, bsz):
+                end_j = min(j + bsz, num_data)
+                data_2d_batch = kmeans_model[j:end_j].unsqueeze(0)  # Shape: (1, batch_size, 768)
+
+                # Compute the squared Euclidean distance for the current batches
+                distances[i:end_i, j:end_j] = torch.sum((slots_batch - data_2d_batch) ** 2, dim=2)
+
+        # Find the index of the closest element in data_2d for each slot
+        closest_indices = torch.argmin(distances, dim=1)  # Shape: (x,)
+
+        # Gather the closest centroids from data_2d
+        closest_centroids = kmeans_model[closest_indices]  # Shape: (x, 768)
+
+        # Replace the slots with the closest centroids
+        slots = closest_centroids
+
+    slots=slots.cuda()
+
+    if args.scaler != 'none':
+        # Step 5: De-normalize the centroids
+        centers = scaler.inverse_transform(centers)
+
+    # breakpoint()
+    # # Reshape back to the original slots shape
+    slots = slots.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
 
     slots = torch.tensor(slots).cuda()
 
@@ -282,6 +321,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # get token prediction
         sample_dist = torch.distributions.categorical.Categorical(logits=logits)
         sampled_ids = sample_dist.sample()
+
 
         # get ids for next step
         unknown_map = (cur_ids == mask_token_id)
@@ -455,6 +495,9 @@ parser.add_argument('--both_mboi', default=None,type=int,
                 help='both_mboi logs decoder')
 
 parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans joblib path')
+parser.add_argument('--scaler',  type=str, default='none', help='scaler joblib path')
+parser.add_argument('--usemodel',  type=int, default=None, help='Use kmeansmodel or sample')
+
 
 
 
@@ -483,7 +526,7 @@ model = models_mage_2dec.__dict__[args.model](norm_pix_loss=False,
 model.to(0)
 
 checkpoint = torch.load(args.ckpt, map_location='cpu')
-model.load_state_dict(checkpoint['model'])
+model.load_state_dict(checkpoint['model'],strict=False)
 model.eval()
 
 num_steps = args.num_images // args.batch_size + 1
@@ -526,6 +569,8 @@ counter=0
 for batch, data in iterator:
     if args.dataset == 'coco':
         image, true_mask_i, true_mask_c, mask_ignore = data
+        # image = data
+
     else:
         image, _ = data
 

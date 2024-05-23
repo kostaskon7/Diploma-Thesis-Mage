@@ -21,6 +21,8 @@ from kmeans_pytorch import kmeans
 from sklearn.cluster import MiniBatchKMeans
 from joblib import dump, load
 import os
+from sklearn.preprocessing import StandardScaler
+
 
 
 
@@ -96,6 +98,44 @@ parser.add_argument('--ce_weight', type=float, default=5e-3, help='weight of the
 parser.add_argument('--final_ce_weight', type=float, default=None, help='final weight of the cross-entropy distilation loss')
 
 parser.add_argument('--crf_dir', type=str, default=None, help='Directory of crf files')
+parser.add_argument('--directory', type=str, default=None, help='Directory of crf files')
+
+parser.add_argument('--max_iterations',  type=int, default=300, help='Max iterations in kmeans')
+parser.add_argument('--tol',  type=float, default=1e-3, help='Max tolerance reached')
+
+
+
+def kmeans_plusplus(X, n_clusters, random_state=None):
+    if random_state:
+        torch.manual_seed(random_state)
+        np.random.seed(random_state)
+
+    n_samples, _ = X.shape
+    centers = torch.empty((n_clusters, X.shape[1]), device=X.device, dtype=X.dtype)
+    indices = torch.empty((n_clusters,), dtype=torch.long, device=X.device)  # To store the indices
+
+    # Randomly choose the first center
+    first_center_idx = np.random.choice(n_samples)
+    centers[0] = X[first_center_idx]
+    indices[0] = first_center_idx
+
+    # Initialize a list to store the minimum distances for each point to any center
+    closest_dist_sq = torch.full((n_samples,), float('inf'), device=X.device, dtype=X.dtype)
+
+    for i in range(1, n_clusters):
+        # Compute the distance from each point to the nearest center
+        dist_to_new_center = torch.sum((X - centers[i - 1]) ** 2, dim=1)
+        closest_dist_sq = torch.min(closest_dist_sq, dist_to_new_center)
+
+        # Choose the next center with a probability proportional to the squared distance
+        probs = closest_dist_sq / torch.sum(closest_dist_sq)
+        cumulative_probs = torch.cumsum(probs, dim=0)
+        r = torch.rand(1, device=X.device, dtype=X.dtype)
+        next_center_idx = torch.searchsorted(cumulative_probs, r).item()
+        centers[i] = X[next_center_idx]
+        indices[i] = next_center_idx
+
+    return centers, indices
 
 
 
@@ -122,7 +162,8 @@ model = models_mage_2dec.__dict__[args.model](norm_pix_loss=False,
 model.to(0)
 
 checkpoint = torch.load(args.ckpt, map_location='cpu')
-model.load_state_dict(checkpoint['model'])
+msg=model.load_state_dict(checkpoint['model'],strict=False)
+print(msg)
 model.eval()
 
 num_steps = args.num_images // args.batch_size + 1
@@ -172,11 +213,13 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         latent=latent[:,1:,:]
 
         slots, attn, _, _ = model.slot_attention(latent)
+        # breakpoint()
+
 
         attn=attn.clone().detach()
         # Latent another transformation?
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
-        # attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
+        attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
         # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
@@ -186,15 +229,21 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
 
         slots=model.slot_proj2(slots)
         collected_outputs.append(slots)
+        # break
+
     
 
-
+breakpoint()
 
 
 ## MINIBATCH SKLEARN
+# breakpoint()
 
-tolerance = 1e-4
-max_iterations = 100000
+tolerance = args.tol
+max_iterations = args.max_iterations
+
+scaler = StandardScaler()
+
 
 
 # Step 1: Concatenate all collected outputs
@@ -205,91 +254,43 @@ all_slots_tensor = torch.cat(collected_outputs, dim=0)
 # you can simply reshape it to (-1, 256) to flatten all but the last dimension.
 # data_2d = all_slots_tensor.reshape(-1, 768)
 data_2d = all_slots_tensor.reshape(-1, 768)
+num_samples = 10000
+
+
+breakpoint()
+
+# num_samples = 10000
+
+# # Perform k-means++ initialization
+# sampled_centers, sampled_indices = kmeans_plusplus(data_2d, n_clusters=num_samples, random_state=0)
+
+
+
 
 
 # Step 3: Convert to NumPy array if you're using PyTorch
 data_2d_np = data_2d.cpu().numpy()
 
-# Step 4: Apply MiniBatchKMeans
-n_clusters = 1024  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance,max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
+data_2d_np_normalized = scaler.fit_transform(data_2d_np)
 
 
 
-directory = '/data/kmeans/hard_100_tol_1e-4-remove-imports/'
-file_name = 'kmeans_model1024_100ep_hard.joblib'
 
-full_path = os.path.join(directory, file_name)
+directory = args.directory
 
-
-# Ensure the directory exists
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-
-dump(kmeans_model, file_name)
-
-n_clusters = 2048  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
-
-
-
-file_name = 'kmeans_model2048_100ep_hard.joblib'
-
-full_path = os.path.join(directory, file_name)
-
-
-# Ensure the directory exists
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-dump(kmeans_model, full_path)
-
-
-n_clusters = 4096  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
-
-
-file_name = 'kmeans_model4096_100ep_hard.joblib'
-
-full_path = os.path.join(directory, file_name)
-
-
-# Ensure the directory exists
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-dump(kmeans_model, full_path)
-
-
-n_clusters = 8192  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
-
-
-file_name = 'kmeans_model8192_100ep_hard.joblib'
-
-full_path = os.path.join(directory, file_name)
-
-
-# Ensure the directory exists
-if not os.path.exists(directory):
-    os.makedirs(directory)
-
-dump(kmeans_model, full_path)
 
 n_clusters = 16384  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
-kmeans_model.fit(data_2d_np)
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations,max_no_improvement=None)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np_normalized)
 
 
 file_name = 'kmeans_model16384_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
 
+full_path_scaler = os.path.join(directory, 'scaler.joblib')
+
+
 
 # Ensure the directory exists
 if not os.path.exists(directory):
@@ -297,14 +298,50 @@ if not os.path.exists(directory):
 
 dump(kmeans_model, full_path)
 
+dump(scaler, full_path_scaler)
 
-# kmeans = load('kmeans_model.joblib')
-
-
-
-
-
+print(f"Number of iterations: {kmeans_model.n_iter_}")
+print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
+print(f"inertia_ used for stopping criterion: {kmeans_model.inertia_}")
 
 
-# Save your model
-# torch.save(model, 'cluster_centers_1024.pth')
+
+
+
+n_clusters = 32768  # Example: Define the number of clusters
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np_normalized)
+
+
+file_name = 'kmeans_model32768_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans_model, full_path)
+
+print(f"Number of iterations: {kmeans_model.n_iter_}")
+print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
+
+n_clusters = 65536  # Example: Define the number of clusters
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
+kmeans_model.fit(data_2d_np_normalized)
+
+
+file_name = 'kmeans_model65536_100ep_hard.joblib'
+
+full_path = os.path.join(directory, file_name)
+
+
+# Ensure the directory exists
+if not os.path.exists(directory):
+    os.makedirs(directory)
+
+dump(kmeans_model, full_path)
+
+print(f"Number of iterations: {kmeans_model.n_iter_}")
+print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")

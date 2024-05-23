@@ -60,80 +60,13 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # cluster_centers = cluster_centers.cuda()
 
 
-
-    # Load the model
     kmeans_model = load(args.kmeans_path)
+    if args.scaler != 'none':
+        scaler = load(args.scaler)
+
     model.mask_ratio_min = args.mask_ratio_min
 
- 
 
-
-
-############################ Create Slot vis
-    if slot_vis:
-        if data_used == 'coco' :
-    
-            val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
-
-            default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
-            dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
-            # default_slots_attns=default_slots_attns.unsqueeze(3)
-            # dec_slots_attns=dec_slots_attns.unsqueeze(3)
-
-
-            default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
-            dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
-            # dec_attns shape [B, num_slots, H, W]
-            default_attns = default_attns.unsqueeze(2)
-            dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
-
-            pred_default_mask = default_attns.argmax(1).squeeze(1)
-            pred_dec_mask = dec_attns.argmax(1).squeeze(1)
-
-            image_int = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
-            rgb_default_attns = image_int.unsqueeze(1) * default_attns + 1. - default_attns
-            rgb_dec_attns = image_int.unsqueeze(1) * dec_attns + 1. - dec_attns
-
-            vis_recon = visualize(image_int, true_mask_c, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
-            grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
-            grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
-            log_writer.add_image('VAL_recon/epoch={:03}'.format(1), grid)
-        else:
-            val_loss,_,_,default_slots_attns, dec_slots_attns,logits = model(image)
-
-            default_slots_attns = default_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
-            dec_slots_attns = dec_slots_attns.transpose(-1, -2).reshape(args.batch_size, 7, 16, 16)
-            # default_slots_attns=default_slots_attns.unsqueeze(3)
-            # dec_slots_attns=dec_slots_attns.unsqueeze(3)
-
-
-            default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
-            dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
-            # dec_attns shape [B, num_slots, H, W]
-            default_attns = default_attns.unsqueeze(2)
-            dec_attns = dec_attns.unsqueeze(2) # shape [B, num_slots, 1, H, W]
-
-            pred_default_mask = default_attns.argmax(1).squeeze(1)
-            pred_dec_mask = dec_attns.argmax(1).squeeze(1)
-
-            image_int = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
-            rgb_default_attns = image_int.unsqueeze(1) * default_attns + 1. - default_attns
-            rgb_dec_attns = image_int.unsqueeze(1) * dec_attns + 1. - dec_attns
-
-            vis_recon = visualize(image_int, pred_dec_mask, pred_dec_mask, rgb_dec_attns, pred_default_mask, rgb_default_attns, N=32)
-            grid = vutils.make_grid(vis_recon, nrow=2*7 + 4, pad_value=0.2)[:, 2:-2, 2:-2]#anti gia 7 num_slots
-            grid = F.interpolate(grid.unsqueeze(1), scale_factor=0.15, mode='bilinear').squeeze() # Lower resolution
-            log_writer.add_image('VAL_recon/epoch={:03}'.format(1), grid)
-
-    
-
-#########################
-
-    # latent, gt_indices, _, _ = model.forward_encoder(image)
-    # latent = model.forward_encoder(image)
-
-    # #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-    # slots, attn, init_slots, attn_logits = model.slot_attention(latent[:,1:,:])
     
     
 
@@ -144,31 +77,36 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     slots, attn, init_slots, attn_logits = model.slot_attention(latent)
     
-    # slots_pool = torch.matmul(attn.transpose(-1, -2), x)
+    attn=attn.clone().detach()
+    attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
+    # To add normalization
+    attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
+    slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
-    # attn=attn.clone().detach()
-    # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
-    # # To add normalization
-    # # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
-    # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
-
-    # slots_tensor = slots  # Replace with your actual tensor
-    # slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
-
-    # # Predict cluster assignments
-    # cluster_assignments = kmeans_model.predict(slots_2d)
-
-    # # Replace slots with cluster centers
-    # centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
-
-    # # Reshape back to the original slots shape
-    # slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-    # slots = torch.tensor(slots).cuda()
-
-    # slots = model.slot_proj2(slots)
+    slots = model.slot_proj2(slots)
 
 
-    # slots = model.slot_proj2(slots)
+        # # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
+    slots_tensor = slots  # Replace with your actual tensor
+    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+
+    # Predict cluster assignments
+    cluster_assignments = kmeans_model.predict(slots_2d)
+
+    # Replace slots with cluster centers
+    centers = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+
+    if args.scaler != 'none':
+        # Step 5: De-normalize the centroids
+        centers = scaler.inverse_transform(centers)
+
+        # # Reshape back to the original slots shape
+    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+    # # slots = centers.reshape(-1, 256, 7)  # Use the original num_slots
+
+    slots = torch.tensor(slots).cuda()
+
+
 
     logits,attn_dec = model.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
     
@@ -301,6 +239,8 @@ parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans job
 parser.add_argument('--mask_ratio_min', type=float, default=0.5,
                     help='Minimum mask ratio')
 
+parser.add_argument('--scaler',  type=str, default='none', help='scaler joblib path')
+
 
 
 
@@ -328,7 +268,7 @@ model = models_mage_2dec.__dict__[args.model](norm_pix_loss=False,
 model.to(0)
 
 checkpoint = torch.load(args.ckpt, map_location='cpu')
-model.load_state_dict(checkpoint['model'])
+model.load_state_dict(checkpoint['model'],strict=False)
 model.eval()
 
 num_steps = args.num_images // args.batch_size + 1
