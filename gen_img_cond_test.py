@@ -54,7 +54,7 @@ def compute_iou(mask1, mask2):
     
 #     return slots_tensor
 
-def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_threshold):
+def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_threshold,kmeans_model):
     batch_size, num_slots, num_features = slots_tensor.shape
     
     # Initialize a mask to keep track of valid slots
@@ -73,10 +73,11 @@ def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_thresho
     
     # Replace valid slots with cluster centers
     cluster_centers_tensor = torch.tensor(cluster_centers)
+    cluster_assignments = kmeans_model.predict(slots_tensor.reshape(-1, num_features).cpu().numpy()).reshape(batch_size, num_slots)
     for b in range(batch_size):
         for i in range(num_slots):
             if valid_slots_mask[b, i]:
-                slots_tensor[b, i] = cluster_centers_tensor[i]
+                slots_tensor[b, i] = torch.tensor(cluster_centers[cluster_assignments[b, i]])
 
     return slots_tensor
 
@@ -219,15 +220,15 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # Replace slots with cluster centers
         # slots = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
-        val_cluster_centers  = torch.tensor(kmeans_model.cluster_centers_[cluster_assignments]).reshape(slots.shape)  # Shape: [images*num_slots, 256]
-
+        # val_cluster_centers  = torch.tensor(kmeans_model.cluster_centers_[cluster_assignments]).reshape(slots.shape)  # Shape: [images*num_slots, 256]
+        # print(val_cluster_centers.shape)
         # breakpoint()
         iou_threshold = args.iou_threshold
 
         batch_size, num_features, num_slots = attn.shape
         attn = attn.reshape(batch_size,num_slots,16,16)
 
-        slots = filter_slots_by_iou(slots, attn, val_cluster_centers, iou_threshold)
+        slots = filter_slots_by_iou(slots, attn, kmeans_model.cluster_centers_, iou_threshold,kmeans_model)
 
         if args.scaler != 'none':
         # Step 5: De-normalize the centroids
