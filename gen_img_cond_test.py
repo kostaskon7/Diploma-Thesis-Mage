@@ -224,7 +224,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # breakpoint()
         iou_threshold = args.iou_threshold
 
-        batch_size, num_slots, num_features = attn.shape
+        batch_size, num_features, num_slots = attn.shape
         attn = attn.reshape(batch_size,num_slots,16,16)
 
         slots = filter_slots_by_iou(slots, attn, val_cluster_centers, iou_threshold)
