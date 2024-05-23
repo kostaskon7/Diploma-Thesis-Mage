@@ -534,7 +534,7 @@ parser.add_argument('--both_mboi', default=None,type=int,
 parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans joblib path')
 parser.add_argument('--scaler',  type=str, default='none', help='scaler joblib path')
 parser.add_argument('--usemodel',  type=int, default=None, help='Use kmeansmodel or sample')
-parser.add_argument('--iou_threshold',  type=int, default=2, help='Use kmeansmodel or sample')
+parser.add_argument('--iou_threshold',  type=float, default=2, help='iou_threshold for kmeans')
 
 
 
