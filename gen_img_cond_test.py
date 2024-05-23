@@ -197,7 +197,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         val_cluster_centers  = torch.tensor(kmeans_model.cluster_centers_[cluster_assignments]).reshape(slots.shape)  # Shape: [images*num_slots, 256]
 
         # breakpoint()
-        iou_threshold = 2
+        iou_threshold = args.iou_threshold
         slots = filter_slots_by_iou(slots, attn, val_cluster_centers, iou_threshold)
 
         if args.scaler != 'none':
@@ -534,6 +534,9 @@ parser.add_argument('--both_mboi', default=None,type=int,
 parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans joblib path')
 parser.add_argument('--scaler',  type=str, default='none', help='scaler joblib path')
 parser.add_argument('--usemodel',  type=int, default=None, help='Use kmeansmodel or sample')
+parser.add_argument('--iou_threshold',  type=int, default=2, help='Use kmeansmodel or sample')
+
+
 
 
 
