@@ -196,7 +196,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # slots = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
         val_cluster_centers  = torch.tensor(kmeans_model.cluster_centers_[cluster_assignments]).reshape(slots.shape)  # Shape: [images*num_slots, 256]
 
-        breakpoint()
+        # breakpoint()
         iou_threshold = 0.5
         slots = filter_slots_by_iou(slots, attn, val_cluster_centers, iou_threshold)
 
