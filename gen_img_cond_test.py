@@ -77,7 +77,7 @@ def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_thresho
     for b in range(batch_size):
         for i in range(num_slots):
             if valid_slots_mask[b, i]:
-                slots_tensor[b, i] = torch.tensor(cluster_centers[cluster_assignments[b, i]])
+                slots_tensor[b, i] = cluster_centers_tensor[cluster_assignments[b, i]]#torch.tensor(cluster_centers[cluster_assignments[b, i]])
 
     return slots_tensor
 
