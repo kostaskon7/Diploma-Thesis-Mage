@@ -29,30 +29,7 @@ def compute_iou(mask1, mask2):
     iou = intersection / union
     return iou
 
-# def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_threshold):
-#     batch_size, num_slots, num_features = slots_tensor.shape
-    
-#     # Initialize a mask to keep track of valid slots
-#     valid_slots_mask = np.ones((batch_size, num_slots), dtype=bool)
-    
-#     # Compute IoU for each pair of masks and reject those with IoU greater than the threshold
-#     for b in range(batch_size):
-#         for i in range(num_slots):
-#             for j in range(i + 1, num_slots):
-#                 mask1 = attns_tensor[b, i].cpu().numpy()
-#                 mask2 = attns_tensor[b, j].cpu().numpy()
-#                 iou = compute_iou(mask1, mask2)
-#                 if iou > iou_threshold:
-#                     valid_slots_mask[b, i] = False
-#                     valid_slots_mask[b, j] = False
-    
-#     # Apply the valid slots mask to the cluster centers
-#     for b in range(batch_size):
-#         for i in range(num_slots):
-#             if not valid_slots_mask[b][i]:
-#                 slots_tensor[b, i] = torch.zeros(num_features)
-    
-#     return slots_tensor
+
 
 def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_threshold,kmeans_model):
     batch_size, num_slots, num_features = slots_tensor.shape
