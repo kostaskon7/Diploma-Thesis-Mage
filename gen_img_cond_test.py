@@ -204,7 +204,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # Step 5: De-normalize the centroids
             slots = scaler.inverse_transform(slots)
 
-        slots = torch.from_numpy(slots).float()
+        # slots = torch.from_numpy(slots).float()
 
     
     else:
