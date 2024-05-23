@@ -213,10 +213,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
     slots_tensor = slots  # Replace with your actual tensor
     if args.usemodel:
-        slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+        # slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-        # Predict cluster assignments
-        cluster_assignments = kmeans_model.predict(slots_2d)
+        # # Predict cluster assignments
+        # cluster_assignments = kmeans_model.predict(slots_2d)
 
         # Replace slots with cluster centers
         # slots = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
@@ -229,6 +229,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         attn = attn.reshape(batch_size,num_slots,16,16)
 
         slots = filter_slots_by_iou(slots, attn, kmeans_model.cluster_centers_, iou_threshold,kmeans_model)
+        print(slots.shape)
 
         if args.scaler != 'none':
         # Step 5: De-normalize the centroids
