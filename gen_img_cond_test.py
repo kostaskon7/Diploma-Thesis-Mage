@@ -46,10 +46,12 @@ def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_thresho
     for b in range(batch_size):
         for i in range(num_slots):
             for j in range(i + 1, num_slots):
-                mask1 = attns_tensor[b, i].cpu().numpy()
-                mask2 = attns_tensor[b, j].cpu().numpy()
+                # mask1 = attns_tensor[b, i].cpu().numpy()
+                # mask2 = attns_tensor[b, j].cpu().numpy()
+                mask1 = attns_tensor[b, i]
+                mask2 = attns_tensor[b, j]
                 # iou = compute_iou(mask1, mask2)
-
+                breakpoint()
                 IOU_metric.update(mask1,mask2)
                 iou = IOU_metric.compute()
                                 # Debugging statements
