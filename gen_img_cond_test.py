@@ -56,6 +56,10 @@ def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_thresho
             if valid_slots_mask[b, i]:
                 slots_tensor[b, i] = cluster_centers_tensor[cluster_assignments[b, i]]#torch.tensor(cluster_centers[cluster_assignments[b, i]])
 
+    for b in range(batch_size):
+        num_masked_slots = np.sum(~valid_slots_mask[b])
+        print(f"Image {b}: {num_masked_slots} slots are masked")
+
     return slots_tensor
 
 
