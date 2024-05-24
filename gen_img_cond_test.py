@@ -229,6 +229,12 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         batch_size, num_features, num_slots = attn.shape
         attn = attn.reshape(batch_size,num_slots,16,16)
 
+        attn = attn.unsqueeze(2)
+
+        attn = torch.nn.functional.one_hot(attn).to(torch.float32).permute(0,3,1,2).cuda()
+
+
+
         slots = filter_slots_by_iou(slots, attn, kmeans_model.cluster_centers_, iou_threshold,kmeans_model)
         print(slots.shape)
 
