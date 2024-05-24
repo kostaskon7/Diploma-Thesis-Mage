@@ -44,6 +44,7 @@ def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_thresho
                 mask1 = attns_tensor[b, i].cpu().numpy()
                 mask2 = attns_tensor[b, j].cpu().numpy()
                 iou = compute_iou(mask1, mask2)
+                print(iou)
                 if iou > iou_threshold:
                     valid_slots_mask[b, i] = False
                     valid_slots_mask[b, j] = False
