@@ -47,9 +47,11 @@ def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_thresho
                 mask2 = attns_tensor[b, j].cpu().numpy()
                 iou = compute_iou(mask1, mask2)
                                 # Debugging statements
+                # Debugging statements
                 print(f"Image {b}, Slot {i} and Slot {j}:")
-                print(f"Mask 1:\n{mask1}")
-                print(f"Mask 2:\n{mask2}")
+                print(f"Mask 1 shape: {mask1.shape}, unique values: {np.unique(mask1)}")
+                print(f"Mask 2 shape: {mask2.shape}, unique values: {np.unique(mask2)}")
+  
                 print(f"Intersection: {np.logical_and(mask1, mask2).sum()}")
                 print(f"Union: {np.logical_or(mask1, mask2).sum()}")
                 print(f"IoU: {iou}")
