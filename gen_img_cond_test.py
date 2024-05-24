@@ -645,7 +645,7 @@ for batch, data in iterator:
 
     else:
         image, _ = data
-    IOU_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
+    IOU_metric = UnsupervisedMaskIoUMetric(matching="hungarian", ignore_background = True, ignore_overlaps = True).cuda()
 
     with torch.no_grad():
         gen_images_batch = gen_image(model=model,image=image, bsz=args.batch_size, seed=batch, choice_temperature=args.temp, num_iter=args.num_iter, data_used=args.dataset,slot_vis=args.slot_vis)
