@@ -60,8 +60,8 @@ def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_thresho
                 # print(f"Mask 1 shape: {mask1.shape}, unique values: {np.unique(mask1)}")
                 # print(f"Mask 2 shape: {mask2.shape}, unique values: {np.unique(mask2)}")
   
-                print(f"Intersection: {np.logical_and(mask1, mask2).sum()}")
-                print(f"Union: {np.logical_or(mask1, mask2).sum()}")
+                # print(f"Intersection: {np.logical_and(mask1, mask2).sum()}")
+                # print(f"Union: {np.logical_or(mask1, mask2).sum()}")
                 print(f"IoU: {iou}")
 
                 if iou > iou_threshold:
