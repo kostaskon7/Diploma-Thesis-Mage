@@ -27,6 +27,8 @@ def compute_iou(mask1, mask2):
     intersection = np.logical_and(mask1, mask2).sum()
     union = np.logical_or(mask1, mask2).sum()
     iou = intersection / union
+    if union == 0:
+        return 0  # Avoid division by zero
     return iou
 
 
