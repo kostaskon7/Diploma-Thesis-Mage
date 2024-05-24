@@ -20,6 +20,9 @@ from torch.utils.tensorboard import SummaryWriter
 from joblib import load
 import torch
 
+from spot.ocl_metrics import UnsupervisedMaskIoUMetric, ARIMetric
+
+
 
 
 
@@ -45,12 +48,15 @@ def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_thresho
             for j in range(i + 1, num_slots):
                 mask1 = attns_tensor[b, i].cpu().numpy()
                 mask2 = attns_tensor[b, j].cpu().numpy()
-                iou = compute_iou(mask1, mask2)
+                # iou = compute_iou(mask1, mask2)
+
+                IOU_metric.update(mask1,mask2)
+                iou = IOU_metric.compute()
                                 # Debugging statements
                 # Debugging statements
                 print(f"Image {b}, Slot {i} and Slot {j}:")
-                print(f"Mask 1 shape: {mask1.shape}, unique values: {np.unique(mask1)}")
-                print(f"Mask 2 shape: {mask2.shape}, unique values: {np.unique(mask2)}")
+                # print(f"Mask 1 shape: {mask1.shape}, unique values: {np.unique(mask1)}")
+                # print(f"Mask 2 shape: {mask2.shape}, unique values: {np.unique(mask2)}")
   
                 print(f"Intersection: {np.logical_and(mask1, mask2).sum()}")
                 print(f"Union: {np.logical_or(mask1, mask2).sum()}")
@@ -637,6 +643,7 @@ for batch, data in iterator:
 
     else:
         image, _ = data
+    IOU_metric = UnsupervisedMaskIoUMetric(matching="best_overlap", ignore_background = True, ignore_overlaps = True).cuda()
 
     with torch.no_grad():
         gen_images_batch = gen_image(model=model,image=image, bsz=args.batch_size, seed=batch, choice_temperature=args.temp, num_iter=args.num_iter, data_used=args.dataset,slot_vis=args.slot_vis)
