@@ -46,14 +46,14 @@ def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_thresho
     for b in range(batch_size):
         for i in range(num_slots):
             for j in range(i + 1, num_slots):
-                mask1 = attns_tensor[b, i].cpu().numpy()
-                mask2 = attns_tensor[b, j].cpu().numpy()
-                # mask1 = attns_tensor[b, i].unsqueeze(0).unsqueeze(0)
-                # mask2 = attns_tensor[b, j].unsqueeze(0).unsqueeze(0)
-                iou = compute_iou(mask1, mask2)
+                # mask1 = attns_tensor[b, i].cpu().numpy()
+                # mask2 = attns_tensor[b, j].cpu().numpy()
+                mask1 = attns_tensor[b, i].unsqueeze(0).unsqueeze(0)
+                mask2 = attns_tensor[b, j].unsqueeze(0).unsqueeze(0)
+                # iou = compute_iou(mask1, mask2)
                 # breakpoint()
-                # IOU_metric.update(mask1,mask2)
-                # iou = IOU_metric.compute()
+                IOU_metric.update(mask1,mask2)
+                iou = IOU_metric.compute()
                                 # Debugging statements
                 # Debugging statements
                 print(f"Image {b}, Slot {i} and Slot {j}:")
@@ -230,7 +230,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         attn = attn.reshape(batch_size,num_slots,16,16)
 
         breakpoint()
-        
+
         attn = attn.unsqueeze(2)
 
         attn = attn.argmax(1).squeeze(1)
