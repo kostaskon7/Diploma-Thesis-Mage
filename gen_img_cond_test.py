@@ -50,10 +50,10 @@ def filter_slots_by_iou(slots_tensor, attns_tensor, cluster_centers, iou_thresho
                 mask2 = attns_tensor[b, j].cpu().numpy()
                 # mask1 = attns_tensor[b, i].unsqueeze(0).unsqueeze(0)
                 # mask2 = attns_tensor[b, j].unsqueeze(0).unsqueeze(0)
-                # iou = compute_iou(mask1, mask2)
+                iou = compute_iou(mask1, mask2)
                 # breakpoint()
-                IOU_metric.update(mask1,mask2)
-                iou = IOU_metric.compute()
+                # IOU_metric.update(mask1,mask2)
+                # iou = IOU_metric.compute()
                                 # Debugging statements
                 # Debugging statements
                 print(f"Image {b}, Slot {i} and Slot {j}:")
@@ -214,16 +214,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
     slots_tensor = slots  # Replace with your actual tensor
     if args.usemodel:
-        # slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-        # # Predict cluster assignments
-        # cluster_assignments = kmeans_model.predict(slots_2d)
-
-        # Replace slots with cluster centers
-        # slots = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
-        # val_cluster_centers  = torch.tensor(kmeans_model.cluster_centers_[cluster_assignments]).reshape(slots.shape)  # Shape: [images*num_slots, 256]
-        # print(val_cluster_centers.shape)
-        # breakpoint()
         iou_threshold = args.iou_threshold
 
         batch_size, num_features, num_slots = attn.shape
