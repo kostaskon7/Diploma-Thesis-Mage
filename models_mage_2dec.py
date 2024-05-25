@@ -839,7 +839,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # with torch.no_grad():
         latent,_,_,_= self.forward_encoder_copy(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
-        # latent_mask=latent_mask.clone().detach()
+        latent_mask=latent_mask.clone().detach()
         
 
             # latent= self.forward_encoder(imgs)
