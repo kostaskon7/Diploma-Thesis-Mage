@@ -378,7 +378,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         #     slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
 
         # logits,_ = model.forward_decoder(x, slots_replaced, token_drop_mask, token_all_mask)
-
+        breakpoint()
         logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
 
