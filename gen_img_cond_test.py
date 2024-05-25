@@ -222,12 +222,12 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         breakpoint()
 
-        attn = attn.unsqueeze(2)
+        # attn = attn.unsqueeze(2)
 
-        attn = attn.argmax(1).squeeze(1)
+        # attn = attn.argmax(1).squeeze(1)
 
 
-        attn = torch.nn.functional.one_hot(attn).to(torch.float32).permute(0,3,1,2).cuda()
+        # attn = torch.nn.functional.one_hot(attn).to(torch.float32).permute(0,3,1,2).cuda()
 
 
 
