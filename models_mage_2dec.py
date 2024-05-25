@@ -292,8 +292,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
             slot_size=args.slot_size,       # specify the slot size
             mlp_hidden_size=1024, # specify the MLP hidden size
             pos_channels=4,    # specify the positional channels size
-            truncate='none', # or other options as per your requirement
-            init_method='shared_gaussian')  # or 'shared_gaussian'
+            truncate=args.truncate, # or other options as per your requirement
+            init_method=args.init_method)  # or 'shared_gaussian'
         
             # num_heads=6,       # specify the number of heads for attention
             # drop_path=0.0)        # specify dropout path rate
@@ -839,7 +839,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # with torch.no_grad():
         latent,_,_,_= self.forward_encoder_copy(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
-        latent_mask=latent_mask.clone().detach()
+        # latent_mask=latent_mask.clone().detach()
         
 
             # latent= self.forward_encoder(imgs)
@@ -875,7 +875,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-        slots_pool=self.slot_proj2(slots)
+        slots=self.slot_proj2(slots)
         # Decoder position embeddings
         # decoder_pos_embed_learned_pool=torch.matmul(attn_onehot.transpose(-1, -2), self.decoder_pos_embed_learned[:,1:,:])
 
@@ -888,7 +888,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #TBD
         # logits,attn_dec = self.forward_decoder(latent_mask,slots_proj ,token_drop_mask, token_all_mask)
         #TBD2
-        logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
 
 
         dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
