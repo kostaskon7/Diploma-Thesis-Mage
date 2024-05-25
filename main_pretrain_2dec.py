@@ -223,7 +223,7 @@ def main(args):
         train_sampler = torch.utils.data.DistributedSampler(train_dataset, num_replicas=misc.get_world_size(), rank=misc.get_rank(), shuffle=True)
         log_writer = log_writer if misc.get_rank() == 0 else None
     else:
-        train_sampler = torch.utils.data.RandomSampler(train_sampler)
+        train_sampler = torch.utils.data.RandomSampler(train_dataset)
     print("train_sampler = %s" % str(train_sampler))
 
     train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, drop_last=True, batch_size=args.batch_size, pin_memory=True, num_workers=args.num_workers)#,collate_fn=custom_collate_fn)
