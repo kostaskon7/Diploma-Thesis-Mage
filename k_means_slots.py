@@ -209,7 +209,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
     with torch.no_grad():
         # val_loss, _, _, default_slots_attns, _, _ = model(image)
         # latent,_,_,_= model.forward_encoder_copy(image)
-        latent= model.forward_encoder_copy(image)
+        latent= model.forward_encoder(image)
 
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
