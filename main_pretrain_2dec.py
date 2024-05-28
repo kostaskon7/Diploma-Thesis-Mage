@@ -211,7 +211,6 @@ def main(args):
     #     drop_last=True,
     # )
 
-    torch.manual_seed(0)
 
     log_writer = SummaryWriter(log_dir=args.log_dir)
     train_sampler = None
