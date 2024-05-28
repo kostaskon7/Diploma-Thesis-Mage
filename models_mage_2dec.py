@@ -839,7 +839,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward(self, imgs,mask_crf):
         
         # with torch.no_grad():
-        latent,_,_,_= self.forward_encoder_copy(imgs)
+        # latent,_,_,_= self.forward_encoder_copy(imgs)
+        latent= self.forward_encoder(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
         # latent_mask=latent_mask.clone().detach()
         
@@ -860,7 +861,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         attn=attn.clone().detach()
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
         # To add normalization
-        # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+        attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
         slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         slots_pool=self.slot_proj2(slots_pool)
 
