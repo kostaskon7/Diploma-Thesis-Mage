@@ -890,7 +890,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         breakpoint()
         self.apply_mask = torch.rand(1) < self.prob_threshold
         
-        latent,_,_,_= self.forward_encoder_copy(imgs)
+        latent= self.forward_encoder(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
         # latent_mask=latent_mask.clone().detach()
         
