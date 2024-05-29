@@ -931,21 +931,20 @@ class MaskedGenerativeEncoderViT(nn.Module):
         
 
 
-        # Hard Mask pooling
-        attn=attn.clone().detach()
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
-        # To add normalization
-        attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
-        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
-        slots_pool=self.slot_proj2(slots_pool)
+            # Hard Mask pooling
+            attn=attn.clone().detach()
+            attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
+            # To add normalization
+            attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+            slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+            slots_pool=self.slot_proj2(slots_pool)
 
-        # Decoders
-        logits,attn_dec,cluster_assignments,uniform_mask = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+            # Decoders
+            logits,attn_dec,cluster_assignments,uniform_mask = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
-        with torch.cuda.amp.autocast(enabled=False):
             if self.apply_mask.item():
                 loss_slots = self.slot_loss(slots_pool,cluster_assignments,uniform_mask)
             else:
