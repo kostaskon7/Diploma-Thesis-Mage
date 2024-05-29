@@ -38,7 +38,7 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
         global_step = epoch * train_epoch_size + data_iter_step
         ce_weight = ce_weight_schedule[global_step]
 
-        with torch.cuda.amp.autocast(enabled=False):
+        with torch.cuda.amp.autocast():
             if args.use_decs:
                 # breakpoint()
                 loss_comb, _, _,_,_,_ = model(samples,mask_crf)
