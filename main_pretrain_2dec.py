@@ -385,7 +385,7 @@ def main(args):
                 if args.both_mboi:
                     dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
                 
-                val_loss_mage,ce_loss,  val_loss_spot = val_loss
+                val_loss_mage,ce_loss,  val_loss_spot,loss_slots = val_loss
                 # codebook_emb_dim=256
                 # logits = logits[:, 8:, :model.codebook_size]
                 # # logits = logits[:, 1:, :model.codebook_size]
@@ -490,6 +490,7 @@ def main(args):
             
             log_writer.add_scalar('VAL/val_spot', val_loss_spot, epoch)
             log_writer.add_scalar('VAL/val_mage', val_loss_mage, epoch)
+            log_writer.add_scalar('VAL/loss_slots', loss_slots, epoch)
             log_writer.add_scalar('VAL/ari (slots)', ari_slot, epoch)
             log_writer.add_scalar('VAL/ari (decoder)', ari, epoch)
             log_writer.add_scalar('VAL/mbo_c', mbo_c, epoch)
@@ -501,13 +502,13 @@ def main(args):
 
 
             if args.both_mboi:
-                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t mBO_i_mage = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
-                epoch, val_loss_mage,val_loss_spot, ari, ari_slot, mbo_c, mbo_i, mbo_i_mage, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Slots= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t mBO_i_mage = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
+                epoch, val_loss_mage,loss_slots, ari, ari_slot, mbo_c, mbo_i, mbo_i_mage, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
                 MBO_i_metric_mage.reset()
 
             else:
-                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
-                    epoch, val_loss_mage,val_loss_spot, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Slots= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
+                    epoch, val_loss_mage,loss_slots, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
             
             ari_metric.reset()
             MBO_c_metric.reset()

@@ -43,9 +43,9 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
                 # breakpoint()
                 loss_comb, _, _,_,_,_ = model(samples,mask_crf)
 
-                loss_mage, loss_mage_spot,ce_loss = loss_comb
+                loss_mage, loss_mage_spot,ce_loss,loss_slots = loss_comb
                 
-                loss = loss_mage + ce_weight*ce_loss
+                loss = loss_mage + ce_weight*ce_loss+loss_slots
 
                 
                 # breakpoint()
