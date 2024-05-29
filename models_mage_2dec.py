@@ -731,12 +731,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
         else:
             slots_for_dec=None
 
-
+        breakpoint()
 
         # For each sample in the batch, decide which slots to mask
         if self.apply_mask:
 
-            slots_2d = slots.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+            slots_2d = slots.reshape(-1, 768).detach().cpu().numpy()  # Reshape to 2D for prediction
 
             # Predict cluster assignments
             cluster_assignments = self.kmeans_model.predict(slots_2d)
