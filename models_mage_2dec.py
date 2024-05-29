@@ -947,6 +947,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #[Batch,decoder264,2025]
         if self.apply_mask.item():
             loss_slots = self.slot_loss(slots_pool,cluster_assignments,uniform_mask)
+        else:
+            loss_slots
         
 
         
