@@ -715,7 +715,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # masked_slots = slots[uniform_mask].view(-1, slots.shape[2])  # Shape: [num_masked_elements, num_features]
         masked_slots = slots.reshape(-1, num_features)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements, 768]
         breakpoint()
-        masked_cluster_ids = cluster_assignments_tensor[uniform_mask_reshaped.view(slots.shape[0], slots.shape[1])].view(-1)  # Shape: [num_masked_elements]
+        masked_cluster_ids = cluster_assignments_tensor.view(-1)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements]
 
         # Compute the loss
         loss = self.criterion_masks(masked_slots, masked_cluster_ids)
