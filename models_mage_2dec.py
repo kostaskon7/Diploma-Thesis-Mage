@@ -717,8 +717,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
         breakpoint()
         masked_cluster_ids = cluster_assignments_tensor.view(-1)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements]
 
+            # Transform masked_slots to logits if they are not already
+        cluster_centers = torch.tensor(self.kmeans_model.cluster_centers_, dtype=torch.float32).cuda()
+        logits = torch.mm(masked_slots, cluster_centers.t())  # Shape: [num_masked_elements, num_classes]
+
         # Compute the loss
-        loss = self.criterion_masks(masked_slots, masked_cluster_ids)
+        loss = self.criterion_masks(logits, masked_cluster_ids)
         return(loss)
 
     def forward_decoder(self, x,slots, token_drop_mask, token_all_mask):
