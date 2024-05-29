@@ -928,7 +928,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         latent=latent[:,1:,:]
         with torch.cuda.amp.autocast(enabled=False):
-            slots, attn, attn_logits = self.masked_trans(latent,(H_enc, W_enc))
+            # slots, attn, attn_logits = self.masked_trans(latent,(H_enc, W_enc))
+            slots, attn, _, attn_logits = self.slot_attention(latent)
+
 
         
 
@@ -1024,7 +1026,7 @@ def mage_vit_base_patch16(**kwargs):
         decoder_embed_dim=768, decoder_depth=8, decoder_num_heads=16,
         mlp_ratio=4, norm_layer=partial(nn.LayerNorm, eps=1e-6), **kwargs)
 
-    # model.freeze_encoder()
+    model.freeze_encoder()
 
     # model.freeze_decoder()
 
