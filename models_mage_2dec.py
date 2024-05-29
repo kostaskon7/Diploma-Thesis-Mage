@@ -703,13 +703,17 @@ class MaskedGenerativeEncoderViT(nn.Module):
     
     def slot_loss(self,slots,cluster_assignments,uniform_mask):
         # Convert cluster assignments to tensor
+        batch_size, num_slots, num_features = slots.shape
+
         cluster_assignments_tensor = torch.tensor(cluster_assignments, dtype=torch.long).cuda()  # Shape: [images*num_slots]
 
         # Reshape cluster_assignments_tensor to match the slots shape
         cluster_assignments_tensor = cluster_assignments_tensor.view(slots.shape[0], slots.shape[1])
+        uniform_mask_reshaped = uniform_mask.reshape(-1, num_features)  # Shape: [16*7, 768]
 
         # Flatten the masked slots and cluster assignments for the loss computation
-        masked_slots = slots[uniform_mask].view(-1, slots.shape[2])  # Shape: [num_masked_elements, num_features]
+        # masked_slots = slots[uniform_mask].view(-1, slots.shape[2])  # Shape: [num_masked_elements, num_features]
+        masked_slots = slots.reshape(-1, num_features)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements, 768]
         masked_cluster_ids = cluster_assignments_tensor[uniform_mask.view(slots.shape[0], slots.shape[1])].view(-1)  # Shape: [num_masked_elements]
 
         # Compute the loss
@@ -940,7 +944,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #[Batch,decoder264,2025]
         breakpoint()
         if self.apply_mask.item():
-            loss_slots = self.slot_loss(slots,cluster_assignments,uniform_mask)
+            loss_slots = self.slot_loss(slots_pool,cluster_assignments,uniform_mask)
         breakpoint()
         
 
