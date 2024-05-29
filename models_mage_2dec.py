@@ -945,10 +945,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
-        if self.apply_mask.item():
-            loss_slots = self.slot_loss(slots_pool,cluster_assignments,uniform_mask)
-        else:
-            loss_slots = 0
+        with torch.cuda.amp.autocast(enabled=False):
+            if self.apply_mask.item():
+                loss_slots = self.slot_loss(slots_pool,cluster_assignments,uniform_mask)
+            else:
+                loss_slots = 0
         
 
         
