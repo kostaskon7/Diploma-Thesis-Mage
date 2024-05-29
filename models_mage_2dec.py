@@ -736,7 +736,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # For each sample in the batch, decide which slots to mask
         if self.apply_mask:
 
-            slots_2d = slots.reshape(-1, 768).detach().cpu().numpy()  # Reshape to 2D for prediction
+            slots_2d = slots.reshape(-1, slots.shape[2]).detach().cpu().numpy()  # Reshape to 2D for prediction
 
             # Predict cluster assignments
             cluster_assignments = self.kmeans_model.predict(slots_2d)
@@ -745,7 +745,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             centers = self.kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
 
             # Reshape back to the original slots shape
-            slots = centers.reshape(slots.shape[0], slots.shape[1], slots.shape[1])  # Use the original num_slots
+            slots = centers.reshape(slots.shape[0], slots.shape[1], slots.shape[2])  # Use the original num_slots
             slots = torch.tensor(slots).cuda()
 
             # Create one uniform mask for the entire batch
@@ -753,7 +753,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
             uniform_mask = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, num_features)
 
             # Apply the uniform mask token across all samples in the batch
-            slots[uniform_mask] = self.mask_token.expand_as(slots[uniform_mask])
+            mask_token_expanded = self.mask_token.expand(slots.shape[0], slots.shape[1], slots.shape[2])
+
+
+            slots[uniform_mask] = mask_token_expanded[uniform_mask]
 
 
 
@@ -765,7 +768,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
                     atts = blk(x,slots=slots_for_dec, return_attention=True)
             x = blk(x,slots=slots_for_dec)
 
-        
+        breakpoint()
 
         x = self.decoder_norm(x)
 
