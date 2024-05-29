@@ -527,7 +527,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         num_masked_tokens = int(np.ceil(seq_len * mask_rate))
 
-        if self.apply_mask:
+        if self.apply_mask.item():
             # Mask all tokens
             token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()  # All tokens are dropped
         else:
@@ -749,7 +749,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         breakpoint()
 
         # For each sample in the batch, decide which slots to mask
-        if self.apply_mask:
+        if self.apply_mask.item():
 
             slots_2d = slots.reshape(-1, slots.shape[2]).detach().cpu().numpy()  # Reshape to 2D for prediction
 
@@ -801,7 +801,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         normalized_atts_slots = atts_slots / sums
         #[32,256,7]
 
-        if self.apply_mask:
+        if self.apply_mask.item():
             return x,normalized_atts_slots,cluster_assignments,uniform_mask
         
         return x,normalized_atts_slots,_,_
@@ -939,7 +939,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
         breakpoint()
-        if self.apply_mask:
+        if self.apply_mask.item():
             loss_slots = self.slot_loss(slots,cluster_assignments,uniform_mask)
         breakpoint()
         
