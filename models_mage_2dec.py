@@ -700,6 +700,21 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # print("Logits shape:", x.shape)
 
         return x
+    
+    def slot_loss(self,slots,cluster_assignments,uniform_mask):
+        # Convert cluster assignments to tensor
+        cluster_assignments_tensor = torch.tensor(cluster_assignments, dtype=torch.long).cuda()  # Shape: [images*num_slots]
+
+        # Reshape cluster_assignments_tensor to match the slots shape
+        cluster_assignments_tensor = cluster_assignments_tensor.view(slots.shape[0], slots.shape[1])
+
+        # Flatten the masked slots and cluster assignments for the loss computation
+        masked_slots = slots[uniform_mask].view(-1, slots.shape[2])  # Shape: [num_masked_elements, num_features]
+        masked_cluster_ids = cluster_assignments_tensor[uniform_mask.view(slots.shape[0], slots.shape[1])].view(-1)  # Shape: [num_masked_elements]
+
+        # Compute the loss
+        loss = self.criterion_masks(masked_slots, masked_cluster_ids)
+        return(loss)
 
     def forward_decoder(self, x,slots, token_drop_mask, token_all_mask):
         # embed tokens
@@ -786,8 +801,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         normalized_atts_slots = atts_slots / sums
         #[32,256,7]
 
+        if self.apply_mask:
+            return x,normalized_atts_slots,cluster_assignments,uniform_mask
         
-        return x,normalized_atts_slots
+        return x,normalized_atts_slots,_,_
     
     def forward_decoder_spot(self, slots, emb_target):
         # Prepate the input tokens for the decoder transformer:
@@ -916,12 +933,15 @@ class MaskedGenerativeEncoderViT(nn.Module):
         slots_pool=self.slot_proj2(slots_pool)
 
         # Decoders
-        logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+        logits,attn_dec,cluster_assignments,uniform_mask = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
-
+        breakpoint()
+        if self.apply_mask:
+            loss_slots = self.slot_loss(slots,cluster_assignments,uniform_mask)
+        breakpoint()
         
 
         
