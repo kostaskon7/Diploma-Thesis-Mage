@@ -714,7 +714,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # Flatten the masked slots and cluster assignments for the loss computation
         # masked_slots = slots[uniform_mask].view(-1, slots.shape[2])  # Shape: [num_masked_elements, num_features]
         masked_slots = slots.reshape(-1, num_features)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements, 768]
-        breakpoint()
         masked_cluster_ids = cluster_assignments_tensor.view(-1)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements]
 
             # Transform masked_slots to logits if they are not already
@@ -755,7 +754,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         else:
             slots_for_dec=None
 
-        breakpoint()
 
         # For each sample in the batch, decide which slots to mask
         if self.apply_mask.item():
@@ -792,7 +790,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
                     atts = blk(x,slots=slots_for_dec, return_attention=True)
             x = blk(x,slots=slots_for_dec)
 
-        breakpoint()
 
         x = self.decoder_norm(x)
 
@@ -916,7 +913,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
     def forward(self, imgs,mask_crf):
         
-        breakpoint()
         self.apply_mask = torch.rand(1) < self.prob_threshold
         
         latent= self.forward_encoder(imgs)
@@ -949,10 +945,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
-        breakpoint()
         if self.apply_mask.item():
             loss_slots = self.slot_loss(slots_pool,cluster_assignments,uniform_mask)
-        breakpoint()
         
 
         
