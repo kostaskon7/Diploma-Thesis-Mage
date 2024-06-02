@@ -208,7 +208,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
     image=image.cuda()
     with torch.no_grad():
         # val_loss, _, _, default_slots_attns, _, _ = model(image)
-        latent,_,_,_= model.forward_encoder_copy(image)
+        latent= model.forward_encoder(image)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
 
@@ -227,13 +227,12 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         # breakpoint()
         # slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
 
-        slots=model.slot_proj2(slots)
+        # slots=model.slot_proj2(slots)
         collected_outputs.append(slots)
         # break
 
     
 
-breakpoint()
 
 
 ## MINIBATCH SKLEARN
@@ -242,7 +241,6 @@ breakpoint()
 tolerance = args.tol
 max_iterations = args.max_iterations
 
-scaler = StandardScaler()
 
 
 
@@ -254,10 +252,8 @@ all_slots_tensor = torch.cat(collected_outputs, dim=0)
 # you can simply reshape it to (-1, 256) to flatten all but the last dimension.
 # data_2d = all_slots_tensor.reshape(-1, 768)
 data_2d = all_slots_tensor.reshape(-1, 768)
-num_samples = 10000
 
 
-breakpoint()
 
 # num_samples = 10000
 
@@ -271,7 +267,7 @@ breakpoint()
 # Step 3: Convert to NumPy array if you're using PyTorch
 data_2d_np = data_2d.cpu().numpy()
 
-data_2d_np_normalized = scaler.fit_transform(data_2d_np)
+data_2d_np_normalized = data_2d_np#scaler.fit_transform(data_2d_np)
 
 
 
@@ -288,7 +284,6 @@ file_name = 'kmeans_model16384_100ep_hard.joblib'
 
 full_path = os.path.join(directory, file_name)
 
-full_path_scaler = os.path.join(directory, 'scaler.joblib')
 
 
 
@@ -298,7 +293,6 @@ if not os.path.exists(directory):
 
 dump(kmeans_model, full_path)
 
-dump(scaler, full_path_scaler)
 
 print(f"Number of iterations: {kmeans_model.n_iter_}")
 print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
