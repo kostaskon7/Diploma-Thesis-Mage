@@ -140,7 +140,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
 
-    latent,_,_,_=model.forward_encoder_copy(image)
+    # latent,_,_,_=model.forward_encoder_copy(image)
+    latent = model.forward_encoder(image)
     latent=latent[:,1:,:]
 
     slots, attn, init_slots, attn_logits = model.slot_attention(latent)
@@ -153,7 +154,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
 
-    slots = model.slot_proj2(slots)
+    # slots = model.slot_proj2(slots)
 
     # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
     slots_tensor = slots  # Replace with your actual tensor
@@ -209,6 +210,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots = slots.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
 
     slots = torch.tensor(slots).cuda()
+
+    slots = model.slot_proj2(slots)
 
     # # Find the indices of the maximum values (most important features) from the soft attention
     # max_indices = torch.argmax(attn, dim=-1)
