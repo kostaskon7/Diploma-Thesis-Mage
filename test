@@ -1,0 +1,82 @@
+# Obtain parameter groups with default weight decay handling
+param_groups = add_weight_decay(model, weight_decay=args.weight_decay)
+
+# Parameters for slot_attention and forward_decoder_spot with desired LRs
+lr_slot_attention = args.lr * 2  # Adjust as needed
+lr_decoder_spot = args.lr * 0.5  # Adjust as needed
+parameters_slot_attention = list(model.slot_attention.parameters())
+parameters_decoder_spot = list(model.forward_decoder_spot.parameters())
+
+# Adjust param_groups to include special LRs for these parameters
+# This involves filtering out these parameters from the existing groups and adding new groups
+new_param_groups = []
+for group in param_groups:
+    # Filter out special parameters from existing groups
+    filtered_params = [p for p in group['params'] if p not in parameters_slot_attention + parameters_decoder_spot]
+    if filtered_params:
+        new_group = dict(group, params=filtered_params)  # Create a new group with filtered params
+        new_param_groups.append(new_group)
+
+# Add new groups for special parameters
+if parameters_slot_attention:
+    new_param_groups.append({'params': parameters_slot_attention, 'lr': lr_slot_attention, 'weight_decay': args.weight_decay})
+if parameters_decoder_spot:
+    new_param_groups.append({'params': parameters_decoder_spot, 'lr': lr_decoder_spot, 'weight_decay': args.weight_decay})
+
+# Use the adjusted param_groups to create your optimizer
+optimizer = torch.optim.AdamW(new_param_groups, lr=args.lr, betas=(0.9, 0.95))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+python main_pretrain_2dec.py --batch_size 32 --accum_iter 1 --model mage_vit_base_patch16 --resume /mnt/datalv/gkako/mage_pretrained/mage-vitb-1600.pth --warmup_epochs 5 --vqgan_ckpt_path /mnt/datalv/gkako/mage_pretrained/vqgan_jax_strongaug.ckpt --epochs 50  --lr 6e-5 --min_lr 6e-6 --weight_decay 0.05 --output_dir /mnt/datalv/gkako/mage_output/classic_2dec_mageenc_ft_0lspot_6e5lr_unfreeze_all --data_path /mnt/data/gkako/COCO2017 --log_dir /mnt/datalv/gkako/mage_output/classic_2dec_mageenc_ft_0lspot_6e5lr_unfreeze_all --use_decs 1 --train_permutations random --mask_ratio_min 0.5 --both_mboi 1 --slot_size 768
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- Mask pooling is done with sum pooling ==> should be become avg pooling. Barely 28 mbo_i
+- kmeans cluster = 1024, 2048, 4096, 8192,  Done, not good results
+- Mask pooling also the positional embeddings of mage decoder and add them to the mask-pooled encoder features (running giannis)
+
+- Low Mage loss(unfrozen encoder, no spot decoder), 
+    * Tested with spot decoder as well, no difference in mage loss
+
+
+- Visualize slot centroid
+
+- Add noise to kmeans generation
+
+- Test multigpu code
+
+
+
+/data/2dec-normal-768slot-unfreeze_dec-random-nocls-high-lr-02-1/checkpoint-48.pth
+
+
+test kmeans in trained image
+
+1 cluster visualization
+
+on validation generate images with full slots
