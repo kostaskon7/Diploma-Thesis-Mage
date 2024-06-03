@@ -386,14 +386,14 @@ class MaskedGenerativeEncoderViT(nn.Module):
                 linear(args.slot_size, args.d_model, bias=False),
                 nn.LayerNorm(args.d_model),
             )
-            self.slot_proj2 = nn.Sequential(
-                linear(args.slot_size, args.d_model, bias=False),
-                nn.LayerNorm(args.d_model),
-            )
             # self.slot_proj2 = nn.Sequential(
-            #     linear(args.d_model, args.d_model, bias=False),
+            #     linear(args.slot_size, args.d_model, bias=False),
             #     nn.LayerNorm(args.d_model),
             # )
+            self.slot_proj2 = nn.Sequential(
+                linear(args.d_model, args.d_model, bias=False),
+                nn.LayerNorm(args.d_model),
+            )
             self.dec_input_dim = args.d_model
         
         args.max_tokens=img_size
@@ -857,12 +857,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         # Hard Mask pooling
-        # attn=attn.clone().detach()
-        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
-        # # To add normalization
+        attn=attn.clone().detach()
+        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
+        # To add normalization
         # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
-        # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
-        # slots_pool=self.slot_proj2(slots_pool)
+        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+        slots_pool=self.slot_proj2(slots_pool)
 
         # Classic
         slots=self.slot_proj2(slots)
