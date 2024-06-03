@@ -199,7 +199,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # Replace the slots with the closest centroids
         slots = closest_centroids
 
-    slots=slots.cuda()
+    # slots=slots.cuda()
 
     if args.scaler != 'none':
         # Step 5: De-normalize the centroids
@@ -207,9 +207,9 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     # breakpoint()
     # # Reshape back to the original slots shape
-    slots = slots.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-
     slots = torch.tensor(slots).cuda()
+
+    slots = slots.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
 
     slots = model.slot_proj2(slots)
 
