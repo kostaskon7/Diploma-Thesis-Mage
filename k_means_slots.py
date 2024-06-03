@@ -208,7 +208,8 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
     image=image.cuda()
     with torch.no_grad():
         # val_loss, _, _, default_slots_attns, _, _ = model(image)
-        latent= model.forward_encoder(image)
+        # latent= model.forward_encoder(image)
+        latent,_,_,_= model.forward_encoder_copy(image)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
 
@@ -299,7 +300,7 @@ print(f"inertia_ used for stopping criterion: {kmeans_model.inertia_}")
 
 
 n_clusters = 16384  # Example: Define the number of clusters
-kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations,max_no_improvement=None)  # Adjust batch_size as necessary
+kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
 kmeans_model.fit(data_2d_np_normalized)
 
 
