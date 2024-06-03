@@ -858,15 +858,18 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         # Hard Mask pooling
-        attn=attn.clone().detach()
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
-        # To add normalization
-        attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
-        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
-        slots_pool=self.slot_proj2(slots_pool)
+        # attn=attn.clone().detach()
+        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
+        # # To add normalization
+        # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+        # slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+        # slots_pool=self.slot_proj2(slots_pool)
+
+        # Classic
+        slots=self.slot_proj2(slots)
 
         # Decoders
-        logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
 
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
