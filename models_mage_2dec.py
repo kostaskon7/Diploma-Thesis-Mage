@@ -865,10 +865,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         slots_pool=self.slot_proj2(slots_pool)
 
         # Classic
-        slots=self.slot_proj2(slots)
+        # slots=self.slot_proj2(slots)
 
         # Decoders
-        logits,attn_dec = self.forward_decoder(latent_mask,slots ,token_drop_mask, token_all_mask)
+        logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
