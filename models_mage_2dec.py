@@ -838,9 +838,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
     def forward(self, imgs,mask_crf):
         
-        # with torch.no_grad():
-        latent,_,_,_= self.forward_encoder_copy(imgs)
-        latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+        with torch.no_grad():
+            latent= self.forward_encoder(imgs)
+            latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
         # latent_mask=latent_mask.clone().detach()
         
         bsz, _ = gt_indices.size()
@@ -858,7 +858,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # Hard Mask pooling
         attn=attn.clone().detach()
-        # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
+        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
         # To add normalization
         # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
         slots_pool = torch.matmul(attn.transpose(-1, -2), latent)
@@ -868,7 +868,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
-        # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
+        dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
 
         
@@ -878,7 +878,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
         # loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
-        # loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
+        loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
 
         # Crf
         with torch.cuda.amp.autocast(enabled=False):
@@ -900,7 +900,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
                 ce_loss = self.criterion_masks(attn_logits, mask_crf_onehot)
             else:
                 ce_loss=0
-            loss_spot=0
+            # loss_spot=0
 
 
         torch.cuda.empty_cache()
@@ -910,7 +910,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         loss=(loss_mage,loss_spot,ce_loss)
 
         if self.both_mboi:
-            dec_slots_attns=(attn_dec,attn_dec)
+            dec_slots_attns=(dec_slots_attns,attn_dec)
 
         return loss, imgs, token_all_mask,attn,dec_slots_attns,logits
 
