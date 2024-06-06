@@ -209,7 +209,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
     with torch.no_grad():
         # val_loss, _, _, default_slots_attns, _, _ = model(image)
         # latent= model.forward_encoder(image)
-        latent,_,_,_= model.forward_encoder_copy(image)
+        latent= model.forward_encoder(image)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
         latent=latent[:,1:,:]
 
@@ -220,7 +220,7 @@ for batch, image in enumerate(tqdm(val_loader, desc="Processing images")):
         attn=attn.clone().detach()
         # Latent another transformation?
         attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=7).to(latent.dtype)
-        attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
+        # attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
         # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
 
