@@ -868,7 +868,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         logits,attn_dec = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
-        dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
+        # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
+        dec_recon, dec_slots_attns=self.forward_decoder_spot(slots_pool, latent)
+
         #[Batch,decoder264,2025]
 
         
