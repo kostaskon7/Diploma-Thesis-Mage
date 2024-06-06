@@ -344,6 +344,8 @@ dump(kmeans_model, full_path)
 
 print(f"Number of iterations: {kmeans_model.n_iter_}")
 print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
+print(f"inertia_ used for stopping criterion: {kmeans_model.inertia_}")
+
 
 n_clusters = 65536  # Example: Define the number of clusters
 kmeans_model = MiniBatchKMeans(n_clusters=n_clusters, tol=tolerance, max_iter=max_iterations)  # Adjust batch_size as necessary
@@ -363,3 +365,5 @@ dump(kmeans_model, full_path)
 
 print(f"Number of iterations: {kmeans_model.n_iter_}")
 print(f"Tolerance used for stopping criterion: {kmeans_model.tol}")
+print(f"inertia_ used for stopping criterion: {kmeans_model.inertia_}")
+
