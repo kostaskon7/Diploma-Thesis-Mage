@@ -166,50 +166,11 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # Replace slots with cluster centers
         slots = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
-    
-    else:
+        slots = torch.tensor(slots).cuda()
 
-        # # Calculate the squared Euclidean distance
-        breakpoint()
-        slots = slots.reshape(-1, 768)
+        slots = slots.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
 
-        # Initialize an empty tensor to hold the distances
-        num_slots = slots.shape[0]
-        num_data = kmeans_model.shape[0]
-        distances = torch.empty((num_slots, num_data), dtype=torch.float16, device=slots.device)
 
-        # distances = torch.sum((slots_expanded - data_2d_expanded) ** 2, dim=2)  # Shape: (x, 828009)
-        for i in range(0, num_slots, bsz):
-            end_i = min(i + bsz, num_slots)
-            slots_batch = slots[i:end_i].unsqueeze(1)  # Shape: (batch_size, 1, 768)
-
-            for j in range(0, num_data, bsz):
-                end_j = min(j + bsz, num_data)
-                data_2d_batch = kmeans_model[j:end_j].unsqueeze(0)  # Shape: (1, batch_size, 768)
-
-                # Compute the squared Euclidean distance for the current batches
-                distances[i:end_i, j:end_j] = torch.sum((slots_batch - data_2d_batch) ** 2, dim=2)
-
-        # Find the index of the closest element in data_2d for each slot
-        closest_indices = torch.argmin(distances, dim=1)  # Shape: (x,)
-
-        # Gather the closest centroids from data_2d
-        closest_centroids = kmeans_model[closest_indices]  # Shape: (x, 768)
-
-        # Replace the slots with the closest centroids
-        slots = closest_centroids
-
-    # slots=slots.cuda()
-
-    if args.scaler != 'none':
-        # Step 5: De-normalize the centroids
-        centers = scaler.inverse_transform(centers)
-
-    # breakpoint()
-    # # Reshape back to the original slots shape
-    slots = torch.tensor(slots).cuda()
-
-    slots = slots.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
 
     slots = model.slot_proj2(slots)
 
