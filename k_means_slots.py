@@ -102,6 +102,8 @@ parser.add_argument('--directory', type=str, default=None, help='Directory of cr
 
 parser.add_argument('--max_iterations',  type=int, default=300, help='Max iterations in kmeans')
 parser.add_argument('--tol',  type=float, default=1e-3, help='Max tolerance reached')
+parser.add_argument('--use_spot', type=int, default=None, help='Use spot decoder or not')
+
 
 
 
