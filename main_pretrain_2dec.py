@@ -154,7 +154,9 @@ def get_args_parser():
     parser.add_argument('--crf_dir', type=str, default=None, help='Directory of crf files')
 
     parser.add_argument('--val_mask_size', type=int, default=320, help='Validation mask size')
+    parser.add_argument('--use_spot', type=int, default=None, help='Use spot decoder or not')
 
+    
     return parser
 
 
