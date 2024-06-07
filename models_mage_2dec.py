@@ -874,7 +874,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
             loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
         else:
-            loss_spot
+            loss_spot = 0
 
 
         #[Batch,decoder264,2025]
