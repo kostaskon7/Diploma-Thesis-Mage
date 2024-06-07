@@ -244,6 +244,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.epsilon = epsilon
         self.cross_attn = args.cross_attn
         self.both_mboi = args.both_mboi
+        self.use_spot = args.use_spot
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
@@ -840,7 +841,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         
         with torch.no_grad():
             latent= self.forward_encoder(imgs)
-        latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+            latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
         # latent_mask=latent_mask.clone().detach()
         
         bsz, _ = gt_indices.size()
@@ -869,7 +870,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
-        dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
+        if self.use_spot:
+            dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
+            loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
+        else:
+            loss_spot
+
 
         #[Batch,decoder264,2025]
 
@@ -880,7 +886,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
         # loss_spot = ((latent[:,1:,:] - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
-        loss_spot = ((latent - dec_recon) ** 2).sum()/(bsz*H_enc*W_enc*self.d_model)
+        
 
         # Crf
         with torch.cuda.amp.autocast(enabled=False):
