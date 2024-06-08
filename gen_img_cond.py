@@ -462,6 +462,9 @@ parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans job
 parser.add_argument('--scaler',  type=str, default='none', help='scaler joblib path')
 parser.add_argument('--usemodel',  type=int, default=None, help='Use kmeansmodel or sample')
 parser.add_argument('--use_spot', type=int, default=None, help='Use spot decoder or not')
+parser.add_argument('--num_gens', type=int, default=1, help='Number of batches to be generated')
+
+
 
 
 
@@ -559,7 +562,7 @@ for batch, data in iterator:
             orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
             orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(batch*args.batch_size + b_id).zfill(5))), orig_img_np)
-    if batch >0:
+    if batch > args.num_gens:
         break
 
 log_writer.close()
