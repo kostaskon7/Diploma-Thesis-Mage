@@ -709,6 +709,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # Reshape cluster_assignments_tensor to match the slots shape
         cluster_assignments_tensor = cluster_assignments_tensor.view(slots.shape[0], slots.shape[1])
+        breakpoint()
         uniform_mask_reshaped = uniform_mask.reshape(-1, num_features)  # Shape: [16*7, 768]
 
         # Flatten the masked slots and cluster assignments for the loss computation
