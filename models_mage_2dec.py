@@ -721,6 +721,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         logits = torch.mm(masked_slots, cluster_centers.t())  # Shape: [num_masked_elements, num_classes]
 
         # Compute the loss
+        breakpoint()
         loss = self.criterion_masks(logits, masked_cluster_ids)
         return(loss)
 
@@ -914,6 +915,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward(self, imgs,mask_crf):
         
         self.apply_mask = torch.rand(1) < self.prob_threshold
+        breakpoint()
         
         latent= self.forward_encoder(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
@@ -941,6 +943,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
             # Decoders
             logits,attn_dec,cluster_assignments,uniform_mask = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+            breakpoint()
 
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
