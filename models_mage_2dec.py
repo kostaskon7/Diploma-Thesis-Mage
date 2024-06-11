@@ -709,7 +709,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # Reshape cluster_assignments_tensor to match the slots shape
         cluster_assignments_tensor = cluster_assignments_tensor.view(slots.shape[0], slots.shape[1])
-        breakpoint()
         uniform_mask_reshaped = uniform_mask.reshape(-1, num_features)  # Shape: [16*7, 768]
 
         # Flatten the masked slots and cluster assignments for the loss computation
@@ -717,13 +716,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         masked_slots = slots.reshape(-1, num_features)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements, 768]
         masked_cluster_ids = cluster_assignments_tensor.view(-1)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements]
 
-            # Transform masked_slots to logits if they are not already
-        cluster_centers = torch.tensor(self.kmeans_model.cluster_centers_, dtype=torch.float32).cuda()
-
         # Compute the loss
-        breakpoint()
-        loss = self.criterion_masks(slots, masked_cluster_ids)
-        breakpoint()
+        loss = self.criterion_masks(masked_slots, masked_cluster_ids)
         return(loss)
 
     def forward_decoder(self, x,slots, token_drop_mask, token_all_mask):
@@ -918,7 +912,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward(self, imgs,mask_crf):
         
         self.apply_mask = torch.rand(1) < self.prob_threshold
-        breakpoint()
         
         latent= self.forward_encoder(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
@@ -945,7 +938,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
             # Decoders
             logits,attn_dec,cluster_assignments,uniform_mask = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
-            breakpoint()
 
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
