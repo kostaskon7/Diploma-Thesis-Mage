@@ -809,6 +809,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #[32,256,7]
 
         if self.apply_mask.item():
+            uniform_mask.expand(batch_size, self.slot_attention.num_slots, x.shape[2])
             return x,normalized_atts_slots,cluster_assignments,uniform_mask
         
         return x,normalized_atts_slots,_,_
