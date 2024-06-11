@@ -774,13 +774,13 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
             # Create one uniform mask for the entire batch
             uniform_mask = torch.rand(self.slot_attention.num_slots) < self.mask_prob
-            uniform_mask = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, num_features)
+            uniform_mask_slots = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, num_features)
 
             # Apply the uniform mask token across all samples in the batch
             mask_token_expanded = self.mask_token.expand(slots.shape[0], slots.shape[1], slots.shape[2])
 
 
-            slots[uniform_mask] = mask_token_expanded[uniform_mask]
+            slots[uniform_mask_slots] = mask_token_expanded[uniform_mask_slots]
 
 
 
@@ -810,9 +810,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #[32,256,7]
 
         if self.apply_mask.item():
-            uniform_mask = uniform_mask.repeat(1, 1, x.shape[2] // uniform_mask.size(2))
+            uniform_mask_logits = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, x.shape[2])
 
-            return x,normalized_atts_slots,cluster_assignments,uniform_mask
+            return x,normalized_atts_slots,cluster_assignments,uniform_mask_logits
         
         return x,normalized_atts_slots,_,_
     
