@@ -845,7 +845,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # with torch.no_grad():
         latent= self.forward_encoder(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
-        latent = latent.clone().detach()
+        latent_detached = latent[:,1:,:].clone().detach()
         # latent_mask=latent_mask.clone().detach()
         
         bsz, _ = gt_indices.size()
@@ -853,9 +853,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
             # latent= self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-        latent=latent[:,1:,:]
+        # latent=latent[:,1:,:]
         with torch.cuda.amp.autocast(enabled=False):
-            slots, attn, _, attn_logits = self.slot_attention(latent)
+            # slots, attn, _, attn_logits = self.slot_attention(latent)
+            slots, attn, _, attn_logits = self.slot_attention(latent_detached)
 
 
         
