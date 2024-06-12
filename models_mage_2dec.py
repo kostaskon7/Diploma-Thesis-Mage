@@ -948,8 +948,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
                 loss_slots = 0
         
         print(loss_slots)
-        if torch.isnan(loss_slots):
-            breakpoint()
+        if self.apply_mask.item():
+            if torch.isnan(loss_slots) :
+                breakpoint()
         
 
 
