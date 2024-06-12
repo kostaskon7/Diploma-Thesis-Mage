@@ -845,18 +845,17 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # with torch.no_grad():
         latent= self.forward_encoder(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
-        latent_detached = latent[:,1:,:].clone().detach()
         # latent_mask=latent_mask.clone().detach()
         
         bsz, _ = gt_indices.size()
-        H_enc, W_enc = int(math.sqrt(latent_detached.shape[1])), int(math.sqrt(latent_detached.shape[1]))
+        H_enc, W_enc = int(math.sqrt(latent.shape[1])), int(math.sqrt(latent.shape[1]))
 
             # latent= self.forward_encoder(imgs)
         #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-        # latent=latent[:,1:,:]
+        latent=latent[:,1:,:]
         with torch.cuda.amp.autocast(enabled=False):
             # slots, attn, _, attn_logits = self.slot_attention(latent)
-            slots, attn, _, attn_logits = self.slot_attention(latent_detached)
+            slots, attn, _, attn_logits = self.slot_attention(latent)
 
 
         
@@ -864,10 +863,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # Hard Mask pooling
         attn=attn.clone().detach()
-        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent_detached.dtype)
+        attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=self.slot_attention.num_slots).to(latent.dtype)
         # To add normalization
         # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
-        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent_detached)
+        slots_pool = torch.matmul(attn_onehot.transpose(-1, -2), latent)
         slots_pool=self.slot_proj2(slots_pool)
 
         # Decoders
