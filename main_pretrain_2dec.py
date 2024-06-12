@@ -156,6 +156,9 @@ def get_args_parser():
     parser.add_argument('--val_mask_size', type=int, default=320, help='Validation mask size')
     parser.add_argument('--use_spot', type=int, default=None, help='Use spot decoder or not')
 
+    parser.add_argument('--kmeans_path', type=str, default=None, help='Kmeans model path')
+
+
     
     return parser
 
