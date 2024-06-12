@@ -272,7 +272,7 @@ def main(args):
     print(optimizer)
     loss_scaler = NativeScaler()
 
-    misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
+    # misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
     # if os.path.isfile(args.resume):
     #     checkpoint = torch.load(args.resume, map_location='cpu')
     #     start_epoch = checkpoint['epoch']
