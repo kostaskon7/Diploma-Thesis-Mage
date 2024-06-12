@@ -153,21 +153,10 @@ def get_args_parser():
 
     parser.add_argument('--crf_dir', type=str, default=None, help='Directory of crf files')
 
-    # Masked Transformer
-    parser.add_argument('--num_heads_seg', type=int, default=6)
-    parser.add_argument('--d_model_seg', type=int, default=768)
-    parser.add_argument('--n_layers_seg', type=int, default=2)
-
-    # Mask Slot Probabilities
-
-    parser.add_argument('--prob_threshold', type=int, default=0.5)
-    parser.add_argument('--mask_prob', type=int, default=0.5)
-
-    # Kmeans Path
-    parser.add_argument('--kmeans_path', type=str, default=None, help='Directory of kmeans object file')
+    parser.add_argument('--val_mask_size', type=int, default=320, help='Validation mask size')
+    parser.add_argument('--use_spot', type=int, default=None, help='Use spot decoder or not')
 
     
-
     return parser
 
 
@@ -236,7 +225,7 @@ def main(args):
     
     train_loader = torch.utils.data.DataLoader(train_dataset, sampler=train_sampler, shuffle=True, drop_last=True, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
-    val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256,normalization = False)
+    val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=args.val_mask_size,normalization = False)
     val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
     # define the model
@@ -250,11 +239,6 @@ def main(args):
 
     model_without_ddp = model
     print("Model = %s" % str(model_without_ddp))
-
-    model.to(0)
-
-    checkpoint = torch.load(args.resume, map_location='cpu')
-    model.load_state_dict(checkpoint['model'])
 
     eff_batch_size = args.batch_size * args.accum_iter * misc.get_world_size()
     
@@ -270,17 +254,14 @@ def main(args):
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
         model_without_ddp = model.module
-
-
-
     
     # following timm: set wd as 0 for bias and norm layers
-    param_groups = optim_factory.add_weight_decay(model, args.weight_decay)
+    param_groups = optim_factory.add_weight_decay(model_without_ddp, args.weight_decay)
     optimizer = torch.optim.AdamW(param_groups, lr=args.lr, betas=(0.9, 0.95))
     print(optimizer)
     loss_scaler = NativeScaler()
 
-    # misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
+    misc.load_model(args=args, model_without_ddp=model_without_ddp, optimizer=optimizer, loss_scaler=loss_scaler)
     # if os.path.isfile(args.resume):
     #     checkpoint = torch.load(args.resume, map_location='cpu')
     #     start_epoch = checkpoint['epoch']
@@ -393,7 +374,7 @@ def main(args):
                 if args.both_mboi:
                     dec_slots_attns,mage_dec_slots_attns=dec_slots_attns
                 
-                val_loss_mage,ce_loss,  val_loss_spot,loss_slots = val_loss
+                val_loss_mage,ce_loss,  val_loss_spot = val_loss
                 # codebook_emb_dim=256
                 # logits = logits[:, 8:, :model.codebook_size]
                 # # logits = logits[:, 1:, :model.codebook_size]
@@ -433,8 +414,8 @@ def main(args):
                 
 
 
-                default_attns = F.interpolate(default_slots_attns, size=256, mode='bilinear')
-                dec_attns = F.interpolate(dec_slots_attns, size=256, mode='bilinear')
+                default_attns = F.interpolate(default_slots_attns, size=args.val_mask_size, mode='bilinear')
+                dec_attns = F.interpolate(dec_slots_attns, size=args.val_mask_size, mode='bilinear')
                 
                 # dec_attns shape [B, num_slots, H, W]
                 default_attns = default_attns.unsqueeze(2)
@@ -461,7 +442,7 @@ def main(args):
 
                 if args.both_mboi:
                     mage_dec_slots_attns = mage_dec_slots_attns.transpose(-1, -2).reshape(batch_size, model.slot_attention.num_slots, 16, 16)
-                    mage_dec_attns = F.interpolate(mage_dec_slots_attns, size=256, mode='bilinear')
+                    mage_dec_attns = F.interpolate(mage_dec_slots_attns, size=args.val_mask_size, mode='bilinear')
                     mage_dec_attns = mage_dec_attns.unsqueeze(2)
                     pred_mage_dec_mask = mage_dec_attns.argmax(1).squeeze(1)
                     pred_mage_dec_mask_reshaped = torch.nn.functional.one_hot(pred_mage_dec_mask).to(torch.float32).permute(0,3,1,2).cuda()
@@ -498,7 +479,6 @@ def main(args):
             
             log_writer.add_scalar('VAL/val_spot', val_loss_spot, epoch)
             log_writer.add_scalar('VAL/val_mage', val_loss_mage, epoch)
-            log_writer.add_scalar('VAL/loss_slots', loss_slots, epoch)
             log_writer.add_scalar('VAL/ari (slots)', ari_slot, epoch)
             log_writer.add_scalar('VAL/ari (decoder)', ari, epoch)
             log_writer.add_scalar('VAL/mbo_c', mbo_c, epoch)
@@ -510,13 +490,13 @@ def main(args):
 
 
             if args.both_mboi:
-                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Slots= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t mBO_i_mage = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
-                epoch, val_loss_mage,loss_slots, ari, ari_slot, mbo_c, mbo_i, mbo_i_mage, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t mBO_i_mage = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
+                epoch, val_loss_mage,val_loss_spot, ari, ari_slot, mbo_c, mbo_i, mbo_i_mage, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
                 MBO_i_metric_mage.reset()
 
             else:
-                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Slots= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
-                    epoch, val_loss_mage,loss_slots, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
+                print('====> Epoch: {:3} \t Loss Mage= {:F} \t Loss Spot= {:F}  \t ARI = {:F} \t ARI_slots = {:F} \t mBO_c = {:F} \t mBO_i = {:F} \t fg_IoU = {:F} \t mBO_c_slots = {:F} \t mBO_i_slots = {:F} \t fg_IoU_slots = {:F}'.format(
+                    epoch, val_loss_mage,val_loss_spot, ari, ari_slot, mbo_c, mbo_i, fg_iou, mbo_c_slot, mbo_i_slot, fg_iou_slot))
             
             ari_metric.reset()
             MBO_c_metric.reset()
@@ -548,7 +528,7 @@ def main(args):
                 #torch.save(model.state_dict(), os.path.join(args.output_dir, 'best_model.pt'))
                 
             if epoch%visualize_per_epoch==0 or epoch==args.epochs-1:
-                image = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
+                image = F.interpolate(image, size=args.val_mask_size, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
                 rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
                 rgb_dec_attns = image.unsqueeze(1) * dec_attns + 1. - dec_attns
     
@@ -559,7 +539,7 @@ def main(args):
 
             if best_mbo_i_mage< mbo_i_mage and epoch%visualize_per_epoch==0 and args.both_mboi:
                 best_mbo_i_mage = mbo_i_mage
-                image = F.interpolate(image, size=256, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
+                image = F.interpolate(image, size=args.val_mask_size, mode='bilinear')#EDWWWWWWWW HTAN args.mask_size
                 rgb_default_attns = image.unsqueeze(1) * default_attns + 1. - default_attns
                 rgb_dec_attns = image.unsqueeze(1) * mage_dec_attns + 1. - mage_dec_attns
     
@@ -586,8 +566,8 @@ def main(args):
                 'model': model.state_dict(),
                 'optimizer': optimizer.state_dict()
             }
-            if (epoch % 10 == 0) or (epoch > args.epochs -5):
-                torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
+            # if (epoch % 10 == 0) or (epoch > args.epochs -5):
+            torch.save(checkpoint, os.path.join(args.output_dir, "checkpoint-%s.pth" % epoch))
 
             print('====> Best Loss = {:F} @ Epoch {}'.format(best_val_loss, best_epoch))
 
