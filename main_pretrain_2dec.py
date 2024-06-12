@@ -157,6 +157,10 @@ def get_args_parser():
     parser.add_argument('--use_spot', type=int, default=None, help='Use spot decoder or not')
 
     parser.add_argument('--kmeans_path', type=str, default=None, help='Kmeans model path')
+    parser.add_argument('--prob_threshold', type=float, default=0.5, help='Mask Probability Threshold')
+    parser.add_argument('--mask_prob', type=float, default=0.5, help='Masking Probability')
+
+
 
 
     
