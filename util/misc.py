@@ -333,7 +333,28 @@ def load_model(args, model_without_ddp, optimizer, loss_scaler):
         model_without_ddp.load_state_dict(checkpoint['model'], strict=False)
         print("Resume checkpoint %s" % args.resume)
         if 'optimizer' in checkpoint and 'epoch' in checkpoint and not (hasattr(args, 'eval') and args.eval):
-            optimizer.load_state_dict(checkpoint['optimizer'])
+            try:
+                optimizer.load_state_dict(checkpoint['optimizer'])
+            except:
+                # Assuming optimizer is already defined
+                optimizer_state_dict = optimizer.state_dict()
+                checkpoint_optimizer_state_dict = checkpoint['optimizer']
+
+                # Extract keys from the state dict
+                optimizer_keys = set(optimizer_state_dict.keys())
+                checkpoint_keys = set(checkpoint_optimizer_state_dict.keys())
+
+                # Compare keys
+                missing_keys = checkpoint_keys - optimizer_keys
+                redundant_keys = optimizer_keys - checkpoint_keys
+
+                print("Keys in checkpoint but not in current optimizer state_dict:")
+                for key in missing_keys:
+                    print(key)
+
+                print("\nKeys in current optimizer state_dict but not in checkpoint:")
+                for key in redundant_keys:
+                    print(key)
             args.start_epoch = checkpoint['epoch'] + 1
             if 'scaler' in checkpoint:
                 loss_scaler.load_state_dict(checkpoint['scaler'])
