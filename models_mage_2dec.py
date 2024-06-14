@@ -753,7 +753,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
             # Replace slots with cluster centers
             centers = self.kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
-            breakpoint()
+            # breakpoint()
 
             # Reshape back to the original slots shape
             slots = centers.reshape(slots.shape[0], slots.shape[1], slots.shape[2])  # Use the original num_slots
