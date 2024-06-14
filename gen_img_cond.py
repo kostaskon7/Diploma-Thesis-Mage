@@ -169,6 +169,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         slots = torch.tensor(slots).cuda()
 
         slots = slots.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+        breakpoint()
 
 
 
