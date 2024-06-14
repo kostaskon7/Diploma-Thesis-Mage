@@ -695,11 +695,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
     
     def slot_loss(self,slots,cluster_assignments,uniform_mask):
         # Convert cluster assignments to tensor
+        breakpoint()
         batch_size, num_slots, num_features = slots.shape
 
         cluster_assignments_tensor = torch.tensor(cluster_assignments, dtype=torch.long).cuda()  # Shape: [images*num_slots]
 
-        print(f"Unique cluster assignments: {torch.unique(cluster_assignments_tensor)}")
 
 
         # Reshape cluster_assignments_tensor to match the slots shape
@@ -711,14 +711,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         masked_slots = slots.reshape(-1, num_features)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements, 768]
         masked_cluster_ids = cluster_assignments_tensor.view(-1)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements]
 
-        print(f"Unique masked cluster IDs: {torch.unique(masked_cluster_ids)}")
-        num_classes = self.kmeans_model.n_clusters
-        print(f"Number of classes (clusters): {num_classes}")
 
-        if masked_cluster_ids.min() < 0 or masked_cluster_ids.max() >= num_classes:
-            print(f"Error: Cluster IDs out of range. Valid range: [0, {num_classes - 1}]")
-            print(f"Cluster IDs: {masked_cluster_ids}")
-            raise ValueError("Cluster IDs are out of the valid range.")
+
         breakpoint()
         # Compute the loss
         loss = self.criterion_masks(masked_slots, masked_cluster_ids)
