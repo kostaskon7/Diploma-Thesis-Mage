@@ -948,10 +948,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
-            if self.apply_mask.item():
-                loss_slots = self.slot_loss(logits[:,:self.slot_attention.num_slots],cluster_assignments,uniform_mask)
-            else:
-                loss_slots = 0
+        if self.apply_mask.item():
+            loss_slots = self.slot_loss(logits[:,:self.slot_attention.num_slots],cluster_assignments,uniform_mask)
+        else:
+            loss_slots = 0
         
         print(loss_slots)
         print(cluster_assignments)
