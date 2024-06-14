@@ -719,7 +719,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             print(f"Error: Cluster IDs out of range. Valid range: [0, {num_classes - 1}]")
             print(f"Cluster IDs: {masked_cluster_ids}")
             raise ValueError("Cluster IDs are out of the valid range.")
-
+        breakpoint()
         # Compute the loss
         loss = self.criterion_masks(masked_slots, masked_cluster_ids)
         return(loss)
