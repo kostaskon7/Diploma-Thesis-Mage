@@ -780,7 +780,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
                     atts = blk(x,slots=slots_for_dec, return_attention=True)
             x = blk(x,slots=slots_for_dec)
 
-
+        breakpoint()
         x = self.decoder_norm(x)
 
         word_embeddings = self.token_emb.word_embeddings.weight.data.detach()
