@@ -335,7 +335,9 @@ def load_model(args, model_without_ddp, optimizer, loss_scaler):
         if 'optimizer' in checkpoint and 'epoch' in checkpoint and not (hasattr(args, 'eval') and args.eval):
             try:
                 optimizer.load_state_dict(checkpoint['optimizer'])
-            except:
+            except Exception as e:
+                print(f"Exception occurred while loading optimizer state: {e}")
+
                 # Assuming optimizer is already defined
                 optimizer_state_dict = optimizer.state_dict()
                 checkpoint_optimizer_state_dict = checkpoint['optimizer']
