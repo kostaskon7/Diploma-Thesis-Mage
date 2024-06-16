@@ -789,7 +789,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             # slots[uniform_mask_slots] = mask_token_expanded[uniform_mask_slots]
 
             # Create a random mask probability between 0.4 and 0.8
-            mask_prob = torch.FloatTensor(1).uniform_(self.mask_prob, 0.8).item()
+            mask_prob = torch.FloatTensor(1).uniform_(self.mask_prob, 0.8)
             num_slots_to_mask = torch.ceil(mask_prob * self.slot_attention.num_slots).int().item()
 
             # Apply the mask per sample in the batch
