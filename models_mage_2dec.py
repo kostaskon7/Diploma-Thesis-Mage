@@ -234,7 +234,21 @@ class MlmLayer(nn.Module):
         logits = logits + self.bias
         return logits
     
+class MlmLayerSlots(nn.Module):
 
+    def __init__(self, feat_emb_dim, word_emb_dim, vocab_size):
+        super().__init__()
+        self.fc = nn.Linear(feat_emb_dim, word_emb_dim)
+        self.gelu = nn.GELU()
+        self.ln = nn.LayerNorm(word_emb_dim)
+        self.fc_final = nn.Linear(word_emb_dim, vocab_size)
+
+    def forward(self, x):
+        mlm_hidden = self.fc(x)
+        mlm_hidden = self.gelu(mlm_hidden)
+        mlm_hidden = self.ln(mlm_hidden)
+        logits = self.fc_final(mlm_hidden)
+        return logits
 
 
 
@@ -446,6 +460,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         # --------------------------------------------------------------------------
+        # MlmLayer Slots
+        self.mlm_layer_slots = MlmLayerSlots(feat_emb_dim=decoder_embed_dim, word_emb_dim=embed_dim, vocab_size=self.kmeans_model.n_clusters)
         # MlmLayer
         self.mlm_layer = MlmLayer(feat_emb_dim=decoder_embed_dim, word_emb_dim=embed_dim, vocab_size=vocab_size)
 
@@ -788,6 +804,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         breakpoint()
         x = self.decoder_norm(x)
+
+        # To add another layer
+        x_slots = self.mlm_layer_slots(x)
+        breakpoint()
 
         word_embeddings = self.token_emb.word_embeddings.weight.data.detach()
         x = self.mlm_layer(x, word_embeddings)
