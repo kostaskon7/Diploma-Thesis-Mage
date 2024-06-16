@@ -711,7 +711,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
     
     def slot_loss(self,slots,cluster_assignments,uniform_mask):
         # Convert cluster assignments to tensor
-        breakpoint()
         batch_size, num_slots, num_features = slots.shape
 
         cluster_assignments_tensor = torch.tensor(cluster_assignments, dtype=torch.long).cuda()  # Shape: [images*num_slots]
@@ -727,9 +726,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
         masked_slots = slots.reshape(-1, num_features)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements, 768]
         masked_cluster_ids = cluster_assignments_tensor.view(-1)[uniform_mask_reshaped.any(dim=1)]  # Shape: [num_masked_elements]
 
-
-
-        breakpoint()
         # Compute the loss
         loss = self.criterion_masks(masked_slots, masked_cluster_ids)
         return(loss)
@@ -802,13 +798,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
                     atts = blk(x,slots=slots_for_dec, return_attention=True)
             x = blk(x,slots=slots_for_dec)
 
-        breakpoint()
         x = self.decoder_norm(x)
 
         # To add another layer
         if self.apply_mask.item():
             x_slots = self.mlm_layer_slots(x[:,:self.slot_attention.num_slots])
-        breakpoint()
 
         word_embeddings = self.token_emb.word_embeddings.weight.data.detach()
         x = self.mlm_layer(x, word_embeddings)
