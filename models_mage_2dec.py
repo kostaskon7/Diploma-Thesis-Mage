@@ -839,7 +839,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #[32,256,7]
 
         if self.apply_mask.item():
-            uniform_mask_logits = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, x_slots.shape[2])
+            # uniform_mask_logits = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, x_slots.shape[2])
+            uniform_mask_logits = uniform_mask.unsqueeze(2).expand(batch_size, self.slot_attention.num_slots, x_slots.shape[2])
 
             return x,normalized_atts_slots,cluster_assignments,uniform_mask_logits,x_slots
         
