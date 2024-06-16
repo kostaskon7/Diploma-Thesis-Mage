@@ -778,15 +778,28 @@ class MaskedGenerativeEncoderViT(nn.Module):
             slots = centers.reshape(slots.shape[0], slots.shape[1], slots.shape[2])  # Use the original num_slots
             slots = torch.tensor(slots).cuda()
 
-            # Create one uniform mask for the entire batch
-            uniform_mask = torch.rand(self.slot_attention.num_slots) < self.mask_prob
-            uniform_mask_slots = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, num_features)
+            # # Create one uniform mask for the entire batch
+            # uniform_mask = torch.rand(self.slot_attention.num_slots) < self.mask_prob
+            # uniform_mask_slots = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, num_features)
 
-            # Apply the uniform mask token across all samples in the batch
-            mask_token_expanded = self.mask_token.expand(slots.shape[0], slots.shape[1], slots.shape[2])
+            # # Apply the uniform mask token across all samples in the batch
+            # mask_token_expanded = self.mask_token.expand(slots.shape[0], slots.shape[1], slots.shape[2])
 
 
-            slots[uniform_mask_slots] = mask_token_expanded[uniform_mask_slots]
+            # slots[uniform_mask_slots] = mask_token_expanded[uniform_mask_slots]
+
+            # Create a random mask probability between 0.4 and 0.8
+            mask_prob = torch.FloatTensor(1).uniform_(self.mask_prob, 0.8).item()
+            num_slots_to_mask = torch.ceil(mask_prob * self.slot_attention.num_slots).int().item()
+
+            # Apply the mask per sample in the batch
+            slots = torch.randn(batch_size, self.slot_attention.num_slots, num_features)  # Example slots tensor
+            mask_token_expanded = self.mask_token.expand(batch_size, self.slot_attention.num_slots, num_features)
+
+            # Create random masks for each sample in the batch
+            for i in range(batch_size):
+                mask_indices = torch.randperm(self.slot_attention.num_slots)[:num_slots_to_mask]
+                slots[i, mask_indices] = mask_token_expanded[i, mask_indices]
 
         slots=self.slot_proj2(slots)
 
