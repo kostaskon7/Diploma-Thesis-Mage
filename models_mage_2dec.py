@@ -715,7 +715,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         cluster_assignments_tensor = torch.tensor(cluster_assignments, dtype=torch.long).cuda()  # Shape: [images*num_slots]
 
-
+        breakpoint()
 
         # Reshape cluster_assignments_tensor to match the slots shape
         cluster_assignments_tensor = cluster_assignments_tensor.view(slots.shape[0], slots.shape[1])
