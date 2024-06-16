@@ -79,6 +79,8 @@ def train_one_epoch(model: torch.nn.Module, data_loader: Iterable, optimizer: to
             if args.use_decs:
                 log_writer.add_scalar('ce loss', ce_loss, epoch_1000x)
                 log_writer.add_scalar('loss_mage', loss_mage, epoch_1000x)
+                log_writer.add_scalar('loss_slots', loss_slots, epoch_1000x)
+                
 
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
