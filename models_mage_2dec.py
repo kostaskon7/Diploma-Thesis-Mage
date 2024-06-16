@@ -804,6 +804,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
                 mask[mask_indices] = True
                 # Append the mask to the list
                 batch_masks.append(mask)
+            breakpoint()
             uniform_mask = torch.stack(batch_masks)
 
         slots=self.slot_proj2(slots)
