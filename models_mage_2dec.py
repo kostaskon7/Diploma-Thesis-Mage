@@ -799,6 +799,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             # Create random masks for each sample in the batch
             for i in range(batch_size):
                 mask_indices = torch.randperm(self.slot_attention.num_slots)[:num_slots_to_mask]
+                breakpoint()
                 slots[i, mask_indices] = mask_token_expanded[i, mask_indices]
 
         slots=self.slot_proj2(slots)
