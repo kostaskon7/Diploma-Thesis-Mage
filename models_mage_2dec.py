@@ -803,10 +803,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
             x = blk(x,slots=slots_for_dec)
 
         breakpoint()
-        x = self.decoder_norm(x[:,:self.slot_attention.num_slots])
+        x = self.decoder_norm(x)
 
         # To add another layer
-        x_slots = self.mlm_layer_slots(x)
+        x_slots = self.mlm_layer_slots(x[:,:self.slot_attention.num_slots])
         breakpoint()
 
         word_embeddings = self.token_emb.word_embeddings.weight.data.detach()
