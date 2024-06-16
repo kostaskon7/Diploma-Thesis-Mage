@@ -793,7 +793,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
             num_slots_to_mask = torch.ceil(mask_prob * self.slot_attention.num_slots).int().item()
 
             # Apply the mask per sample in the batch
-            slots = torch.randn(batch_size, self.slot_attention.num_slots, num_features)  # Example slots tensor
             mask_token_expanded = self.mask_token.expand(batch_size, self.slot_attention.num_slots, num_features)
 
             # Create random masks for each sample in the batch
