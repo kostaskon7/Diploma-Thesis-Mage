@@ -802,7 +802,6 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # To add another layer
         if self.apply_mask.item():
-            mask_token_expanded = self.mask_token.expand(slots.shape[0], slots.shape[1], x.shape[2])
             x_slots = self.mlm_layer_slots(x[:,:self.slot_attention.num_slots])
 
         word_embeddings = self.token_emb.word_embeddings.weight.data.detach()
@@ -820,7 +819,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #[32,256,7]
 
         if self.apply_mask.item():
-            uniform_mask_logits = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, x.shape[2])
+            uniform_mask_logits = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, x_slots.shape[2])
 
             return x,normalized_atts_slots,cluster_assignments,uniform_mask_logits,x_slots
         
