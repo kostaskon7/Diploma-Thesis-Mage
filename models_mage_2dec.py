@@ -803,7 +803,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             x = blk(x,slots=slots_for_dec)
 
         breakpoint()
-        x = self.decoder_norm(x)
+        x = self.decoder_norm(x[:,:self.slot_attention.num_slots])
 
         # To add another layer
         x_slots = self.mlm_layer_slots(x)
