@@ -727,7 +727,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # Compute the loss
         loss = self.criterion_masks(masked_slots, masked_cluster_ids)
-        if torch.isnan(loss_slots) :
+        if torch.isnan(loss) :
             breakpoint()
         return(loss)
 
