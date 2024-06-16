@@ -727,6 +727,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # Compute the loss
         loss = self.criterion_masks(masked_slots, masked_cluster_ids)
+        if torch.isnan(loss_slots) :
+            breakpoint()
         return(loss)
 
     def forward_decoder(self, x,slots, token_drop_mask, token_all_mask):
