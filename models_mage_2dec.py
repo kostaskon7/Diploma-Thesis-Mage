@@ -806,7 +806,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         x = self.decoder_norm(x)
 
         # To add another layer
-        x_slots = self.mlm_layer_slots(x[:,:self.slot_attention.num_slots])
+        if self.apply_mask.item():
+            x_slots = self.mlm_layer_slots(x[:,:self.slot_attention.num_slots])
         breakpoint()
 
         word_embeddings = self.token_emb.word_embeddings.weight.data.detach()
@@ -826,9 +827,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         if self.apply_mask.item():
             uniform_mask_logits = uniform_mask.view(1, -1, 1).expand(batch_size, self.slot_attention.num_slots, x.shape[2])
 
-            return x,normalized_atts_slots,cluster_assignments,uniform_mask_logits
+            return x,normalized_atts_slots,cluster_assignments,uniform_mask_logits,x_slots
         
-        return x,normalized_atts_slots,_,_
+        return x,normalized_atts_slots,_,_,_
     
     def forward_decoder_spot(self, slots, emb_target):
         # Prepate the input tokens for the decoder transformer:
@@ -957,13 +958,13 @@ class MaskedGenerativeEncoderViT(nn.Module):
             # slots_pool=self.slot_proj2(slots_pool)
 
             # Decoders
-            logits,attn_dec,cluster_assignments,uniform_mask = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
+            logits,attn_dec,cluster_assignments,uniform_mask,x_slots = self.forward_decoder(latent_mask,slots_pool ,token_drop_mask, token_all_mask)
 
 
         # dec_recon, dec_slots_attns=self.forward_decoder_spot(slots, latent)
         #[Batch,decoder264,2025]
         if self.apply_mask.item():
-            loss_slots = self.slot_loss(logits[:,:self.slot_attention.num_slots],cluster_assignments,uniform_mask)
+            loss_slots = self.slot_loss(x_slots,cluster_assignments,uniform_mask)
         else:
             loss_slots = 0
         
