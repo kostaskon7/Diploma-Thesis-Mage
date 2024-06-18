@@ -574,6 +574,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         # apply Transformer blocks
         x = input_embeddings_after_drop
+        breakpoint()
         for blk in self.blocks:
             x = blk(x)
         x = self.norm(x)
