@@ -753,7 +753,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # add pos embed
         x = x_after_pad + self.decoder_pos_embed_learned
 
-        x = torch.cat((slots, x), dim=1)
+        if self.apply_mask.item():
+            x = slots
+        else:
+            x = torch.cat((slots, x), dim=1)
 
         # apply Transformer blocks
         # for blk in self.decoder_blocks:
@@ -981,7 +984,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
         #[Batch,decoder264,2025]
         if self.apply_mask.item():
             loss_slots = self.slot_loss(x_slots,cluster_assignments,uniform_mask)
+            loss_mage = 0
         else:
+            loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
             loss_slots = 0
         
 
@@ -991,7 +996,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         
 
 
-        loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
+        # loss_mage = self.forward_loss(gt_indices, logits, token_all_mask)
 
 
         # Crf
