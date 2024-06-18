@@ -16,7 +16,7 @@ import torch.nn.functional as F
 from spot.utils_spot import inv_normalize, cosine_scheduler, visualize, bool_flag, load_pretrained_encoder
 import torchvision.utils as vutils
 from torch.utils.tensorboard import SummaryWriter
-from kmeans_pytorch import kmeans, kmeans_predict
+# from kmeans_pytorch import kmeans, kmeans_predict
 from joblib import load
 import torch
 
@@ -38,7 +38,7 @@ def mask_by_random_topk(mask_len, probs, temperature=1.0):
     return masking
 
 
-def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=False,with_mask_vis=True,data_used='coco',slot_vis=True):
+def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_iter=False,with_mask_vis=False,data_used='coco',slot_vis=True):
     torch.manual_seed(seed)
     np.random.seed(seed)
     codebook_emb_dim = 256
@@ -62,7 +62,9 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
 
     # Load the model
-    kmeans = load('kmeans_model4096_classic.joblib')
+    kmeans_model = load(args.kmeans_path)
+    if args.scaler != 'none':
+        scaler = load(args.scaler)
 
  
 
@@ -139,25 +141,61 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
 
     latent=model.forward_encoder(image)
+    # latent = model.forward_encoder(image)
+    latent=latent[:,1:,:]
 
     slots, attn, init_slots, attn_logits = model.slot_attention(latent)
     # slots_pool = torch.matmul(attn.transpose(-1, -2), x)
-    slots = model.slot_proj2(slots)
+
+    attn=attn.clone().detach()
+    attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
+    # To add normalization
+    # attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
+    slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+
+
+    # slots = model.slot_proj2(slots)
 
     # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
     slots_tensor = slots  # Replace with your actual tensor
-    slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+    if args.usemodel:
+        slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
-    # Predict cluster assignments
-    cluster_assignments = kmeans.predict(slots_2d)
+        # Predict cluster assignments
+        cluster_assignments = kmeans_model.predict(slots_2d)
 
-    # Replace slots with cluster centers
-    centers = kmeans.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+        # Replace slots with cluster centers
+        slots = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+        slots = torch.tensor(slots).cuda()
 
-    # Reshape back to the original slots shape
-    slots = centers.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-    slots = torch.tensor(slots).cuda()
+        slots = slots.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
+        breakpoint()
 
+
+
+    slots = model.slot_proj2(slots)
+
+    # # Find the indices of the maximum values (most important features) from the soft attention
+    # max_indices = torch.argmax(attn, dim=-1)
+
+    # # Convert these indices to a one-hot encoding format
+    # attn_hard = torch.nn.functional.one_hot(max_indices, num_classes=slots.shape[1]).to(latent.dtype)
+
+    # # Use the one-hot encoded indices to select features
+    # slots = torch.matmul(attn_hard.float().transpose(-1, -2), latent)
+
+    # slots = model.slot_proj2(slots)
+
+    # attn=slots.reshape(bsz,slots_tensor.shape[1],256)
+    # attn=slots
+
+    # attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
+    # # To add normalization
+    # # attn_onehot = attn_onehot / torch.sum(attn_onehot+self.epsilon, dim=-2, keepdim=True)
+    # slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+
+
+    # slots = model.slot_proj2(slots)
 
     # slots=model.slot_proj2(slots)
 
@@ -248,6 +286,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # get token prediction
         sample_dist = torch.distributions.categorical.Categorical(logits=logits)
         sampled_ids = sample_dist.sample()
+
 
         # get ids for next step
         unknown_map = (cur_ids == mask_token_id)
@@ -420,6 +459,18 @@ parser.add_argument('--slot_vis', default=None,type=int,
 parser.add_argument('--both_mboi', default=None,type=int,
                 help='both_mboi logs decoder')
 
+parser.add_argument('--kmeans_path',  type=str, default='none', help='Kmeans joblib path')
+parser.add_argument('--scaler',  type=str, default='none', help='scaler joblib path')
+parser.add_argument('--usemodel',  type=int, default=None, help='Use kmeansmodel or sample')
+parser.add_argument('--use_spot', type=int, default=None, help='Use spot decoder or not')
+parser.add_argument('--num_gens', type=int, default=1, help='Number of batches to be generated')
+
+
+
+
+
+
+
 
 
                     
@@ -445,7 +496,7 @@ model = models_mage_2dec.__dict__[args.model](norm_pix_loss=False,
 model.to(0)
 
 checkpoint = torch.load(args.ckpt, map_location='cpu')
-model.load_state_dict(checkpoint['model'])
+model.load_state_dict(checkpoint['model'],strict=False)
 model.eval()
 
 num_steps = args.num_images // args.batch_size + 1
@@ -458,7 +509,7 @@ if not os.path.exists(save_folder):
 val_sampler = None
 
 if args.dataset == 'coco':
-  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256)
+  val_dataset = COCO2017(root=args.data_path, split='val', image_size=256, mask_size=256,normalization=False)
   val_loader = torch.utils.data.DataLoader(val_dataset, sampler=val_sampler, shuffle=False, drop_last=False, batch_size=args.batch_size, pin_memory=True,num_workers= 4)#,collate_fn=custom_collate_fn)
 
 
@@ -488,6 +539,8 @@ counter=0
 for batch, data in iterator:
     if args.dataset == 'coco':
         image, true_mask_i, true_mask_c, mask_ignore = data
+        # image = data
+
     else:
         image, _ = data
 
@@ -510,7 +563,7 @@ for batch, data in iterator:
             orig_img_np = np.clip(inv_orig_img.numpy().transpose(1, 2, 0) * 255, 0, 255).astype(np.uint8)
             orig_img_np = cv2.cvtColor(orig_img_np, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(args.output_dir, 'orig_{}.png'.format(str(batch*args.batch_size + b_id).zfill(5))), orig_img_np)
-    if batch >0:
+    if batch > args.num_gens:
         break
 
 log_writer.close()
