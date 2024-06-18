@@ -537,7 +537,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
         if self.apply_mask.item():
             # Mask all tokens
-            token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()  # All tokens are dropped
+            token_drop_mask = torch.ones(bsz, seq_len, device=x.device).float()  # No tokens are dropped
         else:
             # it is possible that two elements of the noise is the same, so do a while loop to avoid it
             while True:
@@ -550,7 +550,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
                 else:
                     print("Rerandom the noise!")
 
-        token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
+            token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  # No tokens are dropped
 
         # print(mask_rate, num_dropped_tokens, num_masked_tokens, token_drop_mask.sum(dim=1), token_all_mask.sum(dim=1))
         token_indices[token_all_mask.nonzero(as_tuple=True)] = self.mask_token_label
