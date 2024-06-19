@@ -129,6 +129,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     
 
 #########################
+
+    model.apply_mask = torch.tensor([True])
+
+
     token_all_mask = torch.zeros(bsz, unknown_number_in_the_beginning, device=x.device).float()  # All tokens are dropped
     token_drop_mask = torch.zeros(bsz, unknown_number_in_the_beginning, device=x.device).float()  # No tokens are dropped
     iter = model.cls_token.expand(bsz, model.slot_attention.num_slots + 1 + 256, 768).clone()
@@ -474,6 +478,9 @@ parser.add_argument('--scaler',  type=str, default='none', help='scaler joblib p
 parser.add_argument('--usemodel',  type=int, default=None, help='Use kmeansmodel or sample')
 parser.add_argument('--use_spot', type=int, default=None, help='Use spot decoder or not')
 parser.add_argument('--num_gens', type=int, default=1, help='Number of batches to be generated')
+parser.add_argument('--prob_threshold', type=float, default=0.5, help='Probability Threshold')
+parser.add_argument('--mask_prob', type=float, default=0.5, help='Probability Masking')
+
 
 
 
