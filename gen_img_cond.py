@@ -139,16 +139,16 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     for _ in range(model.slot_attention.num_slots):
         # Step 2: Split iter into x and slots
-        x = iter[:, model.slot_attention.num_slots + 1:]
-        slots = iter[:, :model.slot_attention.num_slots + 1]
+        x = iter[:, model.slot_attention.num_slots:]
+        slots = iter[:, :model.slot_attention.num_slots]
         breakpoint()
 
         # Step 3: Concatenate x and slots, and pass it through the decoder
         decoder_output,attn_dec,cluster_assignments,uniform_mask,x_slots = model.forward_decoder(x,slots ,token_drop_mask, token_all_mask)  # Shape: [bsz, model.slot_attention.num_slots + 1 + 256, embed_dim]
 
         # Step 4: Split the decoder output into x and slots
-        x = decoder_output[:, model.slot_attention.num_slots + 1:]
-        slots = decoder_output[:, :model.slot_attention.num_slots + 1]
+        x = decoder_output[:, model.slot_attention.num_slots:]
+        slots = decoder_output[:, :model.slot_attention.num_slots]
 
         # Step 5: Apply softmax to the slots part to get the confidence scores
         softmax_scores = F.softmax(slots, dim=1)  # Shape: [bsz, num_slots + 1, embed_dim]
