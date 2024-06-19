@@ -954,6 +954,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         
         latent= self.forward_encoder(imgs)
         latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+        breakpoint()
         # latent_mask=latent_mask.clone().detach()
         
         bsz, _ = gt_indices.size()
