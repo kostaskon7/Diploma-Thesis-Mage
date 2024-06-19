@@ -129,6 +129,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     
 
 #########################
+    breakpoint()
 
     model.apply_mask = torch.tensor([True])
 
