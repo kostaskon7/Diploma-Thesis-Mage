@@ -133,8 +133,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     model.apply_mask = torch.tensor([True])
 
 
-    token_all_mask = torch.zeros(bsz, unknown_number_in_the_beginning, device=x.device).float()  # All tokens are dropped
-    token_drop_mask = torch.zeros(bsz, unknown_number_in_the_beginning, device=x.device).float()  # No tokens are dropped
+    token_all_mask = torch.zeros(bsz, unknown_number_in_the_beginning, device=device).float()  # All tokens are dropped
+    token_drop_mask = torch.zeros(bsz, unknown_number_in_the_beginning, device=device).float()  # No tokens are dropped
     iter = model.cls_token.expand(bsz, model.slot_attention.num_slots + 1 + 256, 768).clone()
 
     for _ in range(model.slot_attention.num_slots):
