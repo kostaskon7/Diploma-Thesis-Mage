@@ -129,35 +129,45 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     
 
 #########################
+    token_all_mask = torch.zeros(bsz, unknown_number_in_the_beginning, device=x.device).float()  # All tokens are dropped
+    token_drop_mask = torch.zeros(bsz, unknown_number_in_the_beginning, device=x.device).float()  # No tokens are dropped
+    iter = model.cls_token.expand(bsz, model.slot_attention.num_slots + 1 + 256, 768).clone()
 
-    # latent, gt_indices, _, _ = model.forward_encoder(image)
-    # latent = model.forward_encoder(image)
+    for _ in range(model.slot_attention.num_slots):
+        # Step 2: Split iter into x and slots
+        x = iter[:, model.slot_attention.num_slots + 1:]
+        slots = iter[:, :model.slot_attention.num_slots + 1]
 
-    # #slots, attn, init_slots, attn_logits = self.slot_attention(latent[:,1:,:])
-    # slots, attn, init_slots, attn_logits = model.slot_attention(latent[:,1:,:])
-    
-    
+        # Step 3: Concatenate x and slots, and pass it through the decoder
+        decoder_output,attn_dec,cluster_assignments,uniform_mask,x_slots = model.forward_decoder(x,slots ,token_drop_mask, token_all_mask)  # Shape: [bsz, model.slot_attention.num_slots + 1 + 256, embed_dim]
 
-    # slots = torch.matmul(attn.transpose(-1, -2), latent[:,1:,:])
+        # Step 4: Split the decoder output into x and slots
+        x = decoder_output[:, model.slot_attention.num_slots + 1:]
+        slots = decoder_output[:, :model.slot_attention.num_slots + 1]
 
-    latent=model.forward_encoder(image)
-    # latent = model.forward_encoder(image)
-    latent=latent[:,1:,:]
+        # Step 5: Apply softmax to the slots part to get the confidence scores
+        softmax_scores = F.softmax(slots, dim=1)  # Shape: [bsz, num_slots + 1, embed_dim]
 
-    slots, attn, init_slots, attn_logits = model.slot_attention(latent)
-    # slots_pool = torch.matmul(attn.transpose(-1, -2), x)
+        # Step 6: Compute the confidence scores and identify the most confident slot
+        confidence_scores = softmax_scores.mean(dim=-1)  # Shape: [bsz, num_slots + 1]
+        most_confident_slot_indices = confidence_scores.argmax(dim=1)  # Shape: [bsz]
 
-    attn=attn.clone().detach()
-    attn_onehot = torch.nn.functional.one_hot(attn.argmax(2), num_classes=model.slot_attention.num_slots).to(latent.dtype)
-    # To add normalization
-    # attn_onehot = attn_onehot / torch.sum(attn_onehot+model.epsilon, dim=-2, keepdim=True)
-    slots = torch.matmul(attn_onehot.transpose(-1, -2), latent)
+        # Step 7: Replace cls_token in iter with the most confident slot
+        most_confident_slots = torch.zeros(bsz, 768).to(iter.device)
+        for i in range(bsz):
+            most_confident_slots[i] = slots[i, most_confident_slot_indices[i]]
+        
+        # Update iter by replacing the cls_token location with the most confident slots for each sample
+        iter[:, model.slot_attention.num_slots] = most_confident_slots
 
+    # Now iter has been iteratively updated with the most confident slot replacing the cls_token
+    print(iter.shape)  # Should print: torch.Size([16, num_slots + 1 + 256, 768]) 
+    breakpoint()
 
     # slots = model.slot_proj2(slots)
 
     # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
-    slots_tensor = slots  # Replace with your actual tensor
+    slots_tensor = iter  # Replace with your actual tensor
     if args.usemodel:
         slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
 
