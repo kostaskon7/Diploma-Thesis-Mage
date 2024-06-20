@@ -131,7 +131,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 #########################
     breakpoint()
 
-    model.apply_mask = torch.tensor([True])
+    model.apply_mask = torch.tensor([False])
 
 
     token_all_mask = torch.zeros(bsz, unknown_number_in_the_beginning+1, device=device).float()  # All tokens are dropped
