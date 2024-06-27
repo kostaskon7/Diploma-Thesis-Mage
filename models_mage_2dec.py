@@ -534,7 +534,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         mask_rate = self.mask_ratio_generator.rvs(1)[0]
 
         num_masked_tokens = int(np.ceil(seq_len * mask_rate))
-
+        # Changed this to drop all latents, It was only the token_all_mask = torch.ones(bsz, seq_len, device=x.device).float() that existed and the token_drop_mask = torch.zeros(bsz, seq_len, device=x.device).float()  was outside the else statement
         if self.apply_mask.item():
             # Mask all tokens
             token_all_mask = torch.ones(bsz, seq_len, device=x.device).float()  # All tokens are dropped
@@ -752,6 +752,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # add pos embed
         x = x_after_pad + self.decoder_pos_embed_learned
 
+        # Changed this to drop all latents, It was only the else
         if self.apply_mask.item():
             x = slots
         else:
