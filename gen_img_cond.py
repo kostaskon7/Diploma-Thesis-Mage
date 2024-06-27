@@ -284,6 +284,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # logits = logits[:, n_top_slots+1:, :codebook_size]
 
         # get token prediction
+        breakpoint()
         sample_dist = torch.distributions.categorical.Categorical(logits=logits)
         sampled_ids = sample_dist.sample()
 
