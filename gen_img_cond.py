@@ -141,10 +141,15 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     x = iter[:, model.slot_attention.num_slots:]
     slots = iter[:, :model.slot_attention.num_slots]
     # Initialize a list of sets to track replaced slots for each batch item
+
     replaced_slots = [set() for _ in range(bsz)]
 
     for iteration in range(model.slot_attention.num_slots):
-        # Forward pass through the decoder
+        # Step 2: Split iter into x and slots
+        
+        # Assuming x is already defined before the loop, otherwise, you need to define x here
+        # Assuming token_drop_mask and token_all_mask are already defined
+
         decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
 
         sample_dist = torch.distributions.Categorical(logits=x_slots)
@@ -169,24 +174,28 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         cluster_centers = torch.tensor(cluster_centers).cuda()
         cluster_centers = cluster_centers.reshape(bsz, model.slot_attention.num_slots, 768)
 
-        # Find the most confident slot from the sampled ids
-        most_confident_slot_indices = torch.argmax(selected_probs, dim=-1)
-
-        # Replace only the most confident slot with the closest kmeans centroid for this iteration
+        # Replace only the next most confident slot that has not been replaced
         for i in range(bsz):
-            # Get the index of the most confident slot for this batch item
-            most_confident_slot_index = most_confident_slot_indices[i].item()  # Convert tensor to int
+            # Sort the selected_probs to get the indices in descending order of confidence
+            sorted_indices = torch.argsort(selected_probs[i], descending=True).tolist()
 
-            # Check if the slot has already been replaced in a previous iteration
-            if most_confident_slot_index not in replaced_slots[i]:
-                # Replace the slot with the closest kmeans centroid
-                slots[i, most_confident_slot_index] = cluster_centers[i, most_confident_slot_index]
+            # Find the next slot that has not been replaced
+            for slot_index in sorted_indices:
+                if slot_index not in replaced_slots[i]:
+                    # Replace the slot with the closest kmeans centroid
+                    slots[i, slot_index] = cluster_centers[i, slot_index]
 
-                # Mark this slot as replaced
-                replaced_slots[i].add(most_confident_slot_index)
+                    # Mark this slot as replaced
+                    replaced_slots[i].add(slot_index)
+
+                    # Print debug information
+                    print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
+
+                    break  # Move to the next batch item after replacing one slot
 
         # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
+
 
         breakpoint()
 
