@@ -181,6 +181,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             # If the current iteration index matches the most confident slot index, replace the slot
             if most_confident_slot_index == iteration:
                 slots[i, most_confident_slot_index] = cluster_centers[i, most_confident_slot_index]
+        breakpoint()
 
 
 
