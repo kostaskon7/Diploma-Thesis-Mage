@@ -148,7 +148,6 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         # breakpoint()
-        x_slots=torch.tensor(x_slots)
         sample_dist = torch.distributions.categorical.Categorical(logits=x_slots)
         sampled_ids = sample_dist.sample()
 
