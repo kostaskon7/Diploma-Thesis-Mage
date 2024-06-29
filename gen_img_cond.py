@@ -287,7 +287,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # logits,_ = model.forward_decoder(x, slots_replaced, token_drop_mask, token_all_mask)
 
-        logits,_,_,_,_,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
+        logits,_,_,_,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
 
 
