@@ -140,6 +140,9 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     x = iter[:, model.slot_attention.num_slots:]
     slots = iter[:, :model.slot_attention.num_slots]
+    # Initialize a list of sets to track replaced slots for each batch item
+    replaced_slots = [set() for _ in range(bsz)]
+
     for iteration in range(model.slot_attention.num_slots):
         # Step 2: Split iter into x and slots
         
@@ -147,8 +150,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # Assuming token_drop_mask and token_all_mask are already defined
 
         decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
-        # breakpoint()
-        sample_dist = torch.distributions.categorical.Categorical(logits=x_slots)
+
+        sample_dist = torch.distributions.Categorical(logits=x_slots)
         sampled_ids = sample_dist.sample()
 
         # Sample ids according to prediction confidence
@@ -178,9 +181,13 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             # Get the index of the most confident slot for this batch item
             most_confident_slot_index = most_confident_slot_indices[i]
 
-            # If the current iteration index matches the most confident slot index, replace the slot
-            if most_confident_slot_index == iteration:
+            # Check if the slot has already been replaced in a previous iteration
+            if most_confident_slot_index not in replaced_slots[i]:
+                # Replace the slot with the closest kmeans centroid
                 slots[i, most_confident_slot_index] = cluster_centers[i, most_confident_slot_index]
+
+                # Mark this slot as replaced
+                replaced_slots[i].add(most_confident_slot_index)
         breakpoint()
 
 
