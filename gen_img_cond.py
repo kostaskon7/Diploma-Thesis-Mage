@@ -138,54 +138,51 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     token_drop_mask = torch.zeros(bsz, unknown_number_in_the_beginning+1, device=device).float()  # No tokens are dropped
     iter = model.cls_token.expand(bsz, model.slot_attention.num_slots + 1 + 256, 768).clone()
 
-    for _ in range(model.slot_attention.num_slots):
+    x = iter[:, model.slot_attention.num_slots:]
+    slots = iter[:, :model.slot_attention.num_slots]
+    for iteration in range(model.slot_attention.num_slots):
         # Step 2: Split iter into x and slots
-        x = iter[:, model.slot_attention.num_slots:]
-        slots = iter[:, :model.slot_attention.num_slots]
-        breakpoint()
-
-        # Step 3: Concatenate x and slots, and pass it through the decoder
-        decoder_output,attn_dec,cluster_assignments,uniform_mask,x_slots = model.forward_decoder(x,slots ,token_drop_mask, token_all_mask)  # Shape: [bsz, model.slot_attention.num_slots + 1 + 256, embed_dim]
-
-        # Step 4: Split the decoder output into x and slots
-        x = decoder_output[:, model.slot_attention.num_slots:]
-        slots = decoder_output[:, :model.slot_attention.num_slots]
-
-        # Step 5: Apply softmax to the slots part to get the confidence scores
-        softmax_scores = F.softmax(slots, dim=1)  # Shape: [bsz, num_slots + 1, embed_dim]
-
-        # Step 6: Compute the confidence scores and identify the most confident slot
-        confidence_scores = softmax_scores.mean(dim=-1)  # Shape: [bsz, num_slots + 1]
-        most_confident_slot_indices = confidence_scores.argmax(dim=1)  # Shape: [bsz]
-
-        # Step 7: Replace cls_token in iter with the most confident slot
-        most_confident_slots = torch.zeros(bsz, 768).to(iter.device)
-        for i in range(bsz):
-            most_confident_slots[i] = slots[i, most_confident_slot_indices[i]]
         
-        # Update iter by replacing the cls_token location with the most confident slots for each sample
-        iter[:, model.slot_attention.num_slots] = most_confident_slots
+        # Assuming x is already defined before the loop, otherwise, you need to define x here
+        # Assuming token_drop_mask and token_all_mask are already defined
 
-    # Now iter has been iteratively updated with the most confident slot replacing the cls_token
-    print(iter.shape)  # Should print: torch.Size([16, num_slots + 1 + 256, 768]) 
-    breakpoint()
+        decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
 
-    # slots = model.slot_proj2(slots)
+        sample_dist = torch.distributions.categorical.Categorical(logits=x_slots)
+        sampled_ids = sample_dist.sample()
 
-    # Assuming 'your_slots_tensor' is your slots tensor with shape [images, num_slots, 256]
-    slots_tensor = iter  # Replace with your actual tensor
-    if args.usemodel:
-        slots_2d = slots_tensor.reshape(-1, 768).cpu().numpy()  # Reshape to 2D for prediction
+        # Sample ids according to prediction confidence
+        probs = torch.nn.functional.softmax(x_slots, dim=-1)
+        selected_probs = torch.squeeze(
+            torch.gather(probs, dim=-1, index=torch.unsqueeze(sampled_ids, -1)), -1
+        )
+
+        # Reshape slots tensor to 2D
+        slots_2d = slots.reshape(-1, 768).cpu().numpy()
 
         # Predict cluster assignments
         cluster_assignments = kmeans_model.predict(slots_2d)
 
-        # Replace slots with cluster centers
-        slots = kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
-        slots = torch.tensor(slots).cuda()
+        # Get the cluster centers for the assignments
+        cluster_centers = kmeans_model.cluster_centers_[cluster_assignments]
 
-        slots = slots.reshape(-1, slots_tensor.shape[1], 768)  # Use the original num_slots
-        breakpoint()
+        # Reshape cluster centers to original slots shape
+        cluster_centers = torch.tensor(cluster_centers).cuda()
+        cluster_centers = cluster_centers.reshape(bsz, model.slot_attention.num_slots, 768)
+
+        # Find the most confident slot from the sampled ids
+        most_confident_slot_indices = torch.argmax(selected_probs, dim=-1)
+
+        # Replace only the most confident slot with the closest kmeans centroid for this iteration
+        for i in range(bsz):
+            # Get the index of the most confident slot for this batch item
+            most_confident_slot_index = most_confident_slot_indices[i]
+
+            # If the current iteration index matches the most confident slot index, replace the slot
+            if most_confident_slot_index == iteration:
+                slots[i, most_confident_slot_index] = cluster_centers[i, most_confident_slot_index]
+
+
 
 
 
