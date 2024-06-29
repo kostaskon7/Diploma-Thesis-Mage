@@ -753,10 +753,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         x = x_after_pad + self.decoder_pos_embed_learned
 
         # Changed this to drop all latents, It was only the else
-        if self.apply_mask.item():
-            x = slots
-        else:
-            x = torch.cat((slots, x), dim=1)
+        # if self.apply_mask.item():
+        #     x = slots
+        # else:
+        x = torch.cat((slots, x), dim=1)
 
         # apply Transformer blocks
         # for blk in self.decoder_blocks:

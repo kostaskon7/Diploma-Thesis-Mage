@@ -131,7 +131,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 #########################
     breakpoint()
 
-    model.apply_mask = torch.tensor([False])
+    model.apply_mask = torch.tensor([True])
 
 
     token_all_mask = torch.zeros(bsz, unknown_number_in_the_beginning+1, device=device).float()  # All tokens are dropped
@@ -147,7 +147,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # Assuming token_drop_mask and token_all_mask are already defined
 
         decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
-        breakpoint()
+        # breakpoint()
         x_slots=torch.tensor(x_slots)
         sample_dist = torch.distributions.categorical.Categorical(logits=x_slots)
         sampled_ids = sample_dist.sample()
@@ -212,6 +212,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # slots = model.slot_proj2(slots)
 
     # slots=model.slot_proj2(slots)
+    model.apply_mask = torch.tensor([False])
 
     initial_token_indices = mask_token_id * torch.ones(bsz, unknown_number_in_the_beginning)
 
@@ -287,7 +288,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # logits,_ = model.forward_decoder(x, slots_replaced, token_drop_mask, token_all_mask)
 
-        logits,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
+        logits,_,_,_,_,_ = model.forward_decoder(x, slots, token_drop_mask, token_all_mask)
         # logits = logits[:, model.slot_attention.num_slots+1:, :codebook_size]
 
 
