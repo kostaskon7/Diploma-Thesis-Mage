@@ -142,6 +142,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     slots = iter[:, :model.slot_attention.num_slots]
     # Initialize a list of sets to track replaced slots for each batch item
 
+    # Initialize a list of sets to track replaced slots for each batch item
     replaced_slots = [set() for _ in range(bsz)]
 
     for iteration in range(model.slot_attention.num_slots):
@@ -174,9 +175,9 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         cluster_centers = torch.tensor(cluster_centers).cuda()
         cluster_centers = cluster_centers.reshape(bsz, model.slot_attention.num_slots, 768)
 
-        # Replace only the next most confident slot that has not been replaced
+        # Replace the most confident slot that has not been replaced yet for each batch item
         for i in range(bsz):
-            # Sort the selected_probs to get the indices in descending order of confidence
+            # Sort the selected_probs for the current batch item to get the indices in descending order of confidence
             sorted_indices = torch.argsort(selected_probs[i], descending=True).tolist()
 
             # Find the next slot that has not been replaced
@@ -195,7 +196,6 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
-
 
         breakpoint()
 
