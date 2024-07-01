@@ -163,10 +163,6 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     # Initialize a list of sets to track replaced slots for each batch item
 
     for iteration in range(model.slot_attention.num_slots):
-        # Step 2: Split iter into x and slots
-        
-        # Assuming x is already defined before the loop, otherwise, you need to define x here
-        # Assuming token_drop_mask and token_all_mask are already defined
 
         decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
 
