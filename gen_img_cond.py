@@ -190,8 +190,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                     replaced_slots[i].add(slot_index)
 
                     # Print debug information
+                    # Print debug information
                     print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
-
+                    print(f"KMeans ID Selected: {cluster_assignments[slot_index]}")
+                    print(f"KMeans Centroid: {cluster_centers[i, slot_index]}")
                     break  # Move to the next batch item after replacing one slot
 
         # Print the replaced slots for debugging
