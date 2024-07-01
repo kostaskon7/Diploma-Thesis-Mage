@@ -679,9 +679,10 @@ class MaskedGenerativeEncoderViT(nn.Module):
         return x
     
 
-    def forward_decoder_generation(self, x, token_drop_mask, token_all_mask):
+    def forward_decoder_generation(self, x,slots, token_drop_mask, token_all_mask):
         # embed tokens
         x = self.decoder_embed(x)
+        batch_size,_,num_features = slots.shape
 
         # append mask tokens to sequence
         if self.pad_with_cls_token:
@@ -698,17 +699,66 @@ class MaskedGenerativeEncoderViT(nn.Module):
         # add pos embed
         x = x_after_pad + self.decoder_pos_embed_learned
 
+        # Changed this to drop all latents, It was only the else
+        # if self.apply_mask.item():
+        #     x = slots
+        # else:
+        x = torch.cat((slots, x), dim=1)
+
         # apply Transformer blocks
-        for blk in self.decoder_blocks:
-            x = blk(x)
+        # for blk in self.decoder_blocks:
+        #     x = blk(x)
+        if self.cross_attn:
+            slots_for_dec=slots
+        else:
+            slots_for_dec=None
+
+
+        # For each sample in the batch, decide which slots to mask
+
+        slots_2d = slots.reshape(-1, slots.shape[2]).detach().cpu().numpy()  # Reshape to 2D for prediction
+
+        # Predict cluster assignments
+        cluster_assignments = self.kmeans_model.predict(slots_2d)
+
+
+
+        slots=self.slot_proj2(slots)
+
+
+
+        for i, blk in enumerate(self.decoder_blocks):
+            if i == len(self.decoder_blocks) - 1: # last block
+                # Get attention matrix from last block
+                with torch.no_grad(): # r
+                    atts = blk(x,slots=slots_for_dec, return_attention=True)
+            x = blk(x,slots=slots_for_dec)
 
         x = self.decoder_norm(x)
+
+        # To add another layer
+        if self.apply_mask.item():
+            x_slots = self.mlm_layer_slots(x[:,:self.slot_attention.num_slots])
 
         word_embeddings = self.token_emb.word_embeddings.weight.data.detach()
         x = self.mlm_layer(x, word_embeddings)
         # print("Logits shape:", x.shape)
 
-        return x
+        #print(atts.shape)
+        #[32,16,264,264]
+        atts=atts.sum(dim=1)
+        atts_slots = atts[:,self.slot_attention.num_slots+1:,:self.slot_attention.num_slots]#8,7
+        atts_slots=atts_slots+self.epsilon
+        sums = atts_slots.sum(dim=2, keepdim=True)
+        # Replace zero sums to avoid division by zero
+        normalized_atts_slots = atts_slots / sums
+        #[32,256,7]
+
+        if self.apply_mask.item():
+
+            return x,normalized_atts_slots,cluster_assignments,_,x_slots
+        
+        return x,normalized_atts_slots,_,_,_
     
     def slot_loss(self,slots,cluster_assignments,uniform_mask):
         # Convert cluster assignments to tensor
