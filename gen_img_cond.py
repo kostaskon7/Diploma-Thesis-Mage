@@ -168,7 +168,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             )
 
             # Check if selected_probs contains values of exactly 1.0
-            if not torch.any(selected_probs[i] == 1.0):
+            if not torch.any(selected_probs == 1.0):
                 initialization_success = True
                 # Mark this slot as replaced
                 replaced_slots[i].add(random_slot_index)
@@ -176,7 +176,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                 print(f"Initialization, Batch Item {i}: Replaced Slot Index {random_slot_index} with KMeans ID {random_centroid_index}")
             else:
                 # Reset the initialized slot if the condition is not met
-                slots[i, random_slot_index] = model.cls_token.expand(1, 768).clone().cuda()
+                slots[i, random_slot_index] = model.mask_token.clone().cuda()
 
 
     # Initialize a list of sets to track replaced slots for each batch item
