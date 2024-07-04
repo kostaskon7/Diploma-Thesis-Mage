@@ -203,16 +203,14 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             # Set probabilities of slots with KMeans ID 3 to zero
             for slot_idx in range(model.slot_attention.num_slots):
                 if cluster_assignments[i * model.slot_attention.num_slots + slot_idx] == 3:
-                    probs[i, slot_idx] = 0.0
+                    probs[i, slot_idx, :] = 0.0  # Set the entire probability distribution for the slot to zero
 
             # Sort the probabilities and get the indices in descending order
-            sorted_indices = torch.argsort(probs[i], descending=True).tolist()
-            sorted_indices = [idx for sublist in sorted_indices for idx in sublist]
+            sorted_indices = torch.argsort(probs[i, :, :].max(dim=1)[0], descending=True).tolist()
 
             # Find the next slot that has not been replaced
             for slot_index in sorted_indices:
-                breakpoint()
-                if slot_index not in replaced_slots[i] and probs[i, slot_index] > 0:
+                if slot_index not in replaced_slots[i]:
                     # Replace the slot with the closest kmeans centroid
                     slots[i, slot_index] = cluster_centers[i, slot_index]
 
@@ -226,6 +224,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
+
 
 
 
