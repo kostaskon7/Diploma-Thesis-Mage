@@ -174,6 +174,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         selected_probs = torch.squeeze(
             torch.gather(probs, dim=-1, index=torch.unsqueeze(sampled_ids, -1)), -1
         )
+        breakpoint()
 
         # Reshape slots tensor to 2D
         slots_2d = slots.reshape(-1, 768).cpu().numpy()
