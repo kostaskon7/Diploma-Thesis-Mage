@@ -142,38 +142,44 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     replaced_slots = [set() for _ in range(bsz)]
 
-    # Randomly initialize one slot with a KMeans centroid for each sample
+# Define the number of initial slots to be initialized for each sample
+    num_initial_slots = 3  # You can set this to the desired number of initial slots
+
+    # Randomly initialize slots with KMeans centroids for each sample
     for i in range(bsz):
-        initialization_success = False
-        while not initialization_success:
+        initialized_slots = 0
+        while initialized_slots < num_initial_slots:
             random_centroid_index = random.randint(0, len(kmeans_model.cluster_centers_) - 1)
             random_slot_index = random.randint(0, model.slot_attention.num_slots - 1)
             
-            # Place the random KMeans centroid in the selected slot
-            slots[i, random_slot_index] = torch.tensor(kmeans_model.cluster_centers_[random_centroid_index]).cuda()
-            
-            # Run the decoder to check the selected_probs
-            decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
+            # Ensure the slot hasn't been initialized already
+            if random_slot_index not in replaced_slots[i]:
+                # Place the random KMeans centroid in the selected slot
+                slots[i, random_slot_index] = torch.tensor(kmeans_model.cluster_centers_[random_centroid_index]).cuda()
+                
+                # Run the decoder to check the selected_probs
+                decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
 
-            sample_dist = torch.distributions.Categorical(logits=x_slots)
-            sampled_ids = sample_dist.sample()
+                sample_dist = torch.distributions.Categorical(logits=x_slots)
+                sampled_ids = sample_dist.sample()
 
-            # Sample ids according to prediction confidence
-            probs = torch.nn.functional.softmax(x_slots, dim=-1)
-            selected_probs = torch.squeeze(
-                torch.gather(probs, dim=-1, index=torch.unsqueeze(sampled_ids, -1)), -1
-            )
+                # Sample ids according to prediction confidence
+                probs = torch.nn.functional.softmax(x_slots, dim=-1)
+                selected_probs = torch.squeeze(
+                    torch.gather(probs, dim=-1, index=torch.unsqueeze(sampled_ids, -1)), -1
+                )
 
-            # Check if selected_probs contains values of exactly 1.0
-            if not torch.any(selected_probs == 1.0):
-                initialization_success = True
-                # Mark this slot as replaced
-                replaced_slots[i].add(random_slot_index)
-                # Print debug information for initialization
-                print(f"Initialization, Batch Item {i}: Replaced Slot Index {random_slot_index} with KMeans ID {random_centroid_index}")
-            else:
-                # Reset the initialized slot if the condition is not met
-                slots[i, random_slot_index] = model.mask_token.clone().cuda()
+                # Check if selected_probs contains values of exactly 1.0
+                if not torch.any(selected_probs == 1.0):
+                    initialized_slots += 1
+                    # Mark this slot as replaced
+                    replaced_slots[i].add(random_slot_index)
+                    # Print debug information for initialization
+                    print(f"Initialization, Batch Item {i}: Replaced Slot Index {random_slot_index} with KMeans ID {random_centroid_index}")
+                else:
+                    # Reset the initialized slot if the condition is not met
+                    slots[i, random_slot_index] = model.mask_token.clone().cuda()
+
 
     for iteration in range(model.slot_attention.num_slots):
 
