@@ -237,6 +237,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
 
 
+
     # slots = model.slot_proj2(slots)
 
     # # Find the indices of the maximum values (most important features) from the soft attention
