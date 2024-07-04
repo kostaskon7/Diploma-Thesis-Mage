@@ -143,7 +143,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     replaced_slots = [set() for _ in range(bsz)]
 
 # Define the number of initial slots to be initialized for each sample
-    num_initial_slots = 3  # You can set this to the desired number of initial slots
+    num_initial_slots = args.init_slots_gen  # You can set this to the desired number of initial slots
 
     # Randomly initialize slots with KMeans centroids for each sample
     for i in range(bsz):
@@ -521,6 +521,10 @@ parser.add_argument('--use_spot', type=int, default=None, help='Use spot decoder
 parser.add_argument('--num_gens', type=int, default=1, help='Number of batches to be generated')
 parser.add_argument('--prob_threshold', type=float, default=0.5, help='Probability Threshold')
 parser.add_argument('--mask_prob', type=float, default=0.5, help='Probability Masking')
+
+parser.add_argument('--init_slots_gen', type=int, default=4, help='Number of slot to initiate randomly')
+
+
 
 
 
