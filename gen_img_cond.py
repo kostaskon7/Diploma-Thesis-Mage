@@ -177,7 +177,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     for iteration in range(model.slot_attention.num_slots):
 
-        decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
+        decoder_output, attn_dec, uniform_mask, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
 
         sample_dist = torch.distributions.Categorical(logits=x_slots)
         sampled_ids = sample_dist.sample()
@@ -185,84 +185,37 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # Sample ids according to prediction confidence
         probs = torch.nn.functional.softmax(x_slots, dim=-1)
 
-        # Reshape slots tensor to 2D
-        slots_2d = slots.reshape(-1, 768).cpu().numpy()
-
-        # Predict cluster assignments
-        cluster_assignments = kmeans_model.predict(slots_2d)
-
-        # Get the cluster centers for the assignments
-        cluster_centers = kmeans_model.cluster_centers_[cluster_assignments]
-
-        breakpoint()
-
-        # Reshape cluster centers to original slots shape
+        # Get the cluster centers
+        cluster_centers = kmeans_model.cluster_centers_
         cluster_centers = torch.tensor(cluster_centers).cuda()
-        cluster_centers = cluster_centers.reshape(bsz, model.slot_attention.num_slots, 768)
 
         # Process each batch item
         for i in range(bsz):
-            # Flatten cluster assignments for the current batch
-            flat_cluster_assignments = cluster_assignments[i * model.slot_attention.num_slots:(i + 1) * model.slot_attention.num_slots]
-
-            # Set probabilities of slots with KMeans ID 3 to zero
-            for slot_idx in range(model.slot_attention.num_slots):
-                if flat_cluster_assignments[slot_idx] == 3:
-                    probs[i, slot_idx, :] = 0.0  # Set the entire probability distribution for the slot to zero
-
             # Sort the probabilities and get the indices in descending order
             sorted_indices = torch.argsort(probs[i, :, :].max(dim=1)[0], descending=True).tolist()
 
             # Print top 3 options
             top_3_indices = sorted_indices[:3]
-            top_3_options = [(idx, flat_cluster_assignments[idx], probs[i, idx].max().item()) for idx in top_3_indices]
-            print(f"Iteration {iteration}, Batch Item {i}: Top 3 Options (Slot Index, KMeans ID, Probability): {top_3_options}")
+            top_3_options = [(idx, probs[i, idx].max().item()) for idx in top_3_indices]
+            print(f"Iteration {iteration}, Batch Item {i}: Top 3 Options (Slot Index, Probability): {top_3_options}")
 
             # Find the next slot that has not been replaced
             for slot_index in sorted_indices:
                 if slot_index not in replaced_slots[i]:
-                    selected_kmeans_id = flat_cluster_assignments[slot_index]
-                    selected_prob = probs[i, slot_index].max().item()
+                    # Replace the slot with the most probable cluster center
+                    most_probable_center_idx = torch.argmax(probs[i, slot_index]).item()
+                    slots[i, slot_index] = cluster_centers[most_probable_center_idx]
 
-                    # If the selected probability is 0.0 and KMeans ID is 3, find the next highest probability for a different KMeans ID
-                    if selected_prob == 0.0 and selected_kmeans_id == 3:
-                        sorted_probs = torch.sort(probs[i, slot_index], descending=True).values
-                        # Find the next highest probability that doesn't have KMeans ID 3
-                        for prob in sorted_probs:
-                            if prob.item() > 0:
-                                next_highest_prob_index = torch.where(probs[i, slot_index] == prob)[0].item()
-                                if flat_cluster_assignments[next_highest_prob_index] != 3:
-                                    selected_prob = prob.item()
-                                    slot_index = next_highest_prob_index
-                                    break
+                    # Mark this slot as replaced
+                    replaced_slots[i].add(slot_index)
 
-                    print(f"Iteration {iteration}, Batch Item {i}: Considering Slot Index {slot_index} with KMeans ID {selected_kmeans_id} and probability {selected_prob}")
-
-                    # Only replace the slot if the probability is greater than zero
-                    if selected_prob > 0:
-                        # Replace the slot with the closest kmeans centroid
-                        slots[i, slot_index] = cluster_centers[i, slot_index]
-
-                        # Mark this slot as replaced
-                        replaced_slots[i].add(slot_index)
-
-                        # Print debug information
-                        print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
-                        print(f"KMeans ID Selected: {selected_kmeans_id}")
-                        break  # Move to the next batch item after replacing one slot
+                    # Print debug information
+                    print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
+                    print(f"Cluster Center Index Selected: {most_probable_center_idx}")
+                    break  # Move to the next batch item after replacing one slot
 
         # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
-
-
-
-
-
-
-
-
-
-
 
 
     # slots = model.slot_proj2(slots)
