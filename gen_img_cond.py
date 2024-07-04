@@ -211,16 +211,23 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             # Find the next slot that has not been replaced
             for slot_index in sorted_indices:
                 if slot_index not in replaced_slots[i]:
-                    # Replace the slot with the closest kmeans centroid
-                    slots[i, slot_index] = cluster_centers[i, slot_index]
-
-                    # Mark this slot as replaced
-                    replaced_slots[i].add(slot_index)
-
                     # Print debug information
-                    print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
-                    print(f"KMeans ID Selected: {cluster_assignments[i * model.slot_attention.num_slots + slot_index]}")
-                    break  # Move to the next batch item after replacing one slot
+                    selected_kmeans_id = cluster_assignments[i * model.slot_attention.num_slots + slot_index]
+                    selected_prob = probs[i, slot_index].max().item()
+                    print(f"Iteration {iteration}, Batch Item {i}: Considering Slot Index {slot_index} with KMeans ID {selected_kmeans_id} and probability {selected_prob}")
+
+                    # Only replace the slot if the probability is greater than zero
+                    if selected_prob > 0:
+                        # Replace the slot with the closest kmeans centroid
+                        slots[i, slot_index] = cluster_centers[i, slot_index]
+
+                        # Mark this slot as replaced
+                        replaced_slots[i].add(slot_index)
+
+                        # Print debug information
+                        print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
+                        print(f"KMeans ID Selected: {selected_kmeans_id}")
+                        break  # Move to the next batch item after replacing one slot
 
         # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
