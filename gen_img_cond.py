@@ -209,9 +209,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
             # Sort the probabilities and get the indices in descending order
             sorted_indices = torch.argsort(probs[i], descending=True).tolist()
+            flat_sorted_indices = [idx for sublist in sorted_indices for idx in sublist]
 
             # Find the next slot that has not been replaced
-            for slot_index in sorted_indices:
+            for slot_index in flat_sorted_indices:
                 if any(slot not in replaced_slots[i] for slot in slot_index):
                     # Replace the slot with the closest kmeans centroid
                     breakpoint()
