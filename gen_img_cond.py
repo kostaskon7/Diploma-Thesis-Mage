@@ -130,7 +130,6 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     
 
 #########################
-    breakpoint()
 
     model.apply_mask = torch.tensor([True])
 
@@ -140,7 +139,6 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     x = model.mask_token.expand(bsz, 1 + 256, 768).clone()
     slots = model.mask_token.expand(bsz, model.slot_attention.num_slots, 768).clone()
-    breakpoint()
 
     replaced_slots = [set() for _ in range(bsz)]
 
@@ -213,6 +211,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
             # Find the next slot that has not been replaced
             for slot_index in sorted_indices:
+                breakpoint()
                 if slot_index not in replaced_slots[i] and probs[i, slot_index] > 0:
                     # Replace the slot with the closest kmeans centroid
                     slots[i, slot_index] = cluster_centers[i, slot_index]
