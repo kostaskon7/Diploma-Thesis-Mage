@@ -146,7 +146,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     x = model.mask_token.expand(bsz, 1 + 256, 768).clone()
     slots = model.cls_token.expand(bsz, model.slot_attention.num_slots, 768).clone()
-    breakpoint(0)
+    breakpoint()
 
     replaced_slots = [set() for _ in range(bsz)]
 
