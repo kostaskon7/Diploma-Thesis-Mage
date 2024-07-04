@@ -208,7 +208,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         for i in range(bsz):
             # Set probabilities of slots with KMeans ID 3 to zero
             for slot_idx in range(model.slot_attention.num_slots):
-                if cluster_assignments[slot_idx] == 3:
+                if cluster_assignments[i * model.slot_attention.num_slots + slot_idx] == 3:
                     probs[i, slot_idx] = 0.0
 
             # Sort the probabilities and get the indices in descending order
@@ -225,7 +225,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
                     # Print debug information
                     print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
-                    print(f"KMeans ID Selected: {cluster_assignments[slot_index]}")
+                    print(f"KMeans ID Selected: {cluster_assignments[i * model.slot_attention.num_slots + slot_index]}")
                     break  # Move to the next batch item after replacing one slot
 
         # Print the replaced slots for debugging
