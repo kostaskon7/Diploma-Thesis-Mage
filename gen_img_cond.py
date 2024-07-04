@@ -146,6 +146,22 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
 
     # Randomly initialize one slot with a KMeans centroid for each sample
+    for i in range(bsz):
+        random_centroid_index = random.randint(0, len(kmeans_model.cluster_centers_) - 1)
+        random_slot_index = random.randint(0, model.slot_attention.num_slots - 1)
+        
+        # Place the random KMeans centroid in the selected slot
+        slots[i, random_slot_index] = torch.tensor(kmeans_model.cluster_centers_[random_centroid_index]).cuda()
+        
+        # Mark this slot as replaced
+        replaced_slots[i].add(random_slot_index)
+
+        # Print debug information for initialization
+        print(f"Initialization, Batch Item {i}: Replaced Slot Index {random_slot_index} with KMeans ID {random_centroid_index}")
+
+
+    # Initialize a list of sets to track replaced slots for each batch item
+
     for iteration in range(model.slot_attention.num_slots):
 
         decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
