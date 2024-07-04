@@ -193,6 +193,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         for i in range(bsz):
             # Sort the probabilities and get the indices in descending order
             sorted_indices = torch.argsort(probs[i, :, :].max(dim=1)[0], descending=True).tolist()
+            breakpoint()
 
             # Print top 3 options
             top_3_indices = sorted_indices[:3]
