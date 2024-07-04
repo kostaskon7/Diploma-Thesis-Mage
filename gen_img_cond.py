@@ -206,7 +206,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                     if torch.argmax(probs[i, slot_index]).item() ==3:
                         print("Pobability of slot 3 is: "+str(torch.sort(probs[i, slot_index], descending=True).values[0].item())+"Selecting Next")
                         breakpoint()
-                        most_probable_center_idx = torch.argmax(probs[i, slot_index]).indices[1]
+                        most_probable_center_idx = torch.sort(probs[i, slot_index], descending=True).indices[1]
 
                     slots[i, slot_index] = cluster_centers[most_probable_center_idx]
 
