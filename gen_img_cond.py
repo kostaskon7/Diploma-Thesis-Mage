@@ -216,9 +216,9 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                     selected_prob = probs[i, slot_index].max().item()
                     print(f"Iteration {iteration}, Batch Item {i}: Considering Slot Index {slot_index} with KMeans ID {selected_kmeans_id} and probability {selected_prob}")
                     # Print top 3 options
-                    top_3_indices = sorted_indices[:3]
-                    top_3_options = [(idx, cluster_assignments[i * model.slot_attention.num_slots + idx], probs[i, idx].max().item()) for idx in top_3_indices]
-                    print(f"Iteration {iteration}, Batch Item {i}: Top 3 Options (Slot Index, KMeans ID, Probability): {top_3_options}")
+                    # top_3_indices = sorted_indices[:3]
+                    # top_3_options = [(idx, cluster_assignments[i * model.slot_attention.num_slots + idx], probs[i, idx].max().item()) for idx in top_3_indices]
+                    # print(f"Iteration {iteration}, Batch Item {i}: Top 3 Options (Slot Index, KMeans ID, Probability): {top_3_options}")
 
 
                     # Only replace the slot if the probability is greater than zero
