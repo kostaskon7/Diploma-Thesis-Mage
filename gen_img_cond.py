@@ -204,6 +204,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                 if slot_index not in replaced_slots[i]:
                     # Replace the slot with the most probable cluster center
                     most_probable_center_idx = torch.argmax(probs[i, slot_index]).item()
+                    most_probable_center_idx = torch.argmax(probs[i, slot_index]).item()
+                    if most_probable_center_idx == 3:
+                        sorted_probs = torch.sort(probs[i, slot_index], descending=True).values
+                        breakpoint()
                     slots[i, slot_index] = cluster_centers[most_probable_center_idx]
 
                     # Mark this slot as replaced
