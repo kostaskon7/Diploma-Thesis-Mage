@@ -214,6 +214,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             for slot_index in sorted_indices:
                 if any(slot not in replaced_slots[i] for slot in slot_index):
                     # Replace the slot with the closest kmeans centroid
+                    breakpoint()
                     slots[i, slot_index] = cluster_centers[i, slot_index]
 
                     # Mark this slot as replaced
