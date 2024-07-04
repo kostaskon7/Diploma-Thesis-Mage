@@ -211,7 +211,10 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                     break  # Move to the next batch item after replacing one slot
 
             if all_have_id_3:
+                top_probs, top_indices = torch.topk(selected_probs[i], 3)
                 print(f"Iteration {iteration}, Batch Item {i}: All non-replaced slots have KMeans ID 3.")
+                print(f"Top 3 Confidences: {top_probs.cpu().numpy()}")
+                print(f"Top 3 Indices: {top_indices.cpu().numpy()}")
 
         # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
