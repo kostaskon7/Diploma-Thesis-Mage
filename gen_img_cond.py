@@ -216,8 +216,17 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                 print(f"Top 3 Confidences: {top_probs.cpu().numpy()}")
                 print(f"Top 3 Indices: {top_indices.cpu().numpy()}")
 
+                # Replace with the second-highest confidence slot
+                second_highest_index = top_indices[1].item()  # Get the second-highest confidence index
+                slots[i, second_highest_index] = cluster_centers[i, second_highest_index]
+                replaced_slots[i].add(second_highest_index)
+
+                # Print debug information for the replacement
+                print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {second_highest_index} with KMeans ID {cluster_assignments[second_highest_index]}")
+
         # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
+
 
         breakpoint()
 
