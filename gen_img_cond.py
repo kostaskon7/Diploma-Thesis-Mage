@@ -177,7 +177,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     for iteration in range(model.slot_attention.num_slots):
 
-        decoder_output, attn_dec, uniform_mask, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
+        decoder_output, attn_dec, uniform_mask,_, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
 
         sample_dist = torch.distributions.Categorical(logits=x_slots)
         sampled_ids = sample_dist.sample()
