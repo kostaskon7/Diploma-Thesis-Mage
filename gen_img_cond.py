@@ -135,13 +135,19 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     model.apply_mask = torch.tensor([False])
 
 
-    token_all_mask = torch.zeros(bsz, unknown_number_in_the_beginning+1, device=device).float()  # No tokens are masked
+    token_all_mask = torch.ones(bsz, unknown_number_in_the_beginning+1, device=device).float()  # No tokens are masked
     token_drop_mask = torch.zeros(bsz, unknown_number_in_the_beginning+1, device=device).float()  # No tokens are dropped
     iter = model.cls_token.expand(bsz, model.slot_attention.num_slots + 1 + 256, 768).clone()
 
-    x = iter[:, model.slot_attention.num_slots:]
-    slots = iter[:, :model.slot_attention.num_slots]
+    # x = iter[:, model.slot_attention.num_slots:]
+    # slots = iter[:, :model.slot_attention.num_slots]
     # Initialize a list of sets to track replaced slots for each batch item
+
+
+    x = model.mask_token.expand(bsz, 1 + 256, 768).clone()
+    slots = model.cls_token.expand(bsz, model.slot_attention.num_slots, 768).clone()
+    breakpoint(0)
+
     replaced_slots = [set() for _ in range(bsz)]
 
 
