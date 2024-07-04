@@ -146,6 +146,22 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
 
     # Randomly initialize one slot with a KMeans centroid for each sample
+    for i in range(bsz):
+        random_centroid_index = random.randint(0, len(kmeans_model.cluster_centers_) - 1)
+        random_slot_index = random.randint(0, model.slot_attention.num_slots - 1)
+        
+        # Place the random KMeans centroid in the selected slot
+        slots[i, random_slot_index] = torch.tensor(kmeans_model.cluster_centers_[random_centroid_index]).cuda()
+        
+        # Mark this slot as replaced
+        replaced_slots[i].add(random_slot_index)
+
+        # Print debug information for initialization
+        print(f"Initialization, Batch Item {i}: Replaced Slot Index {random_slot_index} with KMeans ID {random_centroid_index}")
+
+
+    # Initialize a list of sets to track replaced slots for each batch item
+
     for iteration in range(model.slot_attention.num_slots):
 
         decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
@@ -172,33 +188,46 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         cluster_centers = torch.tensor(cluster_centers).cuda()
         cluster_centers = cluster_centers.reshape(bsz, model.slot_attention.num_slots, 768)
 
+        # Replace the most confident slot that has not been replaced yet for each batch item
         for i in range(bsz):
+            # Sort the selected_probs for the current batch item to get the indices in descending order of confidence
             sorted_indices = torch.argsort(selected_probs[i], descending=True).tolist()
 
-            replaced = False
-            non_id_3_indices = []
+            all_highest_have_id_3 = True
+            first_non_id_3_slot = None
 
-            # First pass: Try to find the highest confidence slot that is not ID 3
+            # Find the next slot that has not been replaced and does not have KMeans ID 3
             for slot_index in sorted_indices:
                 if slot_index not in replaced_slots[i]:
                     if cluster_assignments[slot_index] != 3:
+                        all_highest_have_id_3 = False
+                        # Replace the slot with the closest kmeans centroid
                         slots[i, slot_index] = cluster_centers[i, slot_index]
+
+                        # Mark this slot as replaced
                         replaced_slots[i].add(slot_index)
+
+                        # Print debug information
                         print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
                         print(f"KMeans ID Selected: {cluster_assignments[slot_index]}")
-                        replaced = True
-                        break
-                    else:
-                        non_id_3_indices.append(slot_index)
+                        break  # Move to the next batch item after replacing one slot
+                    elif first_non_id_3_slot is None:
+                        first_non_id_3_slot = slot_index  # Remember the first slot with ID 3
 
-            # Second pass: If all highest confidences have KMeans ID 3, pick the next best slot with a non-3 KMeans ID
-            if not replaced and non_id_3_indices:
-                second_best_slot_index = non_id_3_indices[1] if len(non_id_3_indices) > 1 else non_id_3_indices[0]
-                slots[i, second_best_slot_index] = cluster_centers[i, second_best_slot_index]
-                replaced_slots[i].add(second_best_slot_index)
-                print(f"Iteration {iteration}, Batch Item {i}: All highest confidences have KMeans ID 3.")
-                print(f"Replaced Slot Index {second_best_slot_index} with KMeans ID {cluster_assignments[second_best_slot_index]} due to second highest KMeans ID confidence.")
+            # If all highest confidences have KMeans ID 3, find the second best KMeans ID that is not 3
+            if all_highest_have_id_3 and first_non_id_3_slot is not None:
+                second_best_kmeans_id = sorted_indices[1]  # Take the second highest index
+                for slot_index in sorted_indices:
+                    if slot_index not in replaced_slots[i] and cluster_assignments[slot_index] == second_best_kmeans_id:
+                        slots[i, slot_index] = cluster_centers[i, slot_index]
+                        replaced_slots[i].add(slot_index)
 
+                        # Print debug information
+                        print(f"Iteration {iteration}, Batch Item {i}: All highest confidences have KMeans ID 3.")
+                        print(f"Replaced Slot Index {slot_index} with KMeans ID {cluster_assignments[slot_index]} due to second highest KMeans ID confidence.")
+                        break  # Move to the next batch item after replacing one slot
+
+        # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
 
 
