@@ -167,8 +167,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                 torch.gather(probs, dim=-1, index=torch.unsqueeze(sampled_ids, -1)), -1
             )
 
-            # Check if selected_probs has more than the initialized slot with non-zero probabilities
-            if not torch.all(selected_probs[i] == 1):
+            # Check if selected_probs contains values of exactly 1.0
+            if not torch.any(selected_probs[i] == 1.0):
                 initialization_success = True
                 # Mark this slot as replaced
                 replaced_slots[i].add(random_slot_index)
