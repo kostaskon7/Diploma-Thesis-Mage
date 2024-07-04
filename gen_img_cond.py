@@ -137,12 +137,6 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     token_all_mask = torch.ones(bsz, unknown_number_in_the_beginning+1, device=device).float()  # No tokens are masked
     token_drop_mask = torch.zeros(bsz, unknown_number_in_the_beginning+1, device=device).float()  # No tokens are dropped
-    iter = model.cls_token.expand(bsz, model.slot_attention.num_slots + 1 + 256, 768).clone()
-
-    # x = iter[:, model.slot_attention.num_slots:]
-    # slots = iter[:, :model.slot_attention.num_slots]
-    # Initialize a list of sets to track replaced slots for each batch item
-
 
     x = model.mask_token.expand(bsz, 1 + 256, 768).clone()
     slots = model.mask_token.expand(bsz, model.slot_attention.num_slots, 768).clone()
@@ -180,7 +174,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         selected_probs = torch.squeeze(
             torch.gather(probs, dim=-1, index=torch.unsqueeze(sampled_ids, -1)), -1
         )
-        breakpoint()
+
         # Reshape slots tensor to 2D
         slots_2d = slots.reshape(-1, 768).cpu().numpy()
 
@@ -199,9 +193,12 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             # Sort the selected_probs for the current batch item to get the indices in descending order of confidence
             sorted_indices = torch.argsort(selected_probs[i], descending=True).tolist()
 
-            # Find the next slot that has not been replaced
+            all_have_id_3 = True
+
+            # Find the next slot that has not been replaced and does not have KMeans ID 3
             for slot_index in sorted_indices:
-                if slot_index not in replaced_slots[i]:
+                if slot_index not in replaced_slots[i] and cluster_assignments[slot_index] != 3:
+                    all_have_id_3 = False
                     # Replace the slot with the closest kmeans centroid
                     slots[i, slot_index] = cluster_centers[i, slot_index]
 
@@ -209,11 +206,12 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                     replaced_slots[i].add(slot_index)
 
                     # Print debug information
-                    # Print debug information
                     print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
                     print(f"KMeans ID Selected: {cluster_assignments[slot_index]}")
-                    # print(f"KMeans Centroid: {cluster_centers[i, slot_index]}")
                     break  # Move to the next batch item after replacing one slot
+
+            if all_have_id_3:
+                print(f"Iteration {iteration}, Batch Item {i}: All non-replaced slots have KMeans ID 3.")
 
         # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
