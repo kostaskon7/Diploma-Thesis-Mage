@@ -193,36 +193,38 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             # Sort the selected_probs for the current batch item to get the indices in descending order of confidence
             sorted_indices = torch.argsort(selected_probs[i], descending=True).tolist()
 
-            all_have_id_3 = True
+            all_highest_have_id_3 = True
+            highest_slot_replaced = False
 
             # Find the next slot that has not been replaced and does not have KMeans ID 3
             for slot_index in sorted_indices:
-                if slot_index not in replaced_slots[i] and cluster_assignments[slot_index] != 3:
-                    all_have_id_3 = False
-                    # Replace the slot with the closest kmeans centroid
-                    slots[i, slot_index] = cluster_centers[i, slot_index]
+                if slot_index not in replaced_slots[i]:
+                    if cluster_assignments[slot_index] != 3:
+                        all_highest_have_id_3 = False
+                        # Replace the slot with the closest kmeans centroid
+                        slots[i, slot_index] = cluster_centers[i, slot_index]
 
-                    # Mark this slot as replaced
-                    replaced_slots[i].add(slot_index)
+                        # Mark this slot as replaced
+                        replaced_slots[i].add(slot_index)
 
-                    # Print debug information
-                    print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
-                    print(f"KMeans ID Selected: {cluster_assignments[slot_index]}")
-                    break  # Move to the next batch item after replacing one slot
+                        # Print debug information
+                        print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {slot_index}")
+                        print(f"KMeans ID Selected: {cluster_assignments[slot_index]}")
+                        highest_slot_replaced = True
+                        break  # Move to the next batch item after replacing one slot
 
-            if all_have_id_3:
-                top_probs, top_indices = torch.topk(selected_probs[i], 3)
-                print(f"Iteration {iteration}, Batch Item {i}: All non-replaced slots have KMeans ID 3.")
-                print(f"Top 3 Confidences: {top_probs.cpu().numpy()}")
-                print(f"Top 3 Indices: {top_indices.cpu().numpy()}")
+            if not highest_slot_replaced and all_highest_have_id_3:
+                # Find the second most confident slot, ensuring it doesn't have KMeans ID 3
+                for slot_index in sorted_indices:
+                    if slot_index not in replaced_slots[i] and cluster_assignments[slot_index] == 3:
+                        # Replace the slot with the closest kmeans centroid
+                        slots[i, slot_index] = cluster_centers[i, slot_index]
+                        replaced_slots[i].add(slot_index)
 
-                # Replace with the second-highest confidence slot
-                second_highest_index = top_indices[1].item()  # Get the second-highest confidence index
-                slots[i, second_highest_index] = cluster_centers[i, second_highest_index]
-                replaced_slots[i].add(second_highest_index)
-
-                # Print debug information for the replacement
-                print(f"Iteration {iteration}, Batch Item {i}: Replaced Slot Index {second_highest_index} with KMeans ID {cluster_assignments[second_highest_index]}")
+                        # Print debug information
+                        print(f"Iteration {iteration}, Batch Item {i}: All highest confidences have KMeans ID 3.")
+                        print(f"Replaced Slot Index {slot_index} with KMeans ID 3 due to highest confidence.")
+                        break  # Move to the next batch item after replacing one slot
 
         # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
