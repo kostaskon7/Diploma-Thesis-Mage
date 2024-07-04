@@ -194,6 +194,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         # Get the cluster centers for the assignments
         cluster_centers = kmeans_model.cluster_centers_[cluster_assignments]
 
+        breakpoint()
+
         # Reshape cluster centers to original slots shape
         cluster_centers = torch.tensor(cluster_centers).cuda()
         cluster_centers = cluster_centers.reshape(bsz, model.slot_attention.num_slots, 768)
