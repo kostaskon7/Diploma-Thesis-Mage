@@ -144,7 +144,6 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
     replaced_slots = [set() for _ in range(bsz)]
 
-
     # Randomly initialize one slot with a KMeans centroid for each sample
     for i in range(bsz):
         initialization_success = False
@@ -177,9 +176,6 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             else:
                 # Reset the initialized slot if the condition is not met
                 slots[i, random_slot_index] = model.mask_token.clone().cuda()
-
-
-    # Initialize a list of sets to track replaced slots for each batch item
 
     for iteration in range(model.slot_attention.num_slots):
 
@@ -216,6 +212,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
             # Find the next slot that has not been replaced
             for slot_index in sorted_indices:
+                breakpoint()
                 if slot_index not in replaced_slots[i]:
                     # Replace the slot with the closest kmeans centroid
                     slots[i, slot_index] = cluster_centers[i, slot_index]
@@ -230,6 +227,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
         # Print the replaced slots for debugging
         print(f"Iteration {iteration}: Replaced Slots: {[list(s) for s in replaced_slots]}")
+
 
 
 
