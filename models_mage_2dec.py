@@ -714,6 +714,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
 
 
         # For each sample in the batch, decide which slots to mask
+        breakpoint()
 
         slots_2d = slots.reshape(-1, slots.shape[2]).detach().cpu().numpy()  # Reshape to 2D for prediction
 
