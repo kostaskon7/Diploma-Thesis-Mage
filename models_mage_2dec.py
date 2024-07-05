@@ -838,7 +838,7 @@ class MaskedGenerativeEncoderViT(nn.Module):
             # Replace slots with cluster centers
             # centers = self.kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
             # breakpoint()
-            cluster_assignments_tensor = torch.tensor(self.kmeans_model.predict(slots_2d), dtype=torch.long)
+            cluster_assignments_tensor = torch.tensor(self.kmeans_model.predict(slots_2d), dtype=torch.long).cuda()
 
             # Step 3: Map Cluster Assignments to Embeddings
             centers = self.embedding_layer(cluster_assignments_tensor)
