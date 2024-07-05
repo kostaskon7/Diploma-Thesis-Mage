@@ -1015,9 +1015,9 @@ class MaskedGenerativeEncoderViT(nn.Module):
     def forward(self, imgs,mask_crf):
         
         self.apply_mask = torch.rand(1) < self.prob_threshold
-        
-        latent= self.forward_encoder(imgs)
-        latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
+        with torch.no_grad():
+            latent= self.forward_encoder(imgs)
+            latent_mask, gt_indices, token_drop_mask, token_all_mask = self.forward_encoder_mask(imgs)
         # latent_mask=latent_mask.clone().detach()
         
         bsz, _ = gt_indices.size()
@@ -1026,11 +1026,8 @@ class MaskedGenerativeEncoderViT(nn.Module):
         latent=latent[:,1:,:]
         with torch.cuda.amp.autocast(enabled=False):
             # slots, attn, attn_logits = self.masked_trans(latent,(H_enc, W_enc))
-            slots, attn, _, attn_logits = self.slot_attention(latent)
-
-
-        
-
+            with torch.no_grad():
+                slots, attn, _, attn_logits = self.slot_attention(latent)
 
             # Hard Mask pooling
             attn=attn.clone().detach()
