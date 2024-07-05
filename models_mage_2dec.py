@@ -841,12 +841,11 @@ class MaskedGenerativeEncoderViT(nn.Module):
             cluster_assignments_tensor = torch.tensor(self.kmeans_model.predict(slots_2d), dtype=torch.long)
 
             # Step 3: Map Cluster Assignments to Embeddings
-            breakpoint()
             centers = self.embedding_layer(cluster_assignments_tensor)
 
             # Reshape back to the original slots shape
             slots = centers.reshape(slots.shape[0], slots.shape[1], slots.shape[2])  # Use the original num_slots
-            slots = torch.tensor(slots).cuda()
+            # centers = torch.tensor(centers).cuda()
 
             # # Create one uniform mask for the entire batch
             # uniform_mask = torch.rand(self.slot_attention.num_slots) < self.mask_prob
