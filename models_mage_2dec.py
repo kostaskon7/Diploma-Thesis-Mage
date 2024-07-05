@@ -274,6 +274,16 @@ class MaskedGenerativeEncoderViT(nn.Module):
         self.mask_prob = args.mask_prob            # Probability to mask individual slots
 
         self.kmeans_model = load(args.kmeans_path)
+
+        # Embedding Layer for Kmeans Centers
+        num_clusters = self.kmeans_model.cluster_centers_.shape[0]
+        embedding_dim = self.kmeans_model.cluster_centers_.shape[1]
+
+        #  Create the Embedding Layer
+        self.embedding_layer = nn.Embedding(num_clusters, embedding_dim)
+
+        # Initialize the embedding layer with the cluster centers
+        self.embedding_layer.weight.data.copy_(torch.tensor(self.kmeans_model.cluster_centers_))
         # --------------------------------------------------------------------------
         # VQGAN specifics
         config = OmegaConf.load('config/vqgan.yaml').model
@@ -826,8 +836,12 @@ class MaskedGenerativeEncoderViT(nn.Module):
             cluster_assignments = self.kmeans_model.predict(slots_2d)
 
             # Replace slots with cluster centers
-            centers = self.kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
+            # centers = self.kmeans_model.cluster_centers_[cluster_assignments]  # Shape: [images*num_slots, 256]
             # breakpoint()
+            cluster_assignments_tensor = torch.tensor(self.kmeans_model.predict(slots_2d), dtype=torch.long)
+
+            # Step 3: Map Cluster Assignments to Embeddings
+            centers = self.embedding_layer(cluster_assignments_tensor)
 
             # Reshape back to the original slots shape
             slots = centers.reshape(slots.shape[0], slots.shape[1], slots.shape[2])  # Use the original num_slots
