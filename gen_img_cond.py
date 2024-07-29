@@ -151,7 +151,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
     for i in range(bsz):
         initialized_slots = 0
         while initialized_slots < num_initial_slots:
-            random_centroid_index = random.randint(0, len(self.kmeans_model.cluster_centers_) - 1)
+            random_centroid_index = random.randint(0, len(kmeans_model.cluster_centers_) - 1)
             random_slot_index = random.randint(0, model.slot_attention.num_slots - 1)
             
             # Ensure the slot hasn't been initialized already
