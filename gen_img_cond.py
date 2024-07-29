@@ -157,7 +157,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             # Ensure the slot hasn't been initialized already
             if random_slot_index not in replaced_slots[i]:
                 # Place the random KMeans centroid in the selected slot
-                slots[i, random_slot_index] = torch.tensor(cluster_centers(random_centroid_index)).cuda()
+                slots[i, random_slot_index] = torch.tensor(cluster_centers(torch.tensor(random_centroid_index).cuda())).cuda()
                 
                 # Run the decoder to check the selected_probs
                 decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
@@ -215,7 +215,7 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
                         print("Pobability of slot 3 is: "+str(torch.sort(probs[i, slot_index], descending=True).values[0].item())+"Selecting Next")
                         most_probable_center_idx = torch.sort(probs[i, slot_index], descending=True).indices[1]
 
-                    slots[i, slot_index] = cluster_centers(most_probable_center_idx)
+                    slots[i, slot_index] = cluster_centers(torch.tensor(most_probable_center_idx).cuda())
 
                     # Mark this slot as replaced
                     replaced_slots[i].add(slot_index)
