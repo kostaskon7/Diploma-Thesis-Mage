@@ -144,18 +144,20 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
 
 # Define the number of initial slots to be initialized for each sample
     num_initial_slots = args.init_slots_gen  # You can set this to the desired number of initial slots
+    # cluster_centers = kmeans_model.cluster_centers_
+    cluster_centers = model.embedding_layer
 
     # Randomly initialize slots with KMeans centroids for each sample
     for i in range(bsz):
         initialized_slots = 0
         while initialized_slots < num_initial_slots:
-            random_centroid_index = random.randint(0, len(kmeans_model.cluster_centers_) - 1)
+            random_centroid_index = random.randint(0, len(cluster_centers) - 1)
             random_slot_index = random.randint(0, model.slot_attention.num_slots - 1)
             
             # Ensure the slot hasn't been initialized already
             if random_slot_index not in replaced_slots[i]:
                 # Place the random KMeans centroid in the selected slot
-                slots[i, random_slot_index] = torch.tensor(kmeans_model.cluster_centers_[random_centroid_index]).cuda()
+                slots[i, random_slot_index] = torch.tensor(cluster_centers[random_centroid_index]).cuda()
                 
                 # Run the decoder to check the selected_probs
                 decoder_output, attn_dec, cluster_assignments, uniform_mask, x_slots = model.forward_decoder_generation(x, slots, token_drop_mask, token_all_mask)
@@ -192,8 +194,8 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
         probs = torch.nn.functional.softmax(x_slots, dim=-1)
 
         # Get the cluster centers
-        cluster_centers = kmeans_model.cluster_centers_
-        cluster_centers = torch.tensor(cluster_centers).cuda()
+        # cluster_centers = kmeans_model.cluster_centers_
+        # cluster_centers = torch.tensor(cluster_centers).cuda()
 
         # Process each batch item
         for i in range(bsz):
