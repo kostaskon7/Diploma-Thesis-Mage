@@ -211,9 +211,9 @@ def gen_image(model, image, bsz, seed, num_iter=12, choice_temperature=4.5,per_i
             for slot_index in sorted_indices:
                 if slot_index not in replaced_slots[i]:
                     # Replace the slot with the most probable cluster center
-                    if torch.argmax(probs[i, slot_index]).item() ==3:
-                        print("Pobability of slot 3 is: "+str(torch.sort(probs[i, slot_index], descending=True).values[0].item())+"Selecting Next")
-                        most_probable_center_idx = torch.sort(probs[i, slot_index], descending=True).indices[1]
+                    # if torch.argmax(probs[i, slot_index]).item() ==3:
+                    print("Pobability of slot 3 is: "+str(torch.sort(probs[i, slot_index], descending=True).values[0].item())+"Selecting Next")
+                    most_probable_center_idx = torch.sort(probs[i, slot_index], descending=True).indices[1]
 
                     slots[i, slot_index] = cluster_centers(torch.tensor(most_probable_center_idx).cuda())
 
